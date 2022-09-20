@@ -31,3 +31,9 @@ path_to_dt <- function(path){
 meanfunc <- function(x,prices,remaining_days){
   mean(sample(x = prices,size = reamining_days*24,replace=T))
 }
+
+compensation_func <- function(avgprice,compensation_threshold,compensation_prop){
+  ifelse(avgprice<=compensation_threshold,
+         yes = avgprice,
+         no = (avgprice-compensation_threshold)*compensation_prop)
+}

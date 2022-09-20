@@ -8,10 +8,10 @@ source("funcs.R")
 
 # Building database
 
-date_from = as.Date("2022-09-01")
-date_to = as.Date(Sys.time())
-areas = c("NO1","NO2")
-playground = TRUE
+date_from = as.Date("2022-09-15")
+date_to = as.Date("2022-09-21")#as.Date(Sys.time())
+areas = c("NO2")#,"NO2")
+playground = FALSE
 key = "1e931976-1e0a-466d-811d-aec47e9ebe42"
 
 dates = seq(date_from,date_to,1)
@@ -43,6 +43,6 @@ if(playground){
   database[,dups:=NULL]
   data.table::fwrite(database,"database_fake.csv")
 } else {
-  data.table::fwrite(database,"database.csv")
+  data.table::fwrite(database,"database.csv",append = T)
 }
 

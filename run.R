@@ -7,7 +7,7 @@ library(lubridate)
 playground = TRUE
 use_past_k_days <- 14
 k_bootstrap <- 10^5
-compensation <- 0.90
+compensation_prop <- 0.90
 compensation_threshold <- 0.70*1.25
 areas <- c("NO1","NO2")
 
@@ -72,9 +72,6 @@ current_mean_dt <- this_month_dt[,list(mean_price = mean(price)),by=area]
 current_mean_vec <- current_mean_dt[,mean_price]
 names(current_mean_vec) <- current_mean_dt[,area]
 
-meanfunc <- function(x,prices,remaining_days){
-  mean(sample(x = prices,size = reamining_days*24,replace=T))
-}
 
 set.seed(123)
 samp_price_mat <- matrix(NA,ncol=length(areas),nrow=k_bootstrap)
@@ -102,5 +99,48 @@ observed_contrib <- matrix(rep(current_mean_vec,each=nrow(summary_forecated_pric
 forecasted_contrib <- summary_forecated_price*(reamining_days/days_this_month)
 
 estimated_month_mean_price <- observed_contrib+forecasted_contrib
-colnames(estimated_month_mean_price) <-
+colnames(estimated_month_mean_price) <- areas
+
+estimated_compensation_dt <- as.data.table(compensation_func(estimated_month_mean_price,
+                                                             compensation_threshold = compensation_threshold,
+                                                             compensation_prop = compensation_prop),keep.rownames = T)
+tomorrow_dt_plot <- copy(tomorrow_dt)
+#tomorrow_dt_plot[,from_time:=as.ITime(from)]
+#tomorrow_dt_plot[,from:=NULL]
+#tomorrow_dt_plot[,to:=NULL]
+
+
+plot_dt <- copy(tomorrow_dt_plot)
+plot_dt[,type:="original"]
+for(j in seq_along(areas)){
+  for(i in seq_len(nrow(estimated_compensation_dt))){
+    this_row <- estimated_compensation_dt[i,rn]
+    compensation <- estimated_compensation_dt[i,get(areas[j])]
+    tmp <- tomorrow_dt_plot[area==areas[j]][,price:=price-compensation]
+    tmp[,type:=this_row]
+
+    plot_dt <- rbind(plot_dt,tmp)
+  }
+}
+
+plot_dt_CI80 <- copy(plot_dt[type=="90%"])
+plot_dt_CI80[,price_upper:=price]
+plot_dt_CI80[,price_lower:=plot_dt[type=="10%",price]]
+plot_dt_CI80[,price:=NULL]
+
+
+library(ggplot2)
+library(scales)
+plot_list <- list()
+for(j in seq_along(areas)){
+
+  tmp <- ggplot(mapping=aes(x=from))+
+    geom_step(data=plot_dt[area==areas[j]&type=="original"],mapping=aes(y=price))+
+    geom_step(data=plot_dt[area==areas[j]&type=="mean"],col=2,linetype=2,mapping=aes(y=price))+
+    geom_ribbon(data=plot_dt_CI80[area==areas[j]],mapping=aes(ymin=price_lower,ymax=price_upper))+
+    scale_x_datetime(labels = date_format("%H:%M",tz="Europe/Berlin"))
+
+  plot_list[[j]] <- tmp
+}
+
 
