@@ -2,7 +2,10 @@
 
 library(data.table)
 
-dt <- fread("hourly_prices_NO2_nordpool.csv",header=T,dec=",")
+#dt <- fread("hourly_prices_NO2_nordpool.csv",header=T,dec=",")
+dt <- fread("hourly_prices_NO2_nordpoolv2.csv",header=T,dec=",")
+
+
 
 
 dt <- melt(dt,id.vars = "V1",variable.name = "date",value.name = "price")
@@ -21,7 +24,7 @@ dt_fake[,price:=price+1]
 
 dt <- rbind(dt,dt_fake)
 
-fwrite(dt,"datebase_nordpool.csv")
+fwrite(dt,"database_nordpool.csv")
 
 
 
