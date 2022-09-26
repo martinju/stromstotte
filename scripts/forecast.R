@@ -1,0 +1,134 @@
+# 3 []load model and daily data and use these to forecast the rest of the month
+
+library(data.table)
+
+predict_based_on_past_k_days <- 31
+k_sim <- 10^4
+bootstrap_residuals <- FALSE
+
+compensation_prop <- 0.90
+compensation_threshold <- 0.70*1.25
+
+areas <- c("NO1","NO2")#,"NO1")#c("NO1","NO2")
+quants <- seq(0,1,length.out=1001)
+today <- as.IDate(Sys.time())-1
+seed = 12345
+
+database_daily_filename <- "database_daily_nordpool.csv"
+model_filename <- "models/model_list.RData"
+current_compensation_filename <- "current_estimated_compensation.csv"
+historic_compensation_filename <- "historic_estimated_compensation.csv"
+
+### Input
+
+source("funcs.R")
+
+# What I really should do here is to get data from the previous year (daily proces).
+# Then do a basic autocorrelation plot of this
+# Then, I can weight the daily observations according to this
+
+load(model_filename)
+
+database_daily <- data.table::fread(database_daily_filename)
+
+setkey(database_daily,"area","date")
+
+tomorrow <- today+1
+
+
+this_month <- data.table::month(tomorrow)
+this_year <- data.table::year(tomorrow)
+this_day <- data.table::mday(tomorrow)
+
+days_this_month <- lubridate::days_in_month(tomorrow)
+
+remaining_days <- days_this_month-this_day
+
+first_day_month <- as.IDate(paste0(this_year,"-",this_month,"-01"))
+last_day_month <- as.IDate(paste0(this_year,"-",this_month,"-",days_this_month))
+
+
+
+
+####
+
+this_month_dt0 <- data.table(area=rep(areas,each=days_this_month),
+                             date=rep(seq(first_day_month,last_day_month,1)))
+this_month_dt <- merge(this_month_dt0,database_daily,all.x=T,all.y=F,by=c("area","date"))
+
+this_month_dt[,wday:=as.factor(wday(date))]
+
+
+wday_numeric_future <- model.matrix(~wday,data=this_month_dt[is.na(price)])
+#this_month_dt <- database_daily[date<=first_day_month & date<=tomorrow]
+
+prediction_dt <- database_daily[date>tomorrow-predict_based_on_past_k_days & date<=tomorrow]
+
+
+prediction_dt[,wday:=as.factor(wday(date))]
+
+wday_numeric_list = list()
+prediction_dt_list <- list()
+pred_mod_list <- list()
+for(j in seq_along(areas)){
+  this_mod <- mod_list[[which(names(mod_list)==areas[j])]]
+
+  prediction_dt_list[[j]] <- prediction_dt[area==areas[j]]
+
+  wday_numeric_list[[j]] <- model.matrix(~wday,data=prediction_dt_list[[j]])
+
+  pred_mod_list[[j]] <- forecast::Arima(y=prediction_dt_list[[j]]$price,model=this_mod,xreg = wday_numeric_list[[j]][,-1])
+
+}
+
+
+current_mean_dt <- this_month_dt[,list(mean_price = mean(price,na.rm=T)),by=area]
+current_mean_vec <- current_mean_dt[,mean_price]
+names(current_mean_vec) <- current_mean_dt[,area]
+
+
+samp_price_mat <- matrix(0,ncol=length(areas),nrow=k_sim)
+colnames(samp_price_mat)<- areas
+
+
+set.seed(seed)
+if(remaining_days>0){
+  for(j in seq_along(areas)){
+    for(i in 1:k_sim){
+
+
+      samps <- simulate(pred_mod_list[[j]],nsim=remaining_days,future=TRUE,bootstrap=bootstrap_residuals,xreg=wday_numeric_future[,-1])
+      #   lines(tail(this_month_dt[,date],remaining_days),samps,col=2)
+      samp_price_mat[i,j] <- mean(pmax(0,samps))
+      #    lines(tail(this_month_dt[,date],remaining_days),rep(meanval,remaining_days),col=3)
+    }
+  }
+}
+
+
+
+estimated_meanprice_mat <- t(current_mean_vec*(this_day/days_this_month)+t(samp_price_mat*(remaining_days/days_this_month)))
+colnames(estimated_meanprice_mat) <- areas
+
+estimation_dt <- melt(as.data.table(estimated_meanprice_mat),measure.vars = areas,variable.name = "area",value.name="mean_price")
+
+estimation_dt[,compensation := compensation_func(avgprice = mean_price,
+                                                 compensation_threshold = compensation_threshold,
+                                                 compensation_prop = compensation_prop)]
+
+
+quants_dt <- estimation_dt[,lapply(.SD,quantile,probs = quants),.SDcols=c("mean_price","compensation"),by=area]
+quants_dt[,type:=rep(paste0("quantile_",quants*100,"%"),times=length(areas))]
+
+means_dt <- estimation_dt[,lapply(.SD,mean),.SDcols=c("mean_price","compensation"),by=area]
+means_dt[,type:="mean"]
+
+medians_dt <- estimation_dt[,lapply(.SD,median),.SDcols=c("mean_price","compensation"),by=area]
+medians_dt[,type:="median"]
+
+res_dt <- rbind(means_dt,medians_dt,quants_dt)
+res_dt[,estimation_date:=today]
+
+fwrite(res_dt,current_compensation_filename)
+fwrite(res_dt,historic_compensation_filename,append=T)
+

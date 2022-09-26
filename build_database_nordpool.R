@@ -24,25 +24,13 @@ dt_fake[,price:=price+1]
 
 dt <- rbind(dt,dt_fake)
 
+setnafill(dt,"locf",cols="price") # Just filling in something when we adjust the clock
+
 fwrite(dt,"database_nordpool.csv")
 
 
 
 
 
-tmp <- fread("daily_prices_NO2_nordpool.csv",header=T,dec=",")
-tmp[,area:="NO2"]
-tmp[,V1:=NULL]
-setcolorder(tmp,rev(names(tmp)))
-dt_daily <- melt(tmp,id.vars="area",value.name = "price")
-
-first_date <- as.IDate("2021-11-01")
-dt_daily <- dt_daily[!is.na(price)]
-dt_daily[,date:=seq(from=first_date,by=1,length.out=.N)]
-dt_daily[,variable:=NULL]
-
-setcolorder(dt_daily,c("area","date"))
-
-fwrite(dt_daily,"datebase_daily_nordpool.csv")
 
 

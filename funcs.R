@@ -38,9 +38,25 @@ path_to_dt <- function(path){
 
 
 
-meanfunc <- function(x,prices,remaining_days){
+all_indep <- function(x,prices,remaining_days){
   mean(sample(x = prices,size = remaining_days*24,replace=T))
 }
+
+double_bootstrap <- function(non,dates,sampling_dt,remaining_days){
+  samp_dates <- sample(x=dates,size=remaining_days,replace=T)
+  mean(sapply(samp_dates,helper))
+}
+helper <- function(x){
+  prices <- sampling_dt[date==x,price]
+  mean(sample(prices,size=24,replace=T))
+}
+
+sim_forecast <- function(x,tomorrow_model,bootstrap,remaining_days){
+  samps <- simulate(tomorrow_model,nsim=remaining_days,future=TRUE,bootstrap=bootstrap)
+  mean(pmax(0,samps))
+}
+
+
 
 compensation_func <- function(avgprice,compensation_threshold,compensation_prop){
   ret <- ifelse(avgprice<=compensation_threshold,
