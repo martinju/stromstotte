@@ -64,3 +64,9 @@ compensation_func <- function(avgprice,compensation_threshold,compensation_prop)
                 no = (avgprice-compensation_threshold)*compensation_prop)
   as.data.table(ret,keep.rownames = T)
 }
+
+get_density <- function(x,adjust){
+  tmp <- density(x,adjust=adjust)
+  data.table(x=tmp$x,y=tmp$y)
+}
+
