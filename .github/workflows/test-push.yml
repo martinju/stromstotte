@@ -1,0 +1,36 @@
+# Hourly scraping
+name: testing GHA push
+
+# Controls when the action will run.
+on: [push, pull_request]
+
+jobs:
+  autoscrape:
+    # The type of runner that the job will run on
+    runs-on: macos-latest
+
+    # Load repo and install R
+    steps:
+    - uses: actions/checkout@master
+    - uses: r-lib/actions/setup-r@master
+
+    # Set-up R
+    - name: Install packages
+      run: |
+        R -e 'install.packages("data.table")'
+        R -e 'install.packages("ggplot2")'
+    # Run R script
+    - name: Scrape
+      run: Rscript GHAtest.R
+
+ # Add new files in data folder, commit along with other modified files, push
+    - name: Commit files
+      run: |
+        git config --local user.name actions-user
+        git config --local user.email "actions@github.com"
+        git add data/*
+        git commit -am "GH ACTION Headlines $(date)"
+        git push origin main
+      env:
+        REPO_KEY: ${{secrets.GITHUB_TOKEN}}
+        username: github-actions
