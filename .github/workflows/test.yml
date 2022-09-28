@@ -1,10 +1,10 @@
 # Hourly scraping
-name: nifty50scrape
+name: testing GHA
 
 # Controls when the action will run.
 on:
   schedule:
-    - cron:  '0 13 * * *'
+    - cron:  '0 20 40 * *'
 
 
 jobs:
