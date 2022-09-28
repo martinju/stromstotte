@@ -4,8 +4,9 @@ name: testing GHA
 # Controls when the action will run.
 on:
   schedule:
-    - cron:  '42 20 * * *'
-
+    - cron:  '50 20 * * *'
+    - cron:  '52 22 * * *'
+    - cron:  '51 21 * * *'
 
 jobs:
   autoscrape:
