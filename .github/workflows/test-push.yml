@@ -22,6 +22,7 @@ jobs:
     # Run R script
     - name: Scrape
       run: Rscript GHAtest.R
+
     # Run R script
     - name: TEST
       env:
