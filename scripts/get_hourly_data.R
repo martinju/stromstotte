@@ -7,14 +7,14 @@ library(lubridate)
 
 source("funcs.R")
 
+KEY_FFAIL_DATA <- Sys.getenv("KEY_FFAIL_DATA")
 
 playground = FALSE
-key = "1e931976-1e0a-466d-811d-aec47e9ebe42"
 areas <- c("NO1","NO2")#,"NO1")#c("NO1","NO2")
 database_hourly_filename <- "database_hourly.csv"
 database_daily_filename <- "database_daily_nordpool.csv"
 
-today <- as.IDate(Sys.time())-2#as.IDate("2022-09-23") #as.IDate(Sys.time())
+today <- as.IDate(Sys.time())-1#as.IDate("2022-09-23") #as.IDate(Sys.time())
 
 tomorrow <- today+1
 
@@ -24,7 +24,7 @@ for(j in seq_along(areas)){
   if(playground){
     file = paste0("https://playground-norway-power.ffail.win/?zone=",areas[j],"&date=",tomorrow,"&key=123")
   } else {
-    file = paste0("https://norway-power.ffail.win/?zone=",areas[j],"&date=",tomorrow,"&key=",key)
+    file = paste0("https://norway-power.ffail.win/?zone=",areas[j],"&date=",tomorrow,"&key=",KEY_FFAIL_DATA)
   }
 
   this_dt <- basic_ffail_to_dt(file,areas[j])

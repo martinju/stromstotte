@@ -1,0 +1,39 @@
+# Get hourly data
+name: Get hourly data
+
+# Controls when the action will run.
+on:
+  schedule:
+    - cron:  '15 07 * * *'
+
+jobs:
+  autoscrape:
+    # The type of runner that the job will run on
+    runs-on: macos-latest
+
+    # Load repo and install R
+    steps:
+    - uses: actions/checkout@master
+    - uses: r-lib/actions/setup-r@master
+
+    # Set-up R
+    - name: Install packages
+      run: |
+        R -e 'install.packages("data.table")'
+        R -e 'install.packages("ggplot2")'
+        R -e 'install.packages("lubridate")'
+
+    # Run R script
+    - name: Get hourly data
+      env:
+        KEY_FFAIL_DATA: ${{ secrets.KEY_FFAIL_DATA }}
+      run: Rscript scripts/get_hourly_data.R
+
+ # Add new files in data folder, commit along with other modified files, push
+    - name: Commit files
+      run: |
+        git config --local user.name actions-user
+        git config --local user.email "actions@github.com"
+        git add *
+        git commit -am "GHA Get hourly data $(date)"
+        git push
