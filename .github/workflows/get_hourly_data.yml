@@ -4,12 +4,12 @@ name: Get hourly data
 # Controls when the action will run.
 on:
   schedule:
-    - cron:  '15 07 * * *'
+    - cron:  '20 11 * * *'
 
 jobs:
   autoscrape:
     # The type of runner that the job will run on
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     # Load repo and install R
     steps:
@@ -22,6 +22,7 @@ jobs:
         R -e 'install.packages("data.table")'
         R -e 'install.packages("ggplot2")'
         R -e 'install.packages("lubridate")'
+        R -e 'install.packages("rjson")'
 
     # Run R script
     - name: Get hourly data
