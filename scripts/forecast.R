@@ -23,7 +23,7 @@ historic_compensation_filename <- "data/historic_estimated_compensation.csv"
 
 ### Input
 
-source("funcs.R")
+source("source/funcs.R")
 
 # What I really should do here is to get data from the previous year (daily proces).
 # Then do a basic autocorrelation plot of this

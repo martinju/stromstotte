@@ -6,7 +6,7 @@ library(data.table)
 library(lubridate)
 library(rjson)
 
-source("funcs.R")
+source("source/funcs.R")
 
 KEY_FFAIL_DATA <- Sys.getenv("KEY_FFAIL_DATA")
 
