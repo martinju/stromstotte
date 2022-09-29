@@ -2,13 +2,13 @@
 library(data.table)
 library(ggplot2)
 
-areas <- c("NO1","NO2")#,"NO1")#c("NO1","NO2")
+areas <- c("NO1","NO2")
 plot_CI_ints <- c(0.99,0.95,0.9,0.8,0.5)
 plot_avg_measures <- c("mean","median")
 
-database_hourly_filename <- "database_hourly.csv"
-current_compensation_filename <- "current_estimated_compensation.csv"
-current_density_compensation_filename <- "current_estimated_compensation_density.csv"
+database_hourly_filename <- "data/database_hourly.csv"
+current_compensation_filename <- "data/current_estimated_compensation.csv"
+current_density_compensation_filename <- "data/current_estimated_compensation_density.csv"
 
 density_dt <- fread(current_density_compensation_filename)
 

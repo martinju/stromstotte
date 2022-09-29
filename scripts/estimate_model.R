@@ -3,11 +3,11 @@
 library(data.table)
 
 areas <- c("NO2","NO1")#,"NO1")#c("NO1","NO2")
-database_filename <- "database_daily_nordpool.csv"
+database_filename <- "data/database_daily.csv"
 seed = 12345
 method = "daily_auto.arima"#"all_indep"
 model_training_range <- c(as.IDate("2022-01-01"),as.IDate("2022-08-31"))
-saving_filename <- "models/model_list.RData"
+model_filename <- "models/model_list.RData"
 
 
 database <- data.table::fread(database_filename)
@@ -28,4 +28,4 @@ for(j in seq_along(areas)){
 
 names(mod_list) <- areas
 
-save(mod_list,file=saving_filename)
+save(mod_list,file=model_filename)

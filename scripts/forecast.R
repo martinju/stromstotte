@@ -14,12 +14,12 @@ CI_ints <- c(0.99,0.95,0.9,0.8,0.5)
 today <- as.IDate(Sys.time())-1
 seed = 12345
 
-database_daily_filename <- "database_daily_nordpool.csv"
+database_daily_filename <- "data/database_daily.csv"
 model_filename <- "models/model_list.RData"
 
-current_density_compensation_filename <- "current_estimated_compensation_density.csv"
-current_compensation_filename <- "current_estimated_compensation.csv"
-historic_compensation_filename <- "historic_estimated_compensation.csv"
+current_density_compensation_filename <- "data/current_estimated_compensation_density.csv"
+current_compensation_filename <- "data/current_estimated_compensation.csv"
+historic_compensation_filename <- "data/historic_estimated_compensation.csv"
 
 ### Input
 

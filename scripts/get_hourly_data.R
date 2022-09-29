@@ -11,11 +11,11 @@ source("funcs.R")
 KEY_FFAIL_DATA <- Sys.getenv("KEY_FFAIL_DATA")
 
 playground = FALSE
-areas <- c("NO1","NO2")#,"NO1")#c("NO1","NO2")
-database_hourly_filename <- "database_hourly.csv"
-database_daily_filename <- "database_daily_nordpool.csv"
+areas <- c("NO1","NO2")
+database_hourly_filename <- "data/database_hourly.csv"
+database_daily_filename <- "data/database_daily.csv"
 
-today <- as.IDate(Sys.time())-1#as.IDate("2022-09-23") #as.IDate(Sys.time())
+today <- as.IDate(Sys.time())-1
 
 tomorrow <- today+1
 
