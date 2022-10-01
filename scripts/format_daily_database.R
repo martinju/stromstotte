@@ -1,5 +1,5 @@
 
-areas <- c("NO2","NO1")
+areas <- c("NO1","NO2")
 
 first_date <- as.IDate("2021-11-01")
 
