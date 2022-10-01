@@ -13,7 +13,7 @@ KEY_FFAIL_DATA <- Sys.getenv("KEY_FFAIL_DATA")
 playground = TRUE
 areas <- c("NO1","NO2")
 database_hourly_filename <- "data/database_hourly_fake.csv"
-database_daily_filename <- "data/database_daily.csv"
+database_daily_filename <- "data/database_daily_fake.csv"
 
 today <- as.IDate(Sys.time())
 

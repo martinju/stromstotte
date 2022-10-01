@@ -15,7 +15,7 @@ areas <- c("NO1","NO2")
 database_hourly_filename <- "data/database_hourly.csv"
 database_daily_filename <- "data/database_daily.csv"
 
-today <- as.IDate(Sys.time())-1
+today <- as.IDate(Sys.time())
 
 tomorrow <- today+1
 

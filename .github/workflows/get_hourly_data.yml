@@ -4,7 +4,7 @@ name: Get hourly data
 # Controls when the action will run.
 on:
   schedule:
-    - cron:  '20 11 * * *'
+    - cron:  '05 11 * * *'
 
 jobs:
   autoscrape:
