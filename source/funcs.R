@@ -2,6 +2,7 @@ basic_ffail_to_dt <- function(path,area){
   dat <- rjson::fromJSON(file = path)
   date <- as.IDate(lubridate::ymd_hms(dat[[10]]$valid_from)) # Avoid time zone issues
   prices <- sapply(dat,function(x)x$NOK_per_kWh,USE.NAMES = F)
+  prices <- prices*1.25 # Add MVA
 
   dt <- data.table(area=area,start_hour=0:23,date=date,price=prices)
 
