@@ -7,7 +7,7 @@ on:
     - cron:  '05 11 * * *'
 
 jobs:
-  autoscrape:
+  hourly_data:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -25,10 +25,15 @@ jobs:
         R -e 'install.packages("rjson")'
 
     # Run R script
-    - name: Get hourly data
+    - name: Get hourly data ffail
       env:
         KEY_FFAIL_DATA: ${{ secrets.KEY_FFAIL_DATA }}
-      run: Rscript scripts/get_hourly_data.R
+      run: Rscript scripts/get_hourly_data_ffail.R
+
+    # Run R script
+    - name: Get hourly data nordpool
+      run: Rscript scripts/get_hourly_data_nordpool.R
+
 
  # Add new files in data folder, commit along with other modified files, push
     - name: Commit files
