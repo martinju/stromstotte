@@ -2,11 +2,11 @@
 name: Get hourly data
 
 # Controls when the action will run.
-#on:
-#  schedule:
-#    - cron:  '20 20 * * *'
+on:
+  schedule:
+    - cron:  '10 11 * * *'
 # Controls when the action will run.
-on: [push, pull_request]
+#on: [push, pull_request]
 
 
 jobs:
