@@ -1,4 +1,5 @@
 library(data.table)
+library(flextable)
 library(ggplot2)
 
 Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
@@ -90,13 +91,8 @@ computation_year <- year(estimation_date)
 caption_text <- paste("Estimert strømstøtte for",computation_month_NO,computation_year,"per",estimation_date)
 ft <- set_caption(ft, caption = caption_text)
 ft <- add_footer_lines(ft,"Estimering Martin Jullum, Norsk Regnesentral")
-#ft <- footnote(ft, j = 1,i=c(1,2), value =
-#           as_paragraph(c("Estimering Martin Jullum, Norsk Regnesentral")),
-#         ref_symbols = c("1"), part =
-#           "body")
 ft <- fontsize(ft, size = 8, part = "footer")
 ft <- align(ft,align="right",part="footer")
-ft
 
 webshot::install_phantomjs() # Should get rid of this one if I can
 save_as_image(ft,"output/current_estimate_tab.png")

@@ -25,13 +25,9 @@ historic_compensation_filename <- "data/historic_estimated_compensation.csv"
 
 source("source/funcs.R")
 
-# What I really should do here is to get data from the previous year (daily proces).
-# Then do a basic autocorrelation plot of this
-# Then, I can weight the daily observations according to this
-
 load(model_filename)
 
-database_daily <- data.table::fread(database_filename)
+database_daily <- fread(database_filename)
 
 setkey(database_daily,"area","date")
 
@@ -42,9 +38,9 @@ if(database_daily[date==tomorrow,.N]==0){
 }
 
 
-this_month <- data.table::month(tomorrow)
-this_year <- data.table::year(tomorrow)
-this_day <- data.table::mday(tomorrow)
+this_month <- month(tomorrow)
+this_year <- year(tomorrow)
+this_day <- mday(tomorrow)
 
 days_this_month <- lubridate::days_in_month(tomorrow)
 
@@ -67,7 +63,6 @@ this_month_dt[,wday:=date_to_wday_factor(date)]
 
 
 wday_numeric_future <- model.matrix(~wday,data=this_month_dt[is.na(price)])
-#this_month_dt <- database_daily[date<=first_day_month & date<=tomorrow]
 
 prediction_dt <- database_daily[date>tomorrow-predict_based_on_past_k_days & date<=tomorrow]
 
@@ -105,9 +100,7 @@ if(remaining_days>0){
 
 
       samps <- simulate(pred_mod_list[[j]],nsim=remaining_days,future=TRUE,bootstrap=bootstrap_residuals,xreg=wday_numeric_future[,-1])
-      #   lines(tail(this_month_dt[,date],remaining_days),samps,col=2)
       samp_price_mat[i,j] <- mean(pmax(0,samps))
-      #    lines(tail(this_month_dt[,date],remaining_days),rep(meanval,remaining_days),col=3)
     }
   }
 }
@@ -170,10 +163,27 @@ density_dt[,estimation_date:=today]
 density_dt[,computation_year:=data.table::year(tomorrow)]
 density_dt[,computation_month:=data.table::month(tomorrow)]
 
+setkey(res_dt,estimation_date,area)
 
 fwrite(density_dt,current_density_compensation_filename)
-
-setkey(res_dt,area)
 fwrite(res_dt,current_compensation_filename)
-fwrite(res_dt,historic_compensation_filename,append=T)
+
+
+prev_historic_compensation <- fread(historic_compensation_filename)
+prev_estimation_dates <- prev_historic_compensation[,unique(estimation_date)]
+if(today%in%prev_estimation_dates){
+  warning("Computation already done for current date! Updating rather than appending historic data.")
+
+  prev_historic_compensation <- prev_historic_compensation[estimation_date!=today]
+
+  res_dt <- rbind(prev_historic_compensation,res_dt)
+
+  setkey(res_dt,estimation_date,area)
+
+  fwrite(res_dt,historic_compensation_filename)
+
+} else {
+  fwrite(res_dt,historic_compensation_filename,append=T)
+}
+
 

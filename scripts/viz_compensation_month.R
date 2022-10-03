@@ -1,4 +1,5 @@
 library(data.table)
+library(flextable)
 library(ggplot2)
 
 Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
@@ -34,12 +35,6 @@ first_day_month <- as.IDate(paste0(this_year,"-",this_month,"-01"))
 last_day_month <- as.IDate(paste0(this_year,"-",this_month,"-",days_this_month))
 
 
-#get_quant <- function(x){
-#  round(as.numeric(sub("%","",sapply(strsplit(x, "_"), "[", 2))),6)
-#}
-
-#res_dt[type0=="quantile",quant:=unlist(lapply(type,get_quant))]
-
 these_quants <- paste0("quantile_",round(c((1-plot_CI_int)/2,1-(1-plot_CI_int)/2),6))
 
 plot_lines0 <- res_dt[type%in%c("current_mean","lower_bound","mean")]
@@ -73,8 +68,6 @@ plot_observed_prices[,type:="d_observed"]
 
 
 scaleFUN <- function(x) sprintf("%.2f", x)
-
-library(ggplot2)
 
 computation_date0 <- res_dt[,max(computation_date)]
 computation_month_NO <- get_NO_month(month(estimation_date))
