@@ -1,3 +1,21 @@
+
+get_NO_month <- function(num_month){
+  lookup<-c("januar"=1,
+            "februar"=2,
+            "mars"=3,
+            "april"=4,
+            "mai"=5,
+            "juni"=6,
+            "juli"=7,
+            "august"=8,
+            "september"=9,
+            "oktober"=10,
+            "november"=11,
+            "desember"=12)
+  return(names(which(lookup==num_month)))
+
+}
+
 date_to_wday_factor <- function(date){
   factor(lubridate::wday(date,week_start=7,label=T),ordered=F,levels = c("Sun","Mon","Tue","Wed","Thu","Fri","Sat"))
 }

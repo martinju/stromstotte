@@ -1,6 +1,9 @@
-
 library(data.table)
 library(ggplot2)
+
+Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
+
+source("source/funcs.R")
 
 areas <- c("NO1","NO2")
 plot_CI_ints <- c(0.99,0.95,0.9,0.8,0.5)
@@ -47,11 +50,11 @@ for(j in seq_along(areas)){
   c_lb <- format(round(res_dt[area==areas[j] & type=="lower_bound",compensation],2),nsmall=2)
   c_cm <- format(round(res_dt[area==areas[j] & type=="current_mean",compensation],2),nsmall=2)
 
-  tab0 <- cbind(c("Gjennomsnittspris",mp_m,
+  tab0 <- cbind(c(mp_m,
                   paste0("(",mp_CI_L,",",mp_CI_U,")"),
                   mp_lb,
                   mp_cm),
-                c("Kompensasjon",c_m,
+                c(c_m,
                   paste0("(",c_CI_L,",",c_CI_U,")"),
                   c_lb,
                   c_cm))
@@ -59,6 +62,41 @@ for(j in seq_along(areas)){
   tab <- cbind(tab,tab0)
 }
 
-colnames(tab) <- rep(areas,each=2)
-rownames(tab) <- c("","Estimat","95% konfidens","Absolutt nedre grense","Saa langt denne maned")
 
+
+tab_header <- c("",rep(c("Gjennomsnittspris\n(NOK/kWh)","Kompensasjon\n(NOK/kWh)"),times=length(areas)))
+names(tab_header) <- paste0("V",seq_len(ncol(tab)+1)-1)
+
+
+tab_dt <- as.data.table(tab)
+tab_dt <- cbind(V0=c("Estimat","95% konfidens","Absolutt nedre grense","Så langt denne måned"),tab_dt)
+
+
+ft <- flextable(tab_dt)
+ft <- set_header_labels(ft,values=as.list(tab_header))
+ft <- add_header_row(ft,values=c("",areas),colwidths = c(1,rep(2,length(areas))))
+
+if(length(areas)>1){
+  ft <- vline(ft,j=paste0("V",c(0,2*seq_len(length(areas)-1))),border=fp_border(style="dashed"),part = "all")
+}
+ft <- align(ft,part="header",align="center")
+ft <- align(ft,part="body",align="right")
+ft <- autofit(ft)
+
+estimation_date <- res_dt[1,estimation_date]
+computation_month_NO <- get_NO_month(month(estimation_date))
+computation_year <- year(estimation_date)
+
+caption_text <- paste("Estimert strømstøtte for",computation_month_NO,computation_year,"per",estimation_date)
+ft <- set_caption(ft, caption = caption_text)
+ft <- add_footer_lines(ft,"Estimering Martin Jullum, Norsk Regnesentral")
+#ft <- footnote(ft, j = 1,i=c(1,2), value =
+#           as_paragraph(c("Estimering Martin Jullum, Norsk Regnesentral")),
+#         ref_symbols = c("1"), part =
+#           "body")
+ft <- fontsize(ft, size = 8, part = "footer")
+ft <- align(ft,align="right",part="footer")
+ft
+
+webshot::install_phantomjs() # Should get rid of this one if I can
+save_as_image(ft,"output/current_estimate_tab.png")
