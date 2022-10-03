@@ -1,5 +1,7 @@
 
-areas <- c("NO1","NO2")
+library(data.table)
+
+areas <- c("NO1","NO2","NO3","NO4","NO5")
 
 first_date <- as.IDate("2021-11-01")
 
@@ -19,10 +21,13 @@ for(j in seq_along(areas)){
 
 dt_daily <- rbindlist(dt_list)
 
-dt_daily[,price:=price*1.25/1000] # ADD MVA and convert to kWh
+dt_daily[area!="NO5",price:=price*1.25] # Add mva (not for NO5)
+dt_daily[,price:=price/1000] # Convert to kWh
 
 
 setcolorder(dt_daily,c("area","date"))
 
-fwrite(dt_daily,"data/database_daily.csv")
+fwrite(dt_daily,"data/database_nordpool_daily.csv")
+fwrite(dt_daily,"data/database_ffail_daily.csv")
+
 
