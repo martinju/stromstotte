@@ -1,9 +1,8 @@
 library(data.table)
-library(flextable)
 library(ggplot2)
 
-Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
-
+#Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
+Sys.setlocale("LC_ALL", "no_NO.UTF-8") # UTF-8 with Norwegian months
 source("source/funcs.R")
 
 areas <- c("NO1","NO2")
@@ -64,7 +63,7 @@ plot_ints[type=="lower_bound",type:="c_lower_bound"]
 plot_observed_prices <- daily_dt[date>=first_day_month-plot_k_days_prev_month & area %in% areas]
 setnames(plot_observed_prices,"price","pris")
 setnames(plot_observed_prices,"date","computation_date")
-plot_observed_prices[,type:="d_observed"]
+plot_observed_prices[,obscol:="Daglig spotpris"]
 
 
 scaleFUN <- function(x) sprintf("%.2f", x)
@@ -73,10 +72,13 @@ computation_date0 <- res_dt[,max(computation_date)]
 computation_month_NO <- get_NO_month(month(estimation_date))
 computation_year <- year(estimation_date)
 
-title <- paste("Estimert strømstøtte for",computation_month_NO,computation_year,"per",computation_date0)
+title_compensation <- paste("Estimert strømstøtte for",computation_month_NO,computation_year)
+title_mean_price <- paste("Estimert gjennomsnittlig spotpris for",computation_month_NO,computation_year)
+
+subtitle <- paste("Per",computation_date0)
 
 
-ggplot(mapping = aes(x=computation_date,col=type))+
+gg_compensation <- ggplot(mapping = aes(x=computation_date,col=type))+
   geom_ribbon(data=plot_ints[variable=="compensation"],alpha=0.3,
               mapping=aes(ymin=get(these_quants[1]),
                           ymax=get(these_quants[2]),
@@ -84,15 +86,45 @@ ggplot(mapping = aes(x=computation_date,col=type))+
   geom_line(data=plot_lines[variable=="compensation"],mapping = aes(y=pris),size=1)+
 #              aes(ymin=as.character(these_quants[1]),
 #                  ymax=as.character(these_quants[2])))+
-  geom_vline(xintercept=first_day_month)+
-  geom_point(plot_observed_prices,mapping=aes(y=pris))+
   facet_wrap(vars(Prisområde=area),nrow=2,labeller = label_both)+
 #  expand_limits(x = )+
-  scale_x_date(name = "Siste prisoppdatering",date_minor_breaks = "1 day",date_breaks = "1 weeks",date_labels="%d-%m",limits=c(first_day_month-plot_k_days_prev_month,last_day_month))+
+  scale_x_date(name = "Siste prisoppdatering",date_minor_breaks = "1 day",date_breaks = "3 days",date_labels="%d. %b",limits=c(first_day_month,last_day_month))+
   scale_y_continuous(name = "Pris (NOK/kWh)",labels=scaleFUN)+
   scale_fill_manual(name = "95% Konfidensintervall",values=scales::hue_pal()(3)[1])+
   scale_color_discrete(labels = c("Estimat m/ 95% konfidensintervall","Så langt denne måned", "Absoltt nedre grense","Observert dagspris"))+
   guides(color=guide_legend("",override.aes = list(fill=NA)),fill="none")+
   theme(legend.position = "bottom")+
-  ggtitle(title)
+  ggtitle(title_compensation,subtitle = subtitle)
+
+
+gg_mean_price <- ggplot(mapping = aes(x=computation_date,col=type))+
+  geom_ribbon(data=plot_ints[variable=="mean_price"],alpha=0.3,
+              mapping=aes(ymin=get(these_quants[1]),
+                          ymax=get(these_quants[2]),
+                          fill=""))+
+  geom_line(data=plot_lines[variable=="mean_price"],mapping = aes(y=pris),size=1)+
+  #              aes(ymin=as.character(these_quants[1]),
+  #                  ymax=as.character(these_quants[2])))+
+  geom_vline(xintercept=first_day_month)+
+  geom_point(plot_observed_prices,mapping=aes(y=pris,shape=obscol),color="black")+
+  facet_wrap(vars(Prisområde=area),nrow=2,labeller = label_both)+
+  #  expand_limits(x = )+
+  scale_x_date(name = "Siste prisoppdatering",date_minor_breaks = "1 day",date_breaks = "3 days",date_labels="%d. %b",limits=c(first_day_month-plot_k_days_prev_month,last_day_month))+
+  scale_y_continuous(name = "Pris (NOK/kWh)",labels=scaleFUN)+
+  scale_fill_manual(name = "95% Konfidensintervall",values=scales::hue_pal()(3)[1])+
+  scale_color_discrete(labels = c("Estimat m/ 95% konfidensintervall","Så langt denne måned", "Absoltt nedre grense","Observert dagspris"))+
+  guides(color=guide_legend("",override.aes = list(fill=NA),order=1),shape=guide_legend(""),fill="none")+
+  theme(legend.position = "bottom")+
+  ggtitle(title_mean_price,subtitle = subtitle)
+
+gg_compensation
+gg_mean_price
+
+
+ggsave("output/current_estimated_compensation.png",plot = gg_compensation,width = 10,height=3*length(areas)+2,scale=0.75)
+ggsave("output/current_estimated_mean_price.png",plot = gg_mean_price,width = 10,height=3*length(areas)+2,scale=0.75)
+
+ggsave(paste0("output/historic/estimated_compensation_",tomorrow,".png"),plot = gg_compensation,width = 10,height=3*length(areas)+2,scale=0.75)
+ggsave(paste0("output/historic/estimated_mean_price_",tomorrow,".png"),plot = gg_mean_price,width = 10,height=3*length(areas)+2,scale=0.75)
+
 
