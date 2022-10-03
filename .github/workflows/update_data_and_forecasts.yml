@@ -4,7 +4,7 @@ name: Update data and forecasts
 # Controls when the action will run.
 on:
   schedule:
-    - cron:  '15 11 * * *'
+    - cron:  '30 11 * * *'
 # Controls when the action will run.
 #on: [push, pull_request]
 
@@ -26,6 +26,7 @@ jobs:
         R -e 'install.packages("ggplot2")'
         R -e 'install.packages("lubridate")'
         R -e 'install.packages("rjson")'
+        R -e 'install.packages("flextable")'
 
     # Run R script
     - name: Get hourly data ffail
@@ -40,6 +41,11 @@ jobs:
     # Run R script
     - name: Estimate compensation
       run: Rscript scripts/forecast.R
+
+    # Run R script
+    - name: Plot compensation
+      run: Rscript scripts/viz_compensation.R
+
 
  # Add new files in data folder, commit along with other modified files, push
     - name: Commit files
