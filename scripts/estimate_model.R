@@ -2,7 +2,7 @@
 
 library(data.table)
 
-areas <- c("NO1","NO2")#,"NO1")#c("NO1","NO2")
+areas <- c("NO1","NO2","NO3","NO4","NO5")#,"NO1")#c("NO1","NO2")
 database_filename <- "data/database_nordpool_daily.csv"
 seed = 12345
 model_training_range <- c(as.IDate("2021-11-01"),as.IDate("2022-08-31"))
