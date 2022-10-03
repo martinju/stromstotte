@@ -69,8 +69,8 @@ plot_observed_prices[,obscol:="Daglig spotpris"]
 scaleFUN <- function(x) sprintf("%.2f", x)
 
 computation_date0 <- res_dt[,max(computation_date)]
-computation_month_NO <- get_NO_month(month(estimation_date))
-computation_year <- year(estimation_date)
+computation_month_NO <- get_NO_month(month(estimation_date0))
+computation_year <- year(estimation_date0)
 
 title_compensation <- paste("Estimert strømstøtte for",computation_month_NO,computation_year)
 title_mean_price <- paste("Estimert gjennomsnittlig spotpris for",computation_month_NO,computation_year)

@@ -78,7 +78,7 @@ ft <- set_header_labels(ft,values=as.list(tab_header))
 ft <- add_header_row(ft,values=c("",areas),colwidths = c(1,rep(2,length(areas))))
 
 if(length(areas)>1){
-  ft <- vline(ft,j=paste0("V",c(0,2*seq_len(length(areas)-1))),border=fp_border(style="dashed"),part = "all")
+  ft <- vline(ft,j=paste0("V",c(0,2*seq_len(length(areas)-1))),border=officer::fp_border(style="dashed"),part = "all")
 }
 ft <- align(ft,part="header",align="center")
 ft <- align(ft,part="body",align="right")
