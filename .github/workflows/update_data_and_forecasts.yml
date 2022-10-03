@@ -27,6 +27,7 @@ jobs:
           any::flextable
           any::forecast
           any::ggplot2
+          any::webshot
 
 #    # Run R script
 #    - name: Get hourly data ffail
