@@ -1,6 +1,7 @@
 # 3 []load model and daily data and use these to forecast the rest of the month
 
 library(data.table)
+library(forecast)
 
 predict_based_on_past_k_days <- 31
 k_sim <- 10^4
