@@ -8,7 +8,7 @@ library(rjson)
 
 source("source/funcs.R")
 
-areas <- c("NO1","NO2")#c("NO3","NO4","NO5")
+areas <- c("NO1","NO2","NO3","NO4","NO5")
 
 database_hourly_nordpool_filename <- "data/database_nordpool_hourly.csv"
 database_daily_nordpool_filename <- "data/database_nordpool_daily.csv"

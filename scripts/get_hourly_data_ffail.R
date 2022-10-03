@@ -11,7 +11,7 @@ source("source/funcs.R")
 KEY_FFAIL_DATA <- Sys.getenv("KEY_FFAIL_DATA")
 
 playground = FALSE
-areas <- c("NO1","NO2")#c("NO3","NO4","NO5")
+areas <- c("NO1","NO2","NO3","NO4","NO5")
 
 database_hourly_ffail_filename <- "data/database_ffail_hourly.csv"
 database_daily_ffail_filename <- "data/database_ffail_daily.csv"
