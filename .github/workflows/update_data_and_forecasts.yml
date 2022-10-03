@@ -2,11 +2,11 @@
 name: Update data, forecasts and plots
 
 # Controls when the action will run.
-#on:
-#  schedule:
-#    - cron:  '30 14 * * *'
+on:
+  schedule:
+    - cron:  '30 11 * * *'
 # Controls when the action will run.
-on: [push, pull_request]
+#on: [push, pull_request]
 
 
 jobs:
@@ -29,12 +29,12 @@ jobs:
           any::ggplot2
           any::webshot
 
-#    # Run R script
-#    - name: Get hourly data ffail
-#      env:
-#        KEY_FFAIL_DATA: ${{ secrets.KEY_FFAIL_DATA }}
-#      run: Rscript scripts/get_hourly_data_ffail.R
-#      continue-on-error: true
+    # Run R script
+    - name: Get hourly data ffail
+      env:
+        KEY_FFAIL_DATA: ${{ secrets.KEY_FFAIL_DATA }}
+      run: Rscript scripts/get_hourly_data_ffail.R
+      continue-on-error: true
 
     # Run R script
     - name: Get hourly data nordpool
