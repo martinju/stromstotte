@@ -35,7 +35,7 @@ database_daily <- fread(database_filename)
 
 setkey(database_daily,"area","date")
 
-today_dates <- seq(as.IDate("2022-08-31"),as.IDate("2022-09-30"),by=1)
+today_dates <- seq(as.IDate("2022-08-31"),as.IDate("2022-09-29"),by=1)
 
 for(kkk in seq_along(today_dates)){
 
