@@ -94,7 +94,7 @@ gg_compensation <- ggplot(mapping = aes(x=computation_date,col=type))+
   scale_x_date(name = "Siste prisoppdatering",date_minor_breaks = "1 day",date_breaks = "3 days",date_labels="%d. %b",limits=c(first_day_month,last_day_month))+
   scale_y_continuous(name = "Pris (NOK/kWh)",labels=scaleFUN)+
   scale_fill_manual(name = "95% Konfidensintervall",values=scales::hue_pal()(3)[1])+
-  scale_color_discrete(labels = c("Estimat m/ 95% konfidensintervall","Så langt denne måned", "Absolitt nedre grense","Observert dagspris"))+
+  scale_color_discrete(labels = c("Estimat m/ 95% konfidensintervall","Så langt denne måned", "Absolutt nedre grense","Observert dagspris"))+
   guides(color=guide_legend("",override.aes = list(fill=NA)),fill="none")+
   theme(legend.position = "bottom")+
   ggtitle(title_compensation,subtitle = subtitle)
@@ -115,7 +115,7 @@ gg_mean_price <- ggplot(mapping = aes(x=computation_date,col=type))+
   scale_x_date(name = "Siste prisoppdatering",date_minor_breaks = "1 day",date_breaks = "3 days",date_labels="%d. %b",limits=c(first_day_month-plot_k_days_prev_month,last_day_month))+
   scale_y_continuous(name = "Pris (NOK/kWh inkl. mva, eks. nettleie/påslag)",labels=scaleFUN)+
   scale_fill_manual(name = "95% Konfidensintervall",values=scales::hue_pal()(3)[1])+
-  scale_color_discrete(labels = c("Estimat m/ 95% konfidensintervall","Så langt denne måned", "Absolitt nedre grense","Observert dagspris"))+
+  scale_color_discrete(labels = c("Estimat m/ 95% konfidensintervall","Så langt denne måned", "Absolutt nedre grense","Observert dagspris"))+
   guides(color=guide_legend("",override.aes = list(fill=NA),order=1),shape=guide_legend(""),fill="none")+
   theme(legend.position = "bottom")+
   ggtitle(title_mean_price,subtitle = subtitle)
