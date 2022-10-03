@@ -6,7 +6,7 @@ areas <- c("NO1","NO2")
 plot_CI_ints <- c(0.99,0.95,0.9,0.8,0.5)
 plot_avg_measures <- c("mean","median")
 
-database_hourly_filename <- "data/database_hourly.csv"
+database_hourly_filename <- "data/database_nordpool_hourly.csv"
 current_compensation_filename <- "data/current_estimated_compensation.csv"
 current_density_compensation_filename <- "data/current_estimated_compensation_density.csv"
 
