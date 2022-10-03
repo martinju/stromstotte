@@ -1,3 +1,8 @@
+date_to_wday_factor <- function(date){
+  factor(lubridate::wday(date,week_start=7,label=T),ordered=F,levels = c("Sun","Mon","Tue","Wed","Thu","Fri","Sat"))
+}
+
+
 basic_ffail_to_dt <- function(path,area){
   dat <- rjson::fromJSON(file = path)
   date <- as.IDate(lubridate::ymd_hms(dat[[10]]$valid_from)) # Avoid time zone issues
@@ -89,7 +94,7 @@ sim_forecast <- function(x,tomorrow_model,bootstrap,remaining_days){
 
 compensation_func <- function(avgprice,compensation_threshold,compensation_prop){
   ret <- ifelse(avgprice<=compensation_threshold,
-                yes = avgprice,
+                yes = avgprice*0,
                 no = (avgprice-compensation_threshold)*compensation_prop)
   as.data.table(ret,keep.rownames = T)
 }

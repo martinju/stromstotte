@@ -11,10 +11,10 @@ compensation_threshold <- 0.70*1.25
 
 areas <- c("NO1","NO2")#,"NO1")#c("NO1","NO2")
 CI_ints <- c(0.99,0.95,0.9,0.8,0.5)
-today <- as.IDate(Sys.time())-1
+today <- as.IDate(Sys.time())
 seed = 12345
 
-database_daily_filename <- "data/database_daily.csv"
+database_filename <- "data/database_nordpool_daily.csv"
 model_filename <- "models/model_list.RData"
 
 current_density_compensation_filename <- "data/current_estimated_compensation_density.csv"
@@ -31,11 +31,15 @@ source("source/funcs.R")
 
 load(model_filename)
 
-database_daily <- data.table::fread(database_daily_filename)
+database_daily <- data.table::fread(database_filename)
 
 setkey(database_daily,"area","date")
 
 tomorrow <- today+1
+
+if(database_daily[date==tomorrow,.N]==0){
+  stop("Data for tomorrow not recorded!")
+}
 
 
 this_month <- data.table::month(tomorrow)
@@ -56,9 +60,10 @@ last_day_month <- as.IDate(paste0(this_year,"-",this_month,"-",days_this_month))
 
 this_month_dt0 <- data.table(area=rep(areas,each=days_this_month),
                              date=rep(seq(first_day_month,last_day_month,1)))
-this_month_dt <- merge(this_month_dt0,database_daily,all.x=T,all.y=F,by=c("area","date"))
+this_month_dt <- merge(this_month_dt0,database_daily[date<=tomorrow],all.x=T,all.y=F,by=c("area","date"))
 
-this_month_dt[,wday:=as.factor(wday(date))]
+this_month_dt[,wday:=date_to_wday_factor(date)]
+
 
 
 wday_numeric_future <- model.matrix(~wday,data=this_month_dt[is.na(price)])
@@ -67,7 +72,7 @@ wday_numeric_future <- model.matrix(~wday,data=this_month_dt[is.na(price)])
 prediction_dt <- database_daily[date>tomorrow-predict_based_on_past_k_days & date<=tomorrow]
 
 
-prediction_dt[,wday:=as.factor(wday(date))]
+prediction_dt[,wday:=date_to_wday_factor(date)]
 
 wday_numeric_list = list()
 prediction_dt_list <- list()
@@ -150,6 +155,9 @@ current_monthly_mean_dt[,type:="current_mean"]
 
 res_dt <- rbind(means_dt,medians_dt,quants_dt,lower_bound_dt,current_monthly_mean_dt)
 res_dt[,estimation_date:=today]
+res_dt[,computation_year:=data.table::year(tomorrow)]
+res_dt[,computation_month:=data.table::month(tomorrow)]
+
 
 density_mean_price_dt <- estimation_dt[,get_density(mean_price,adjust=2),by=area]
 density_mean_price_dt[,type:="mean_price"]
@@ -159,6 +167,8 @@ density_compensation_dt[,type:="compensation"]
 
 density_dt <- rbind(density_mean_price_dt,density_compensation_dt)
 density_dt[,estimation_date:=today]
+density_dt[,computation_year:=data.table::year(tomorrow)]
+density_dt[,computation_month:=data.table::month(tomorrow)]
 
 
 fwrite(density_dt,current_density_compensation_filename)

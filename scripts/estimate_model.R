@@ -8,10 +8,12 @@ seed = 12345
 model_training_range <- c(as.IDate("2021-11-01"),as.IDate("2022-08-31"))
 model_filename <- "models/model_list.RData"
 
+source("source/funcs.R")
+
 
 database <- data.table::fread(database_filename)
 model_training_dt <- database[date>=model_training_range[1] & date<=model_training_range[2]]
-model_training_dt[,wday:=factor(lubridate::wday(date,week_start=7,label=T),ordered=F)]
+model_training_dt[,wday:=date_to_wday_factor(date)]
 
 
 mod_list <- list()

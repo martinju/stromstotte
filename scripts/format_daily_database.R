@@ -26,6 +26,7 @@ dt_daily[,price:=price/1000] # Convert to kWh
 
 
 setcolorder(dt_daily,c("area","date"))
+setorder(dt_daily,date,area)
 
 fwrite(dt_daily,"data/database_nordpool_daily.csv")
 fwrite(dt_daily,"data/database_ffail_daily.csv")
