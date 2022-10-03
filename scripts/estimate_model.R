@@ -2,17 +2,16 @@
 
 library(data.table)
 
-areas <- c("NO2","NO1")#,"NO1")#c("NO1","NO2")
-database_filename <- "data/database_daily.csv"
+areas <- c("NO1","NO2")#,"NO1")#c("NO1","NO2")
+database_filename <- "data/database_nordpool_daily.csv"
 seed = 12345
-method = "daily_auto.arima"#"all_indep"
-model_training_range <- c(as.IDate("2022-01-01"),as.IDate("2022-08-31"))
+model_training_range <- c(as.IDate("2021-11-01"),as.IDate("2022-08-31"))
 model_filename <- "models/model_list.RData"
 
 
 database <- data.table::fread(database_filename)
 model_training_dt <- database[date>=model_training_range[1] & date<=model_training_range[2]]
-model_training_dt[,wday:=as.factor(wday(date))]
+model_training_dt[,wday:=factor(lubridate::wday(date,week_start=7,label=T),ordered=F)]
 
 
 mod_list <- list()
