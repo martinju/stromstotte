@@ -2,11 +2,11 @@
 name: Update data, forecasts and plots
 
 # Controls when the action will run.
-#on:
-#  schedule:
-#    - cron:  '30 11 * * *'
+on:
+  schedule:
+    - cron:  '30 11 * * *'
 # Controls when the action will run.
-on: [push, pull_request]
+#on: [push, pull_request]
 
 
 jobs:
