@@ -22,7 +22,7 @@ res_dt[,computation_date:=estimation_date+1]
 res_dt <- res_dt[area%in% areas]
 
 this_date <- res_dt[,max(computation_date)]
-this_date <- as.IDate("2022-09-30")
+#this_date <- as.IDate("2022-09-30")
 
 this_month <- data.table::month(this_date)
 this_year <- data.table::year(this_date)
@@ -120,8 +120,8 @@ gg_mean_price <- ggplot(mapping = aes(x=computation_date,col=type))+
   theme(legend.position = "bottom")+
   ggtitle(title_mean_price,subtitle = subtitle)
 
-gg_compensation
-gg_mean_price
+#gg_compensation
+#gg_mean_price
 
 
 ggsave("output/current_estimated_compensation.png",plot = gg_compensation,width = 10,height=3*length(areas)+2,scale=0.75)
