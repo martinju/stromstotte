@@ -10,7 +10,7 @@ on: [push, pull_request]
 
 
 jobs:
-  hourly_data:
+  run_rscripts:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -62,5 +62,5 @@ jobs:
         git config --local user.name actions-user
         git config --local user.email "actions@github.com"
         git add *
-        git commit -am "GHA update data and forecasts $(date)"
+        git commit -am "GHA update data, forecasts and plots $(date)"
         git push

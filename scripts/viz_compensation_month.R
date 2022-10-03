@@ -1,8 +1,8 @@
 library(data.table)
 library(ggplot2)
 
-#Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
-Sys.setlocale("LC_ALL", "no_NO.UTF-8") # UTF-8 with Norwegian months
+Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
+#Sys.setlocale("LC_ALL", "no_NO.UTF-8") # UTF-8 with Norwegian months
 source("source/funcs.R")
 
 areas <- c("NO1","NO2")
