@@ -40,10 +40,10 @@ res_dt <- res_dt[computation_month==this_month & computation_year==this_year]
 
 these_quants <- paste0("quantile_",round(c((1-plot_CI_int)/2,1-(1-plot_CI_int)/2),6))
 
-plot_lines0 <- res_dt[type%in%c("current_mean","lower_bound","mean")]
+plot_lines0 <- res_dt[type%in%c("current_mean","lower_bound","median")]
 plot_lines <- melt(plot_lines0,measure.vars = c("mean_price","compensation"),value.name = "pris")
 
-plot_lines[type=="mean",type:="a_mean"]
+plot_lines[type=="median",type:="a_median"]
 plot_lines[type=="current_mean",type:="b_current_mean"]
 plot_lines[type=="lower_bound",type:="c_lower_bound"]
 
@@ -56,10 +56,10 @@ plot_ints02 <- dcast(plot_ints0,area+computation_date+computation_year+computati
 
 plot_ints <- rbind(plot_ints01[,variable:="mean_price"],
                  plot_ints02[,variable:="compensation"])
-plot_ints[,type:="mean"]
+plot_ints[,type:="median"]
 
 
-plot_ints[type=="mean",type:="a_mean"]
+plot_ints[type=="median",type:="a_median"]
 plot_ints[type=="current_mean",type:="b_current_mean"]
 plot_ints[type=="lower_bound",type:="c_lower_bound"]
 
@@ -92,7 +92,7 @@ gg_compensation <- ggplot(mapping = aes(x=computation_date,col=type))+
   facet_wrap(vars(Prisområde=area),ncol=1,labeller = label_both,scales = "free_y")+
 #  expand_limits(x = )+
   scale_x_date(name = "Siste prisoppdatering",date_minor_breaks = "1 day",date_breaks = "3 days",date_labels="%d. %b",limits=c(first_day_month,last_day_month))+
-  scale_y_continuous(name = "Pris (NOK/kWh)",labels=scaleFUN)+
+  scale_y_continuous(name = "Pris (NOK/kWh inkl. mva, eks. nettleie/påslag)",labels=scaleFUN)+
   scale_fill_manual(name = "95% Konfidensintervall",values=scales::hue_pal()(3)[1])+
   scale_color_discrete(labels = c("Estimat m/ 95% konfidensintervall","Så langt denne måned", "Absolutt nedre grense","Observert dagspris"))+
   guides(color=guide_legend("",override.aes = list(fill=NA)),fill="none")+

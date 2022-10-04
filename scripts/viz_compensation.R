@@ -6,7 +6,7 @@ Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
 
 source("source/funcs.R")
 
-areas <- c("NO1","NO2")
+areas <- c("NO1","NO2","NO3","NO4","NO5")
 plot_CI_ints <- c(0.99,0.95,0.9,0.8,0.5)
 plot_avg_measures <- c("mean","median")
 
@@ -36,7 +36,7 @@ quantiles_dt[,quant:=lapply(type,get_quant)]
 
 tab=NULL
 for(j in seq_along(areas)){
-  mp_m <- format(round(res_dt[area==areas[j] & type=="mean",mean_price],2),nsmall=2)
+  mp_m <- format(round(res_dt[area==areas[j] & type=="median",mean_price],2),nsmall=2)
   mp_CI_L <- format(round(res_dt[area==areas[j] & type=="quantile_0.025",mean_price],2),nsmall=2)
   mp_CI_U <- format(round(res_dt[area==areas[j] & type=="quantile_0.975",mean_price],2),nsmall=2)
 
@@ -44,7 +44,7 @@ for(j in seq_along(areas)){
   mp_cm <- format(round(res_dt[area==areas[j] & type=="current_mean",mean_price],2),nsmall=2)
 
 
-  c_m <- format(round(res_dt[area==areas[j] & type=="mean",compensation],2),nsmall=2)
+  c_m <- format(round(res_dt[area==areas[j] & type=="median",compensation],2),nsmall=2)
   c_CI_L <- format(round(res_dt[area==areas[j] & type=="quantile_0.025",compensation],2),nsmall=2)
   c_CI_U <- format(round(res_dt[area==areas[j] & type=="quantile_0.975",compensation],2),nsmall=2)
 
@@ -65,12 +65,12 @@ for(j in seq_along(areas)){
 
 
 
-tab_header <- c("",rep(c("Gjennomsnittspris\n(NOK/kWh)","Kompensasjon\n(NOK/kWh)"),times=length(areas)))
+tab_header <- c("",rep(c("Gjennomsnittspris","Kompensasjon)"),times=length(areas)))
 names(tab_header) <- paste0("V",seq_len(ncol(tab)+1)-1)
 
 
 tab_dt <- as.data.table(tab)
-tab_dt <- cbind(V0=c("Estimat","95% konfidens","Absolutt nedre grense","Så langt denne måned"),tab_dt)
+tab_dt <- cbind(V0=c("Estimat","95% konfidensintervall","Absolutt nedre grense","Så langt denne måned"),tab_dt)
 
 
 ft <- flextable(tab_dt)
@@ -92,7 +92,9 @@ caption_text <- paste("Estimert strømstøtte for",computation_month_NO,computat
 ft <- set_caption(ft, caption = caption_text)
 ft <- add_footer_lines(ft,"Estimering Martin Jullum, Norsk Regnesentral")
 ft <- fontsize(ft, size = 8, part = "footer")
-ft <- align(ft,align="right",part="footer")
+ft <- footnote(ft,i=2,j=seq(2*length(areas))+1,value=as_paragraph("Alle priser i NOK/kWh, inkl. mva, eksl. nettleie og øvrige påslag"),part="header",ref_symbols = "1")
+ft <- align(ft,align="right",part="footer",i = 1)
+ft <- align(ft,align="left",part="footer",i = 2)
 
 webshot::install_phantomjs() # Should get rid of this one if I can
 save_as_image(ft,"output/current_estimate_tab.png")
