@@ -42,10 +42,9 @@ basic_nordpoolAPI_to_dt <- function(path="https://www.nordpoolgroup.com/api/mark
   for(j in seq_len(24)){
     for (i in seq_along(area_nums)){
       ii <- area_nums[i]
-      price_mat[j,i] <- as.numeric(gsub(" ","",gsub(",",".",dat$data$Rows[[j]]$Columns[[i]]$Value,fixed=T)))
+      price_mat[j,i] <- as.numeric(gsub(" ","",gsub(",",".",dat$data$Rows[[j]]$Columns[[ii]]$Value,fixed=T)))
     }
   }
-  price_mat <- price_mat*1.25/1000
   price_dt <- as.data.table(price_mat)
 
   date0 <- as.IDate(lubridate::ymd_hms(dat$data$DataStartdate)) # Avoid time zone issues
@@ -53,6 +52,10 @@ basic_nordpoolAPI_to_dt <- function(path="https://www.nordpoolgroup.com/api/mark
   price_dt[,start_hour:=0:23]
 
   dt <- melt(price_dt,id.vars = c("date","start_hour"),variable.name = "area",value.name = "price")
+
+  dt[area!="NO4",price:=price*1.25] # Add mva (not for NO4 in Tromso)
+  dt[,price:=price/1000] # Convert to kWh
+
 
   setcolorder(dt,c("area","date","start_hour"))
 
