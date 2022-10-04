@@ -10,7 +10,7 @@ bootstrap_residuals <- FALSE
 compensation_prop <- 0.90
 compensation_threshold <- 0.70*1.25
 
-areas <- c("NO1","NO2")#,"NO1")#c("NO1","NO2")
+areas <- c("NO1","NO2","NO3","NO4","NO5")
 CI_ints <- c(0.99,0.95,0.9,0.8,0.5)
 today <- as.IDate(Sys.time())
 seed = 12345
