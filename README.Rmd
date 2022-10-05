@@ -38,3 +38,4 @@ knitr::include_graphics("output/current_estimated_mean_price.png")
 
 ## Metode (for spesielt interesserte)
 
+[MJ: Legg inn detaljer om hvordan jeg har kommet frem til estimater og konfidensintervaller her.]
