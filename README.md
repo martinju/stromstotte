@@ -26,3 +26,6 @@ usikkerhetsintervaller.
 <img src="output/current_estimated_mean_price.png" alt="Estimerte gjennomsnittspriser per område per dag" width="100%" />
 
 ## Metode (for spesielt interesserte)
+
+\[MJ: Legg inn detaljer om hvordan jeg har kommet frem til estimater og
+konfidensintervaller her.\]
