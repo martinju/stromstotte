@@ -72,7 +72,7 @@ names(tab_header) <- paste0("V",seq_len(ncol(tab)+1)-1)
 tab_dt <- as.data.table(tab)
 tab_dt <- cbind(V0=c("Estimat","95% konfidensintervall","Absolutt nedre grense","Så langt denne måned"),tab_dt)
 
-
+set_flextable_defaults(background.color = "white")
 ft <- flextable(tab_dt)
 ft <- set_header_labels(ft,values=as.list(tab_header))
 ft <- add_header_row(ft,values=c("",areas),colwidths = c(1,rep(2,length(areas))))
@@ -97,4 +97,4 @@ ft <- align(ft,align="left",part="footer",i = 2)
 ft <- autofit(ft)
 
 webshot::install_phantomjs() # Should get rid of this one if I can
-save_as_image(ft,"output/current_estimate_tab.png")
+save_as_image(ft,"output/current_estimate_tab.pdf")
