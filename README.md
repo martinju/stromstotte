@@ -19,10 +19,10 @@ usikkerhetsintervaller.
 
 ## Estimater
 
-<img src="output/current_estimate_tab.png" title="Siste estimerte priser per område" alt="Siste estimerte priser per område" width="100%" />
+<img src="output/current_estimate_tab.png" alt="Siste estimerte priser per område" width="100%" />
 
-<img src="output/current_estimated_compensation.png" title="Estimert kompensasjon per område per dag" alt="Estimert kompensasjon per område per dag" width="100%" />
+<img src="output/current_estimated_compensation.png" alt="Estimert kompensasjon per område per dag" width="100%" />
 
-<img src="output/current_estimated_mean_price.png" title="Estimerte gjennomsnittspriser per område per dag" alt="Estimerte gjennomsnittspriser per område per dag" width="100%" />
+<img src="output/current_estimated_mean_price.png" alt="Estimerte gjennomsnittspriser per område per dag" width="100%" />
 
 ## Metode (for spesielt interesserte)
