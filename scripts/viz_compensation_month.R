@@ -63,6 +63,15 @@ plot_ints[type=="median",type:="a_median"]
 plot_ints[type=="current_mean",type:="b_current_mean"]
 plot_ints[type=="lower_bound",type:="c_lower_bound"]
 
+plot_text <- rbind(plot_ints[computation_date==max(computation_date),.(area,variable,computation_date,y=quantile_0.025,what="CI")],
+                   plot_ints[computation_date==max(computation_date),.(area,variable,computation_date,y=quantile_0.975,what="CI")],
+                   plot_lines[computation_date==max(computation_date) & type=="a_median",.(area,variable,computation_date,y=pris,what="est")])
+plot_text[,type:="a_median"]
+plot_text[,y_format:=format(round(y,2),nsmall=2)]
+plot_text[,font:=ifelse(what=="CI","plain","bold")]
+plot_text[,size:=ifelse(what=="CI",1,2)]
+
+setorder(plot_text,-what)
 
 plot_observed_prices <- daily_dt[date>=first_day_month-plot_k_days_prev_month & date<=last_day_month & area %in% areas]
 setnames(plot_observed_prices,"price","pris")
@@ -97,7 +106,10 @@ gg_compensation <- ggplot(mapping = aes(x=computation_date,col=type))+
   scale_color_discrete(labels = c("Estimat m/ 95% konfidensintervall","Så langt denne måned", "Absolutt nedre grense","Observert dagspris"))+
   guides(color=guide_legend("",override.aes = list(fill=NA)),fill="none")+
   theme(legend.position = "bottom")+
-  ggtitle(title_compensation,subtitle = subtitle)
+  ggtitle(title_compensation,subtitle = subtitle)+
+  geom_text(data=plot_text[variable=="compensation"],
+            mapping=aes(y=y,label=y_format,fontface=font),
+            hjust="left",check_overlap=TRUE,show.legend = F)
 
 
 gg_mean_price <- ggplot(mapping = aes(x=computation_date,col=type))+
@@ -118,7 +130,10 @@ gg_mean_price <- ggplot(mapping = aes(x=computation_date,col=type))+
   scale_color_discrete(labels = c("Estimat m/ 95% konfidensintervall","Så langt denne måned", "Absolutt nedre grense","Observert dagspris"))+
   guides(color=guide_legend("",override.aes = list(fill=NA),order=1),shape=guide_legend(""),fill="none")+
   theme(legend.position = "bottom")+
-  ggtitle(title_mean_price,subtitle = subtitle)
+  ggtitle(title_mean_price,subtitle = subtitle)+
+  geom_text(data=plot_text[variable=="mean_price"],
+            mapping=aes(y=y,label=y_format,fontface=font),
+            hjust="left",check_overlap=TRUE,show.legend = F)
 
 #gg_compensation
 #gg_mean_price
