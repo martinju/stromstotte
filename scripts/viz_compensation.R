@@ -89,12 +89,12 @@ computation_year <- year(computation_date)
 
 caption_text <- paste("Estimert strømstøtte for",computation_month_NO,computation_year,"per",computation_date)
 ft <- set_caption(ft, caption = caption_text)
-ft <- add_footer_lines(ft,"Estimering Martin Jullum, Norsk Regnesentral")
+#ft <- add_footer_lines(ft,"Estimering Martin Jullum, Norsk Regnesentral")
 ft <- fontsize(ft, size = 9, part = "footer")
-ft <- footnote(ft,i=2,j=seq(2*length(areas))+1,value=as_paragraph("Alle priser i NOK/kWh, inkl. mva, eksl. nettleie og øvrige påslag"),part="header",ref_symbols = "1")
-ft <- align(ft,align="right",part="footer",i = 1)
-ft <- align(ft,align="left",part="footer",i = 2)
+ft <- footnote(ft,i=2,j=seq(2*length(areas))+1,value=as_paragraph("Alle priser i NOK/kWh, inkl. mva, eksl. nettleie og øvrige påslag fra strømleverandør."),part="header",ref_symbols = "1")
+#ft <- align(ft,align="right",part="footer",i = 1)
+ft <- align(ft,align="left",part="footer",i = 1)
 ft <- autofit(ft)
 
 webshot::install_phantomjs() # Should get rid of this one if I can
-save_as_image(ft,"output/current_estimate_tab.pdf")
+save_as_image(ft,"output/current_estimate_tab.png")
