@@ -46,20 +46,20 @@ slik det har vært så langt denne måneden. Tallene inkluderer moms, men
 ikke verken fast eller variabel nettleie, eller andre påslag fra
 nettleverandør.
 
-<img src="output/current_estimate_tab.png" title="Siste estimerte priser per område" alt="Siste estimerte priser per område" width="100%" />
+<img src="output/current_estimate_tab.png" alt="Siste estimerte priser per område" width="100%" />
 
 Figuren nedenfor gir en visuell fremstilling av utviklingen av
 strømstøttetallene fra tabellen overfor slik de har endret seg fra dag
 til dag så langt denne måneden.
 
-<img src="output/current_estimated_compensation.png" title="Estimert kompensasjon per område per dag" alt="Estimert kompensasjon per område per dag" width="100%" />
+<img src="output/current_estimated_compensation.png" alt="Estimert kompensasjon per område per dag" width="100%" />
 
 Figuren nedenfor gir en visuell fremstilling av utviklingen av tallene
 knyttet til månedlig spotpris fra tabellen overfor slik de har endret
 seg fra dag til dag så langt denne måneden. Daglig spotpris er markert
 med prikker for å forklare hvorfor utviklingen er som den er.
 
-<img src="output/current_estimated_mean_price.png" title="Estimerte gjennomsnittspriser per område per dag" alt="Estimerte gjennomsnittspriser per område per dag" width="100%" />
+<img src="output/current_estimated_mean_price.png" alt="Estimerte gjennomsnittspriser per område per dag" width="100%" />
 
 ## Metode (for spesielt interesserte)
 
@@ -102,12 +102,9 @@ simulerte strømstøttene, mens 95% konfidensintervallet er basert på
 spotpriser.
 
 Bakgrunnen for å benytte simulering for å bestemme disse estimatene er
-at avhengigheten predikert spotpris
-![p](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;p "p")
-dager frem og
-![q](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;q "q")
-dager frem, gjør det krevende å regne seg frem til analytiske uttrykk
-for usikkerheten til gjennomsnittet av dem.
+at avhengigheten predikert spotpris $p$ dager frem og $q$ dager frem,
+gjør det krevende å regne seg frem til analytiske uttrykk for
+usikkerheten til gjennomsnittet av dem.
 
 #### Utvidelser og antagelser
 
