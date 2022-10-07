@@ -161,41 +161,48 @@ gg_NO1_compensation <- ggplot(mapping = aes(x=computation_date,col=type))+
   #              aes(ymin=as.character(these_quants[1]),
   #                  ymax=as.character(these_quants[2])))+
   #  expand_limits(x = )+
-  scale_x_date(name = "Siste prisoppdatering",date_minor_breaks = "1 day",date_breaks = "3 days",date_labels="%d. %b",limits=c(first_day_month,last_day_month))+
-  scale_y_continuous(name = "Pris (NOK/kWh inkl. mva, eks. nettleie/påslag)",labels=scaleFUN)+
+  scale_x_date(name = "Siste prisoppdatering",date_minor_breaks = "1 day",date_breaks = "3 days",date_labels="%d. %b",limits=c(first_day_month,this_date+4))+
+  scale_y_continuous(name = "",labels=scaleFUN)+
   scale_fill_manual(name = "95% Konfidensintervall",values=scales::hue_pal()(3)[1])+
   scale_color_discrete(labels = c("Estimat m/ 95% konfidensintervall","Så langt denne måned", "Absolutt nedre grense","Observert dagspris"))+
   guides(color=guide_legend("",override.aes = list(fill=NA)),fill="none")+
   theme(legend.position = "bottom")+
-  ggtitle(title_compensation,subtitle = subtitle)+
+  ggtitle("Strømstøtte")+
   geom_text(data=plot_text[variable=="compensation" & area=="NO1"],
             mapping=aes(y=y,label=y_format,fontface=font),
             hjust="left",check_overlap=TRUE,show.legend = F)
 gg_NO1_compensation
 
 
-gg_mean_price <- ggplot(mapping = aes(x=computation_date,col=type))+
-  geom_ribbon(data=plot_ints[variable=="mean_price"],alpha=0.3,
+gg_NO1_mean_price <- ggplot(mapping = aes(x=computation_date,col=type))+
+  geom_ribbon(data=plot_ints[variable=="mean_price"& area=="NO1"],alpha=0.3,
               mapping=aes(ymin=get(these_quants[1]),
                           ymax=get(these_quants[2]),
                           fill=""))+
-  geom_line(data=plot_lines[variable=="mean_price"],mapping = aes(y=pris),size=1)+
+  geom_line(data=plot_lines[variable=="mean_price"& area=="NO1"],mapping = aes(y=pris),size=1)+
   #              aes(ymin=as.character(these_quants[1]),
   #                  ymax=as.character(these_quants[2])))+
   geom_vline(xintercept=first_day_month)+
-  geom_point(plot_observed_prices,mapping=aes(y=pris,shape=obscol),color="black")+
-  facet_wrap(vars(Prisområde=area_long),ncol=1,labeller = label_both,scales = "free_y")+
-  #  expand_limits(x = )+
-  scale_x_date(name = "Siste prisoppdatering",date_minor_breaks = "1 day",date_breaks = "3 days",date_labels="%d. %b",limits=c(first_day_month-plot_k_days_prev_month,last_day_month))+
+  geom_point(plot_observed_prices[area=="NO1"],mapping=aes(y=pris,shape=obscol),color="black")+
+  scale_x_date(name = "Siste prisoppdatering",date_minor_breaks = "1 day",date_breaks = "3 days",date_labels="%d. %b",limits=c(first_day_month-plot_k_days_prev_month,this_date+4))+
   scale_y_continuous(name = "Pris (NOK/kWh inkl. mva, eks. nettleie/påslag)",labels=scaleFUN)+
   scale_fill_manual(name = "95% Konfidensintervall",values=scales::hue_pal()(3)[1])+
   scale_color_discrete(labels = c("Estimat m/ 95% konfidensintervall","Så langt denne måned", "Absolutt nedre grense","Observert dagspris"))+
   guides(color=guide_legend("",override.aes = list(fill=NA),order=1),shape=guide_legend(""),fill="none")+
   theme(legend.position = "bottom")+
-  ggtitle(title_mean_price,subtitle = subtitle)+
-  geom_text(data=plot_text[variable=="mean_price"],
+  ggtitle("Månedlig spotpris")+
+  geom_text(data=plot_text[variable=="mean_price"& area=="NO1"],
             mapping=aes(y=y,label=y_format,fontface=font),
             hjust="left",check_overlap=TRUE,show.legend = F)
+gg_NO1_mean_price
+
+library(patchwork)
+
+title_common_NO1 <- paste("Estimert månedlig spotpris og strømstøtte for prisområde NO1 (Østlandet) ",computation_month_NO,computation_year)
+subtitle_common_NO1 <- paste("Per dag",first_day_month,"til",this_date)
 
 
+gg_NO_both <- (gg_NO1_mean_price+gg_NO1_compensation)+ plot_annotation(title = title_common_NO1,subtitle = subtitle_common_NO1)+
+  plot_layout(guides = 'collect')& theme(legend.position='bottom')
 
+ggsave("output/current_estimation_both_NO1.png",plot = gg_NO_both,width = 10,height=5,scale=1)
