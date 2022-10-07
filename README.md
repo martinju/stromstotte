@@ -2,7 +2,7 @@ Estimering av strømstøtte
 ================
 
 <!--
-*Sist oppdatert 20.02, 07.10.2022
+*Sist oppdatert 18.06, 07.10.2022
 -->
 
 *Av [Martin Jullum, Norsk
@@ -119,12 +119,9 @@ basert på 2,5 %- og 97,5 %-kvantilene. Tilsvarende gjelder estimater for
 måndelige spotpriser.
 
 Bakgrunnen for å benytte simulering for å bestemme disse estimatene er
-at avhengigheten mellom predikert spotpris
-![p](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;p "p")
-dager frem og
-![q](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;q "q")
-dager frem, gjør det krevende å regne seg frem til analytiske uttrykk
-for usikkerheten til gjennomsnittet av dem.
+at avhengigheten mellom predikert spotpris $p$ dager frem og $q$ dager
+frem, gjør det krevende å regne seg frem til analytiske uttrykk for
+usikkerheten til gjennomsnittet av dem.
 
 #### Antagelser og mulige utvidelser
 
