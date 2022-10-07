@@ -1,7 +1,7 @@
 Estimering av strømstøtte
 ================
 
-*Sist oppdatert 11.38, 07.10.2022 av [Martin Jullum, Norsk
+*Sist oppdatert 15.43, 07.10.2022 av [Martin Jullum, Norsk
 Regnesentral](https://nr.no/ansatte/martin-jullum/).*
 
 ## Bakgrunn
@@ -113,9 +113,12 @@ simulerte strømstøttene, mens 95 % konfidensintervallet er basert på 2,5
 spotpriser.
 
 Bakgrunnen for å benytte simulering for å bestemme disse estimatene er
-at avhengigheten predikert spotpris $p$ dager frem og $q$ dager frem,
-gjør det krevende å regne seg frem til analytiske uttrykk for
-usikkerheten til gjennomsnittet av dem.
+at avhengigheten predikert spotpris
+![p](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;p "p")
+dager frem og
+![q](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;q "q")
+dager frem, gjør det krevende å regne seg frem til analytiske uttrykk
+for usikkerheten til gjennomsnittet av dem.
 
 #### Utvidelser og antagelser
 

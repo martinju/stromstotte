@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 ```
 
 
-*Sist oppdatert `r format(Sys.time(),'%H.%M, %d.%m.%Y')` av [Martin Jullum, Norsk Regnesentral](https://nr.no/ansatte/martin-jullum/).*
+*Sist oppdatert `r format(Sys.time()+2*60*60,'%H.%M, %d.%m.%Y')` av [Martin Jullum, Norsk Regnesentral](https://nr.no/ansatte/martin-jullum/).*
 
 ## Bakgrunn
 
