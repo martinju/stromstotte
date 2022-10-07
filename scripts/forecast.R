@@ -118,6 +118,9 @@ estimation_dt[,compensation := compensation_func(avgprice = mean_price,
                                                  compensation_prop = compensation_prop)]
 
 
+pos_comp <- function(x){mean(x>0)}
+pos_comp_dt <- estimation_dt[,lapply(.SD,pos_comp),.SDcols=c("mean_price","compensation"),by=area]
+pos_comp_dt[,type:="pos_comp"]
 
 
 
@@ -147,7 +150,7 @@ current_monthly_mean_dt[,compensation := compensation_func(avgprice = mean_price
 current_monthly_mean_dt[,type:="current_mean"]
 
 
-res_dt <- rbind(means_dt,medians_dt,quants_dt,lower_bound_dt,current_monthly_mean_dt)
+res_dt <- rbind(pos_comp_dt,means_dt,medians_dt,quants_dt,lower_bound_dt,current_monthly_mean_dt)
 res_dt[,estimation_date:=today]
 res_dt[,computation_year:=data.table::year(tomorrow)]
 res_dt[,computation_month:=data.table::month(tomorrow)]
