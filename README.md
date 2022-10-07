@@ -1,7 +1,7 @@
 Estimering av strømstøtte
 ================
 
-*Sist oppdatert 10.08, 07.10.2022 av [Martin Jullum, Norsk
+*Sist oppdatert 12.20, 07.10.2022 av [Martin Jullum, Norsk
 Regnesentral](https://nr.no/ansatte/martin-jullum/).*
 
 ## Bakgrunn
@@ -35,7 +35,7 @@ gjennomsnittlige spotprisen for måneden gjennom å modellere og så
 predikere daglig spotpris for de gjenværende dagene i måneden. Dette
 gjøres separat for hvert av de 5 prisområdene i Norge. Kombinert med den
 gjennomsnittlige spotprisen så langt i måneden gir dette et estimat på
-månedens strømstøtten med usikkerhetsintervaller. Estimatene oppdateres
+månedens strømstøtte med usikkerhetsintervaller. Estimatene oppdateres
 automatisk ca kl. 13.30 når neste dags spotpris blir offentliggjort.
 
 ## Estimater
