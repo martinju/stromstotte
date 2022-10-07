@@ -16,6 +16,17 @@ get_NO_month <- function(num_month){
 
 }
 
+get_long_area <- function(area){
+  if(area=="NO1") return("NO1 (Østlandet)")
+  if(area=="NO2") return("NO2 (Sørlandet)")
+  if(area=="NO3") return("NO3 (Midt-Norge)")
+  if(area=="NO4") return("NO4 (Nord-Norge)")
+  if(area=="NO5") return("NO5 (Vestlandet)")
+
+}
+
+get_long_area_vec <- Vectorize(get_long_area)
+
 date_to_wday_factor <- function(date){
   factor(lubridate::wday(date,week_start=7,label=T),ordered=F,levels = c("Sun","Mon","Tue","Wed","Thu","Fri","Sat"))
 }

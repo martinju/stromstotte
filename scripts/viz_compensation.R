@@ -64,6 +64,7 @@ for(j in seq_along(areas)){
 }
 
 
+areas_long <- sapply(areas,get_long_area)
 
 tab_header <- c("",rep(c("Spotpris\nmåned","Strømstøtte"),times=length(areas)))
 names(tab_header) <- paste0("V",seq_len(ncol(tab)+1)-1)
@@ -75,7 +76,7 @@ tab_dt <- cbind(V0=c("Estimat","95% konfidensintervall","Absolutt nedre grense",
 set_flextable_defaults(background.color = "white")
 ft <- flextable(tab_dt)
 ft <- set_header_labels(ft,values=as.list(tab_header))
-ft <- add_header_row(ft,values=c("",areas),colwidths = c(1,rep(2,length(areas))))
+ft <- add_header_row(ft,values=c("",areas_long),colwidths = c(1,rep(2,length(areas))))
 
 if(length(areas)>1){
   ft <- vline(ft,j=paste0("V",c(0,2*seq_len(length(areas)-1))),border=officer::fp_border(style="dashed"),part = "all")

@@ -46,6 +46,7 @@ plot_lines <- melt(plot_lines0,measure.vars = c("mean_price","compensation"),val
 plot_lines[type=="median",type:="a_median"]
 plot_lines[type=="current_mean",type:="b_current_mean"]
 plot_lines[type=="lower_bound",type:="c_lower_bound"]
+plot_lines[,area_long:=get_long_area_vec(area)]
 
 
 
@@ -62,6 +63,8 @@ plot_ints[,type:="median"]
 plot_ints[type=="median",type:="a_median"]
 plot_ints[type=="current_mean",type:="b_current_mean"]
 plot_ints[type=="lower_bound",type:="c_lower_bound"]
+plot_ints[,area_long:=get_long_area_vec(area)]
+
 
 plot_text <- rbind(plot_ints[computation_date==max(computation_date),.(area,variable,computation_date,y=quantile_0.025,what="CI")],
                    plot_ints[computation_date==max(computation_date),.(area,variable,computation_date,y=quantile_0.975,what="CI")],
@@ -70,6 +73,8 @@ plot_text[,type:="a_median"]
 plot_text[,y_format:=format(round(y,2),nsmall=2)]
 plot_text[,font:=ifelse(what=="CI","plain","bold")]
 plot_text[,size:=ifelse(what=="CI",1,2)]
+plot_text[,area_long:=get_long_area_vec(area)]
+
 
 setorder(plot_text,-what)
 
@@ -77,7 +82,8 @@ plot_observed_prices <- daily_dt[date>=first_day_month-plot_k_days_prev_month & 
 setnames(plot_observed_prices,"price","pris")
 setnames(plot_observed_prices,"date","computation_date")
 plot_observed_prices[,obscol:="Daglig spotpris"]
-
+plot_observed_prices[,area_long:=get_long_area_vec(area)]
+plot_observed_prices[,variable:="mean_price"]
 
 scaleFUN <- function(x) sprintf("%.2f", x)
 
@@ -98,7 +104,7 @@ gg_compensation <- ggplot(mapping = aes(x=computation_date,col=type))+
   geom_line(data=plot_lines[variable=="compensation"],mapping = aes(y=pris),size=1)+
 #              aes(ymin=as.character(these_quants[1]),
 #                  ymax=as.character(these_quants[2])))+
-  facet_wrap(vars(Prisområde=area),ncol=1,labeller = label_both,scales = "free_y")+
+  facet_wrap(vars(Prisområde=area_long),ncol=1,labeller = label_both,scales = "free_y")+
 #  expand_limits(x = )+
   scale_x_date(name = "Siste prisoppdatering",date_minor_breaks = "1 day",date_breaks = "3 days",date_labels="%d. %b",limits=c(first_day_month,last_day_month))+
   scale_y_continuous(name = "Pris (NOK/kWh inkl. mva, eks. nettleie/påslag)",labels=scaleFUN)+
@@ -122,7 +128,7 @@ gg_mean_price <- ggplot(mapping = aes(x=computation_date,col=type))+
   #                  ymax=as.character(these_quants[2])))+
   geom_vline(xintercept=first_day_month)+
   geom_point(plot_observed_prices,mapping=aes(y=pris,shape=obscol),color="black")+
-  facet_wrap(vars(Prisområde=area),ncol=1,labeller = label_both,scales = "free_y")+
+  facet_wrap(vars(Prisområde=area_long),ncol=1,labeller = label_both,scales = "free_y")+
   #  expand_limits(x = )+
   scale_x_date(name = "Siste prisoppdatering",date_minor_breaks = "1 day",date_breaks = "3 days",date_labels="%d. %b",limits=c(first_day_month-plot_k_days_prev_month,last_day_month))+
   scale_y_continuous(name = "Pris (NOK/kWh inkl. mva, eks. nettleie/påslag)",labels=scaleFUN)+
@@ -144,5 +150,52 @@ ggsave("output/current_estimated_mean_price.png",plot = gg_mean_price,width = 10
 
 ggsave(paste0("output/historic/estimated_compensation_",this_date,".png"),plot = gg_compensation,width = 10,height=3*length(areas)+2,scale=0.75)
 ggsave(paste0("output/historic/estimated_mean_price_",this_date,".png"),plot = gg_mean_price,width = 10,height=3*length(areas)+2,scale=0.75)
+
+
+gg_NO1_compensation <- ggplot(mapping = aes(x=computation_date,col=type))+
+  geom_ribbon(data=plot_ints[variable=="compensation"& area=="NO1"],alpha=0.3,
+              mapping=aes(ymin=get(these_quants[1]),
+                          ymax=get(these_quants[2]),
+                          fill=""))+
+  geom_line(data=plot_lines[variable=="compensation"& area=="NO1"],mapping = aes(y=pris),size=1)+
+  #              aes(ymin=as.character(these_quants[1]),
+  #                  ymax=as.character(these_quants[2])))+
+  #  expand_limits(x = )+
+  scale_x_date(name = "Siste prisoppdatering",date_minor_breaks = "1 day",date_breaks = "3 days",date_labels="%d. %b",limits=c(first_day_month,last_day_month))+
+  scale_y_continuous(name = "Pris (NOK/kWh inkl. mva, eks. nettleie/påslag)",labels=scaleFUN)+
+  scale_fill_manual(name = "95% Konfidensintervall",values=scales::hue_pal()(3)[1])+
+  scale_color_discrete(labels = c("Estimat m/ 95% konfidensintervall","Så langt denne måned", "Absolutt nedre grense","Observert dagspris"))+
+  guides(color=guide_legend("",override.aes = list(fill=NA)),fill="none")+
+  theme(legend.position = "bottom")+
+  ggtitle(title_compensation,subtitle = subtitle)+
+  geom_text(data=plot_text[variable=="compensation" & area=="NO1"],
+            mapping=aes(y=y,label=y_format,fontface=font),
+            hjust="left",check_overlap=TRUE,show.legend = F)
+gg_NO1_compensation
+
+
+gg_mean_price <- ggplot(mapping = aes(x=computation_date,col=type))+
+  geom_ribbon(data=plot_ints[variable=="mean_price"],alpha=0.3,
+              mapping=aes(ymin=get(these_quants[1]),
+                          ymax=get(these_quants[2]),
+                          fill=""))+
+  geom_line(data=plot_lines[variable=="mean_price"],mapping = aes(y=pris),size=1)+
+  #              aes(ymin=as.character(these_quants[1]),
+  #                  ymax=as.character(these_quants[2])))+
+  geom_vline(xintercept=first_day_month)+
+  geom_point(plot_observed_prices,mapping=aes(y=pris,shape=obscol),color="black")+
+  facet_wrap(vars(Prisområde=area_long),ncol=1,labeller = label_both,scales = "free_y")+
+  #  expand_limits(x = )+
+  scale_x_date(name = "Siste prisoppdatering",date_minor_breaks = "1 day",date_breaks = "3 days",date_labels="%d. %b",limits=c(first_day_month-plot_k_days_prev_month,last_day_month))+
+  scale_y_continuous(name = "Pris (NOK/kWh inkl. mva, eks. nettleie/påslag)",labels=scaleFUN)+
+  scale_fill_manual(name = "95% Konfidensintervall",values=scales::hue_pal()(3)[1])+
+  scale_color_discrete(labels = c("Estimat m/ 95% konfidensintervall","Så langt denne måned", "Absolutt nedre grense","Observert dagspris"))+
+  guides(color=guide_legend("",override.aes = list(fill=NA),order=1),shape=guide_legend(""),fill="none")+
+  theme(legend.position = "bottom")+
+  ggtitle(title_mean_price,subtitle = subtitle)+
+  geom_text(data=plot_text[variable=="mean_price"],
+            mapping=aes(y=y,label=y_format,fontface=font),
+            hjust="left",check_overlap=TRUE,show.legend = F)
+
 
 
