@@ -1,6 +1,8 @@
 Estimering av strømstøtte
 ================
-Martin Jullum, Seniorforsker Norsk Regnesentral
+
+*Sist oppdatert 10.08, 07.10.2022 av [Martin Jullum, Norsk
+Regnesentral](https://nr.no/ansatte/martin-jullum/).*
 
 ## Bakgrunn
 
@@ -10,8 +12,9 @@ spotpris. Støtteordningen tar altså ikke hensyn til hva spotprisen er i
 periodene man bruker mest og minst strøm. Siden spotprisen en bestemt
 dag fastsettes først dagen før, vet man heller ikke hvor stor støtten
 blir før nest siste dag i måneden. Med andre ord vet man ikke hvor mye
-man i praksis må betale for strømmen når man bruker den! Mediehus som
-[VG](https://www.vg.no/spesial/2022/stromprisene/) og
+man i praksis må betale for strømmen når man bruker den!
+
+Mediehus som [VG](https://www.vg.no/spesial/2022/stromprisene/) og
 [Aftenposten](https://www.aftenposten.no/emne/str%C3%B8mprisene)
 presenterer daglig den gjennomsnittlige spotprisen så langt i måneden,
 og beregner strømstøtten antagelsen om at resten av måneden har samme
@@ -37,32 +40,32 @@ automatisk ca kl. 13.30 når neste dags spotpris blir offentliggjort.
 
 ## Estimater
 
-Tabellen nedenfor viser estimat og 95% konfidensintervall for månedlig
+Tabellen nedenfor viser estimat og 95 % konfidensintervall for månedlig
 strømpris og dertilhørende strømstøtte for hvert av de fem prisområdene
 med siste tilgjengelige spotpriser. Konfidensintervallet viser hvilket
 intervall den faktiske månedelige spotprisen/strømstøtten vil ligge
-innenfor i 95% av gangene dette gjentas. I tillegg til estimatene vises
+innenfor i 95 % av gangene dette gjentas. I tillegg til estimatene vises
 “Absolutt nedre grense” svarende til at strømprisen blir 0 NOK/kWh
 resten av måneden, mens “Så langt denne måneden” angir hva månedelig
 spotpris/strømstøtte blir hvis gjennomsnittet resten av måneden blir
 helt likt slik det har vært så langt denne måneden. Tallene inkluderer
-moms, men verken fast eller variabel nettleie, eller andre påslag fra
+mva, men verken fast eller variabel nettleie, eller andre påslag fra
 nettleverandør.
 
-<img src="output/current_estimate_tab.png" title="Siste estimerte priser per område" alt="Siste estimerte priser per område" width="100%" />
+<img src="output/current_estimate_tab.png" width="100%" />
 
 Figuren nedenfor gir en visuell fremstilling av utviklingen av
 strømstøttetallene fra tabellen overfor slik de har endret seg fra dag
 til dag så langt denne måneden.
 
-<img src="output/current_estimated_compensation.png" title="Estimert kompensasjon per område per dag" alt="Estimert kompensasjon per område per dag" width="100%" />
+<img src="output/current_estimated_compensation.png" width="100%" />
 
 Figuren nedenfor gir en visuell fremstilling av utviklingen av tallene
 knyttet til månedlig spotpris fra tabellen overfor slik de har endret
 seg fra dag til dag så langt denne måneden. Daglig spotpris er markert
 med prikker for å forklare hvorfor utviklingen er som den er.
 
-<img src="output/current_estimated_mean_price.png" title="Estimerte gjennomsnittspriser per område per dag" alt="Estimerte gjennomsnittspriser per område per dag" width="100%" />
+<img src="output/current_estimated_mean_price.png" width="100%" />
 
 ## Metode (for spesielt interesserte)
 
@@ -100,9 +103,9 @@ Historisk har nemlig spotprisen ikke vært lik identisk i disse områdene.
 Estimerte månedelige spotpriser beregnes ved å for hvert område simulere
 spotpriser for de resterende dagene i måneden fra de tilpassede
 modellene mange (10 000) ganger. Sammen med observert spotpris så langt
-i måneden får man da 10000 rekker med simulerte daglige spotpriser, som
-man kan ta gjennomsnittet av for å få 10000 simulerte månedelig
-spotpriser. Ved å beregne strømstøtten (90 % over 70 øre/kWh eks. MVA)
+i måneden får man da 10 000 rekker med simulerte daglige spotpriser, som
+man kan ta gjennomsnittet av for å få 10 000 simulerte månedelig
+spotpriser. Ved å beregne strømstøtten (90 % over 70 øre/kWh eks. mva)
 for hver simulerte månedlige spotpris får man også 10 000 simuleringen
 av strømstøtten. Estimatetene for strømstøtten er medianen i disse
 simulerte strømstøttene, mens 95 % konfidensintervallet er basert på 2,5
@@ -142,12 +145,11 @@ konfidensintervallene treffer nært nominelt nivå.
 
 ------------------------------------------------------------------------
 
-All modellering Martin Jullum (<jullum@nr.no>,
-[martinjullum.com](https://martinjullum.com),
-[nr.no/ansatte/martin-jullum/](https://nr.no/ansatte/martin-jullum/)),
-Seniorforsker [Norsk Regnesentral](https://nr.no/)
+All modellering [Martin Jullum](https://martinjullum.com)
+(<jullum@nr.no>), [Seniorforsker Norsk
+Regnesentral](https://nr.no/ansatte/martin-jullum/)
 
-[Åpen kildekode](https://github.com/martinju/stromstotte)
+[Kode](https://github.com/martinju/stromstotte)
 
 [Daglige oppdaterte
 prognoser](https://martinjullum.com/sideprojects/stromstotte/)
