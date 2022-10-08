@@ -2,7 +2,7 @@ Estimering av strømstøtte
 ================
 
 <!--
-*Sist oppdatert 18.06, 07.10.2022
+*Sist oppdatert 11.33, 08.10.2022
 -->
 
 *Av [Martin Jullum, Norsk
