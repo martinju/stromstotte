@@ -5,7 +5,7 @@ name: Update data, forecasts, plots and render doc
 on:
   schedule:
     - cron:  '15 11 * * *'
-  push:
+#  push:
 # Controls when the action will run.
 #on: [push, pull_request]
 
@@ -35,36 +35,24 @@ jobs:
 
 
     # Run R script
-    - name: Get hourly data ffail
-      env:
-        KEY_FFAIL_DATA: ${{ secrets.KEY_FFAIL_DATA }}
-      run: Rscript scripts/get_hourly_data_ffail.R
-      continue-on-error: true
-
-    # Run R script
     - name: Get hourly data nordpool
       run: Rscript scripts/get_hourly_data_nordpool.R
-      continue-on-error: true
 
     # Run R script
     - name: Estimate compensation
       run: Rscript scripts/forecast.R
-      continue-on-error: true
 
     # Run R script
     - name: Compensation table
       run: Rscript scripts/viz_compensation.R
-      continue-on-error: true
 
     # Run R script
     - name: Plot compensation and mean price
       run: Rscript scripts/viz_compensation_month.R
-      continue-on-error: true
 
     # Run R script
     - name: Render README
       run: Rscript -e 'rmarkdown::render("README.Rmd",output_format="all")'
-      continue-on-error: true
 
 
  # Add new files in data folder, commit along with other modified files, push
