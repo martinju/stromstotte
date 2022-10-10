@@ -206,3 +206,9 @@ gg_NO_both <- (gg_NO1_mean_price+gg_NO1_compensation)+ plot_annotation(title = t
   plot_layout(guides = 'collect')& theme(legend.position='bottom')
 
 ggsave("output/current_estimation_both_NO1.png",plot = gg_NO_both,width = 10,height=5,scale=1)
+
+
+update_text <- paste0(format(Sys.time(),'%d.%m.%Y, kl. %H.%M')," med spotpriser for ",format(this_date,'%d.%m.%Y'))
+writeLines(update_text,"output/update_time.txt")
+
+
