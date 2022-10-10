@@ -101,7 +101,7 @@ gg_compensation <- ggplot(mapping = aes(x=computation_date,col=type))+
               mapping=aes(ymin=get(these_quants[1]),
                           ymax=get(these_quants[2]),
                           fill=""))+
-  geom_line(data=plot_lines[variable=="compensation"],mapping = aes(y=pris),size=1)+
+  geom_line(data=plot_lines[variable=="compensation"],mapping = aes(y=pris,linetype=type),size=1)+
 #              aes(ymin=as.character(these_quants[1]),
 #                  ymax=as.character(these_quants[2])))+
   facet_wrap(vars(Prisområde=area_long),ncol=1,labeller = label_both,scales = "free_y")+
@@ -110,7 +110,7 @@ gg_compensation <- ggplot(mapping = aes(x=computation_date,col=type))+
   scale_y_continuous(name = "Pris (NOK/kWh inkl. mva, eks. nettleie/påslag)",labels=scaleFUN)+
   scale_fill_manual(name = "95% Konfidensintervall",values=scales::hue_pal()(3)[1])+
   scale_color_discrete(labels = c("Estimat m/ 95% konfidensintervall","Så langt denne måned", "Absolutt nedre grense","Observert dagspris"))+
-  guides(color=guide_legend("",override.aes = list(fill=NA)),fill="none")+
+  guides(color=guide_legend("",override.aes = list(fill=NA)),fill="none",linetype="none")+
   theme(legend.position = "bottom")+
   ggtitle(title_compensation,subtitle = subtitle)+
   geom_text(data=plot_text[variable=="compensation"],
@@ -123,7 +123,7 @@ gg_mean_price <- ggplot(mapping = aes(x=computation_date,col=type))+
               mapping=aes(ymin=get(these_quants[1]),
                           ymax=get(these_quants[2]),
                           fill=""))+
-  geom_line(data=plot_lines[variable=="mean_price"],mapping = aes(y=pris),size=1)+
+  geom_line(data=plot_lines[variable=="mean_price"],mapping = aes(y=pris,linetype=type),size=1)+
   #              aes(ymin=as.character(these_quants[1]),
   #                  ymax=as.character(these_quants[2])))+
   geom_vline(xintercept=first_day_month)+
@@ -134,7 +134,7 @@ gg_mean_price <- ggplot(mapping = aes(x=computation_date,col=type))+
   scale_y_continuous(name = "Pris (NOK/kWh inkl. mva, eks. nettleie/påslag)",labels=scaleFUN)+
   scale_fill_manual(name = "95% Konfidensintervall",values=scales::hue_pal()(3)[1])+
   scale_color_discrete(labels = c("Estimat m/ 95% konfidensintervall","Så langt denne måned", "Absolutt nedre grense","Observert dagspris"))+
-  guides(color=guide_legend("",override.aes = list(fill=NA),order=1),shape=guide_legend(""),fill="none")+
+  guides(color=guide_legend("",override.aes = list(fill=NA),order=1),shape=guide_legend(""),fill="none",linetype="none")+
   theme(legend.position = "bottom")+
   ggtitle(title_mean_price,subtitle = subtitle)+
   geom_text(data=plot_text[variable=="mean_price"],
