@@ -22,6 +22,10 @@ current_density_compensation_filename <- "data/current_estimated_compensation_de
 current_compensation_filename <- "data/current_estimated_compensation.csv"
 historic_compensation_filename <- "data/historic_estimated_compensation.csv"
 
+current_compensation_filename_json <- "data/current_estimated_compensation.json"
+historic_compensation_filename_json <- "data/historic_estimated_compensation.json"
+
+
 ### Input
 
 source("source/funcs.R")
@@ -171,6 +175,7 @@ setkey(res_dt,estimation_date,area)
 
 fwrite(density_dt,current_density_compensation_filename)
 fwrite(res_dt,current_compensation_filename)
+jsonlite::write_json(res_dt,current_compensation_filename_json)
 
 
 prev_historic_compensation <- fread(historic_compensation_filename)
@@ -189,5 +194,10 @@ if(today%in%prev_estimation_dates){
 } else {
   fwrite(res_dt,historic_compensation_filename,append=T)
 }
+
+new_historic_res_dt <- fread(historic_compensation_filename)
+
+jsonlite::write_json(new_historic_res_dt,historic_compensation_filename_json)
+
 
 

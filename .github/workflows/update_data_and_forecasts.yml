@@ -32,6 +32,7 @@ jobs:
           any::webshot
           any::rmarkdown
           any::patchwork
+          any::jsonlite
 
 
     # Run R script
