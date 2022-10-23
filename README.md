@@ -4,8 +4,8 @@ Estimering av strømstøtte
 *Av [Martin Jullum, Norsk
 Regnesentral](https://nr.no/ansatte/martin-jullum/).*
 
-Estimater sist oppdatert 22.10.2022, kl. 13.34 med spotpriser for
-23.10.2022.
+Estimater sist oppdatert 23.10.2022, kl. 13.33 med spotpriser for
+24.10.2022.
 
 ## Bakgrunn
 
