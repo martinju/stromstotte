@@ -4,7 +4,7 @@ name: Update data, forecasts, plots and render doc
 # Controls when the action will run.
 on:
   schedule:
-    - cron:  '15 11 * * *'
+    - cron:  '15 12 * * *'
 #  push:
 # Controls when the action will run.
 #on: [push, pull_request]
