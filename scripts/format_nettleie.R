@@ -1,5 +1,7 @@
 library(data.table)
 
+Sys.setlocale(locale='en_US.UTF-8') # Also OK for reading Norwegian letters
+
 nettleie <- fread("raw-data/innrapportert_nettleie_251022.csv",dec = ",",encoding = "Latin-1")
 
 setnames(nettleie,"Konsesjonær","Nettselskap")
