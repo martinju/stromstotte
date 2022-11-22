@@ -1,4 +1,9 @@
 
+# Here I should first check postnr vs prisområde (and save the interactions) +
+# + prisområde vs netteier and save the interactions when they are nonzero.
+# Then for each postnr/prisområde combination, check the interactions for the netteier
+# that are in this area.
+
 library(geojsonsf)
 library(sf)
 library(future.apply)
