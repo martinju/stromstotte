@@ -51,6 +51,7 @@ sidebar <- dashboardSidebar(
 
 body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                tableOutput("data_nettleie"),
+                              h2("NEXT: Try to make a ggplotly plot of the hourly prices here.")
                              )
 
 body_stromstotte <- tabItem(tabName = "stromstotte",
