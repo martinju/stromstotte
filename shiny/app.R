@@ -14,6 +14,7 @@
 # 2. Estimert strømstøtte
 # 3. Estimert strømpris
 
+Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
 
 
 library(data.table)
@@ -30,45 +31,64 @@ library(shinydashboard)
 ## app.R ##
 library(shinydashboard)
 
-header <- dashboardHeader(title = "Estimert reell strømpris",titleWidth = 300)
+header <- dashboardHeader(title = "Strømpris med strømstøtte",titleWidth = 300)
 
 sidebar <- dashboardSidebar(
   width = 300,
   sidebarMenu(
-    menuItem("Min strømpris", tabName = "dashboard", icon = icon("dashboard")),
+    menuItem("Strømpris NÅ", tabName = "strompris_naa", icon = icon("dashboard",verify_fa = FALSE)),
     selectInput("fylkevalg","Velg Fylke",dt_nettleie[,unique(Fylke)]),
-    menuItem("Historisk estimering", tabName = "historic", icon = icon("th")),
-    menuItem("Metodikk", icon = icon("file-code-o"),
+    selectInput("nettselskap","Velg Nettselskap",""),
+    menuItem("Strømstøtte", tabName = "stromstotte", icon = icon("bolt",verify_fa = FALSE)),
+    menuItem("Fremtidig strømpris", tabName = "strompris", icon = icon("bolt",verify_fa = FALSE)),
+    menuItem("Historisk estimering", tabName = "historic", icon = icon("bolt",verify_fa = FALSE)),
+    menuItem("Avanserte innstillinger", tabName = "settings", icon = icon("gear",verify_fa = FALSE)),
+    menuItem("Metodikk", icon = icon("globe"),
              href = "https://martinjullum.com/sideprojects/stromstotte")
   )
 
 )
 
-body <-  dashboardBody(
-  tabItems(
-    # First tab content
-    tabItem(tabName = "dashboard",
-            fluidRow(
-              box(selectInput("fylkevalg","Velg Fylke",dt_nettleie[,unique(Fylke)])),
-              box(plotOutput("plot1", height = 250)),
-              box(
-                title = "Controls",
-                sliderInput("slider", "Number of observations:", 1, 100, 50)
-              )
-            )
-    ),
+body_strompris_naa <- tabItem(tabName = "strompris_naa",
+                               tableOutput("data_nettleie"),
+                             )
 
-    # Second tab content
-    tabItem(tabName = "historic",
-            h2("Putt inn et eller annet her.")
-    )
-  )
+body_stromstotte <- tabItem(tabName = "stromstotte",
+                h2("Putt inn noe om strømstøtte her."),
+                fluidRow(
+                  box(plotOutput("plot1", height = 250)),
+                  box(title = "Controls",
+                      sliderInput("slider", "Number of observations:", 1, 100, 50)
+                  )
+                )
+)
+
+body_strompris <- tabItem(tabName = "strompris",
+        h2("Putt inn noe om strømpris her.")
+)
+
+body_historic <- tabItem(tabName = "historic",
+        h2("Putt inn noe om historisk tilpasning her.")
+)
+
+body_settings <- tabItem(tabName = "settings",
+        h2("Putt inn avanserte innstillinger her, som dato for strømstøtteestimering, konfidensnivå, datoRange for visning av strømpris.")
+)
+
+
+
+body <-  dashboardBody(
+  tabItems(body_strompris_naa,
+           body_stromstotte,
+           body_strompris,
+           body_historic,
+           body_settings)
 )
 
 
 ui <- dashboardPage(header, sidebar, body)
 
-server <- function(input, output) {
+server <- function(input, output,session) {
   set.seed(122)
   histdata <- rnorm(500)
 
@@ -77,7 +97,20 @@ server <- function(input, output) {
     hist(data)
   })
 
-  output$dt_nettleie <- dt_nettleie[Fylke==input$fylkevalg]
+  dt_nettleie_new <- reactive({
+    as.data.frame(dt_nettleie[Fylke==input$fylkevalg])
+  })
+
+  output$data_nettleie <- renderTable(dt_nettleie_new())
+
+  new_nettselskap <- reactive({
+    dt_nettleie[Fylke==input$fylkevalg,unique(Nettselskap)]
+  })
+
+  observe({
+    updateSelectInput(session, "nettselskap",choices = new_nettselskap()
+    )})
+
 }
 
 shinyApp(ui, server)
