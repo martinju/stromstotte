@@ -22,17 +22,21 @@ nettselskap <- geojsonsf::geojson_sf("raw-data/NettKonsesjonsomrade.geojson",
 
 prisomraader=st_transform(prisomraader0,crs = crs_EUREF89_UTM_sone_33)
 
+nettselskap <- nettselskap[nettselskap$eierType=="EVERK",] # Only care about EVERK
+
+
 
 postnr_vec <- postnr$postnummer
-nettselskap_vec <- make.unique(nettselskap$eierNavn,sep="_dup_")
+nettselskap_vec <- nettselskap$eierNavn
 prisomraader_vec <- prisomraader$ElSpotOmr
 
 konsesjonType_vec <- nettselskap$konsesjonType
 eierType_vec <- nettselskap$eierType
+
 poststed_vec <- postnr$poststed
 kommune_vec <- postnr$kommune
 
-# Getting the area of the intersections between the polygons
+# Getting the intersections between the polygons
 
 plan(multisession)
 
@@ -45,64 +49,96 @@ intersection_area_func <- function(index_vec,poly1,poly2){
   }
 }
 
+intersection_poly_func <- function(index_vec,poly1,poly2){
+  intersection <- st_intersection(st_make_valid(poly1[index_vec[1],]),st_make_valid(poly2[index_vec[2],]))
+  return(intersection)
+}
+
+intersection_polylist_func <- function(index_vec,polylist1,polylist2){
+  intersection <- st_intersection(st_make_valid(polylist1[[index_vec[1]]]),st_make_valid(polylist2[[index_vec[2]]]))
+  return(intersection)
+}
+
+
+area_poly_func <- function(poly){
+  area <- as.numeric(st_area(poly))
+  if(length(area)>0){
+    return(area)
+  } else {
+    return(0)
+  }
+}
+
 # Nettselskap vs prisomraader
 nettselskap_prisomraader_index_mat <- expand.grid(seq_len(nrow(nettselskap)),seq_len(nrow(prisomraader)))
-nettselskap_prisomraader_area_vec <- future_apply(nettselskap_prisomraader_index_mat,MARGIN = 1,FUN=intersection_area_func,poly1=nettselskap,poly2=prisomraader)
+nettselskap_prisomraader_int_poly <- future_apply(nettselskap_prisomraader_index_mat,MARGIN = 1,FUN=intersection_poly_func,poly1=nettselskap,poly2=prisomraader,future.seed=TRUE)
+nettselskap_prisomraader_int_area <- future_lapply(nettselskap_prisomraader_int_poly,area_poly_func,future.seed=TRUE)
 
-nettselskap_prisomraader_area_mat <- matrix(nettselskap_prisomraader_area_vec,nrow=nrow(nettselskap),ncol=nrow(prisomraader))
-rownames(nettselskap_prisomraader_area_mat) <- nettselskap_vec
-colnames(nettselskap_prisomraader_area_mat) <- prisomraader_vec
+nettselskap_prisomraader_index_dt <- data.table(nettselskap =nettselskap_vec[nettselskap_prisomraader_index_mat[,1]],
+                                                konsesjonType = konsesjonType_vec[nettselskap_prisomraader_index_mat[,1]],
+                                                eierType = eierType_vec[nettselskap_prisomraader_index_mat[,1]],
+                                           prisomraade = prisomraader_vec[nettselskap_prisomraader_index_mat[,2]],
+                                           area_nettselskap_prisomraader = unlist(nettselskap_prisomraader_int_area))
+nettselskap_prisomraader_index_dt[,id_nettselskap_prisomraader:=.I]
+nettselskap_prisomraader_index_dt <- nettselskap_prisomraader_index_dt[area_nettselskap_prisomraader>100]
 
-nettselskap_prisomraader_area_dt <- as.data.table(nettselskap_prisomraader_area_mat,keep.rownames = "nettselskap")
-nettselskap_prisomraader_area_dt[,konsesjonType:=konsesjonType_vec]
-nettselskap_prisomraader_area_dt[,eierType:=eierType_vec]
-
-setcolorder(nettselskap_prisomraader_area_dt,c("nettselskap","konsesjonType","eierType"))
-setkey(nettselskap_prisomraader_area_dt,nettselskap)
-
-fwrite(nettselskap_prisomraader_area_dt,"data/nettselskap_prisomraader_area.csv")
+#fwrite(nettselskap_prisomraader_area_dt,"data/nettselskap_prisomraader_area.csv")
 
 
 
 # Postnr vs prisomraader
 postnr_prisomraader_index_mat <- expand.grid(seq_len(nrow(postnr)),seq_len(nrow(prisomraader)))
-postnr_prisomraader_area_vec <- future_apply(postnr_prisomraader_index_mat,MARGIN = 1,FUN=intersection_area_func,poly1=postnr,poly2=prisomraader)
+#postnr_prisomraader_index_mat <- head(postnr_prisomraader_index_mat,100) # For testing to complete inn less time
+postnr_prisomraader_int_poly <- future_apply(postnr_prisomraader_index_mat,MARGIN = 1,FUN=intersection_poly_func,poly1=postnr,poly2=prisomraader,future.seed=TRUE)
+postnr_prisomraader_int_area <- future_lapply(postnr_prisomraader_int_poly,area_poly_func,future.seed=TRUE)
 
-postnr_prisomraader_area_mat <- matrix(postnr_prisomraader_area_vec,nrow=nrow(postnr),ncol=nrow(prisomraader))
-rownames(postnr_prisomraader_area_mat) <- postnr_vec
-colnames(postnr_prisomraader_area_mat) <- prisomraader_vec
+postnr_prisomraader_index_dt <- data.table(postnr =postnr_vec[postnr_prisomraader_index_mat[,1]],
+                                           poststed = poststed_vec[postnr_prisomraader_index_mat[,1]],
+                                           kommune = kommune_vec[postnr_prisomraader_index_mat[,1]],
+                                           prisomraade = prisomraader_vec[postnr_prisomraader_index_mat[,2]],
+                                           area_postnr_prisomraader = unlist(postnr_prisomraader_int_area))
+postnr_prisomraader_index_dt[,id_postnr_prisomraader:=.I]
+postnr_prisomraader_index_dt <- postnr_prisomraader_index_dt[area_postnr_prisomraader>100]
 
-postnr_prisomraader_area_dt <- as.data.table(postnr_prisomraader_area_mat,keep.rownames = "postnr")
-postnr_prisomraader_area_dt[,poststed:=poststed_vec]
-postnr_prisomraader_area_dt[,kommune:=kommune_vec]
+# merging to get full table to check intersection on
+postnr_nettselskap_prisomraader_index_dt <- merge(nettselskap_prisomraader_index_dt,postnr_prisomraader_index_dt,by = "prisomraade",all=F,allow.cartesian = TRUE)
 
-setcolorder(postnr_prisomraader_area_dt,c("postnr","poststed","kommune"))
-setkey(postnr_prisomraader_area_dt,postnr)
+postnr_nettselskap_prisomraader_index_mat <- as.matrix(postnr_nettselskap_prisomraader_index_dt[,.(id_nettselskap_prisomraader,id_postnr_prisomraader)])
 
-fwrite(postnr_prisomraader_area_dt,"data/postnr_prisomraader_area.csv")
+postnr_nettselskap_prisomraader_int_poly <- future_apply(postnr_nettselskap_prisomraader_index_mat,MARGIN = 1,
+                                                         FUN=intersection_polylist_func,
+                                                         polylist1=nettselskap_prisomraader_int_poly,
+                                                         polylist2=postnr_prisomraader_int_poly,future.seed=TRUE)
+postnr_nettselskap_prisomraader_int_area <- future_lapply(postnr_nettselskap_prisomraader_int_poly,area_poly_func,future.seed=TRUE)
 
+postnr_nettselskap_prisomraader_index_dt[,area_postnr_nettselskap_prisomraader:=unlist(postnr_nettselskap_prisomraader_int_area)]
+postnr_nettselskap_prisomraader_index_dt[,id_postnr_nettselskap_prisomraader:=.I]
+postnr_nettselskap_prisomraader_index_dt <- postnr_nettselskap_prisomraader_index_dt[area_postnr_nettselskap_prisomraader>100]
 
+simple_postnr_nettselskap_prisomraader_dt <- unique(postnr_nettselskap_prisomraader_index_dt[,.(postnr,nettselskap,prisomraade,intersection_area =area_postnr_nettselskap_prisomraader)])
+setorder(simple_postnr_nettselskap_prisomraader_dt,postnr,-intersection_area,nettselskap)
 
-
-# Postnr vs Nettselskap
-postnr_nettselskap_index_mat <- expand.grid(seq_len(nrow(postnr)),seq_len(nrow(nettselskap)))
-postnr_nettselskap_area_vec <- future_apply(postnr_nettselskap_index_mat,MARGIN = 1,FUN=intersection_area_func,poly1=postnr,poly2=nettselskap)
-
-postnr_nettselskap_area_mat <- matrix(postnr_nettselskap_area_vec,nrow=nrow(postnr),ncol=nrow(nettselskap))
-rownames(postnr_nettselskap_area_mat) <- postnr_vec
-colnames(postnr_nettselskap_area_mat) <- nettselskap_vec
-
-postnr_nettselskap_area_dt <- as.data.table(postnr_nettselskap_area_mat,keep.rownames = "postnr")
-postnr_nettselskap_area_dt[,poststed:=poststed_vec]
-postnr_nettselskap_area_dt[,kommune:=kommune_vec]
-
-setcolorder(postnr_nettselskap_area_dt,c("postnr","poststed","kommune"))
-setkey(postnr_nettselskap_area_dt,postnr)
-
-
-fwrite(postnr_nettselskap_area_dt,"data/postnr_nettselskap_area.csv")
+fwrite(simple_postnr_nettselskap_prisomraader_dt,"data/simple_postnr_nettselskap_prisomraader_dt.csv")
+fwrite(postnr_nettselskap_prisomraader_index_dt,"data/complete_postnr_nettselskap_prisomraader_dt.csv")
 
 
+nettselskap_prisomraader_int_id_vec <- which(nettselskap_prisomraader_int_area>0)
+nettselskap_prisomraader_int_poly0 <- nettselskap_prisomraader_int_poly[nettselskap_prisomraader_int_id_vec]
+
+postnr_prisomraader_int_id_vec <- which(postnr_prisomraader_int_area>0)
+postnr_prisomraader_int_poly0 <- postnr_prisomraader_int_poly[postnr_prisomraader_int_id_vec]
+
+postnr_nettselskap_prisomraader_int_id_vec <- which(postnr_nettselskap_prisomraader_int_area>0)
+postnr_nettselskap_prisomraader_int_poly0 <- postnr_nettselskap_prisomraader_int_poly[postnr_nettselskap_prisomraader_int_id_vec]
+
+
+save(postnr_nettselskap_prisomraader_int_poly0,
+     postnr_prisomraader_int_poly0,
+     nettselskap_prisomraader_int_poly0,
+     nettselskap_prisomraader_int_id_vec,
+     postnr_prisomraader_int_id_vec,
+     postnr_nettselskap_prisomraader_int_id_vec,
+     file = "data/postnr_nettselskap_prisomraader_intersection_polygon_lists.RData")
 
 
 
