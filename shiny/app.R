@@ -1,3 +1,15 @@
+# TODO:
+
+# Editer hoovertekst
+# Plot innværende døgn hvis før kl 13, plot fra nå og ut neste døgn hvis neste døgn er kjørt.
+# Legg til tekst på siden som viser nettleie, estimert strømstøtte osv for aktuelt valg.
+# Sjekk at nettleie-navn er kompatibelt på tvers av datasett
+# Legg til valg av konfidensgrad i avanserte innstillinger.
+# Legg til en tab som heter "Om siden" der du forklarer hva som gjøres, hvor data er hentet fra osv.
+# Legg til "Laget av Martin Jullum, Norsk Regnesentral" nederst på side panel
+# Sjekk bug med postnr 2863 + "SØR AURDAL ENERGI AS"
+# Kan jeg vise nettselskap/prisområdevalg kun dersom det er flere valg?
+
 #
 # This is a Shiny web application. You can run the application by clicking
 # the 'Run App' button above.
@@ -37,6 +49,8 @@ dt_postnr_nettselskap_prisomraader_map[,prisomraade:=gsub(" ","",prisomraade,fix
 
 dt_nettleie[,Energiledd:=Energiledd/100]
 
+######
+
 today <- Sys.Date()
 
 
@@ -48,7 +62,7 @@ library(shiny)
 library(shinydashboard)
 library(plotly)
 library(ggplot2)
-library(pammtools)
+#library(pammtools)
 
 ## app.R ##
 
@@ -57,40 +71,42 @@ header <- dashboardHeader(title = "Strømpris med strømstøtte",titleWidth = 30
 sidebar <- dashboardSidebar(
   width = 300,
   sidebarMenu(
-    menuItem("Strømpris NÅ", tabName = "strompris_naa", icon = icon("dashboard",verify_fa = FALSE)),
-    selectInput("postnr","Tast inn postnummer",choices=unique_postnr),
+    selectizeInput("postnr","Skriv inn postnummer",choices=NULL),
     selectInput("nettselskap","Velg Nettselskap",""),
     selectInput("prisomraade","Velg Prisområde",""),
+    menuItem("Din reelle strømpris", tabName = "strompris_naa", icon = icon("dashboard",verify_fa = FALSE)),
     menuItem("Strømstøtte", tabName = "stromstotte", icon = icon("bolt",verify_fa = FALSE)),
     menuItem("Fremtidig strømpris", tabName = "strompris", icon = icon("bolt",verify_fa = FALSE)),
     menuItem("Historisk estimering", tabName = "historic", icon = icon("bolt",verify_fa = FALSE)),
     menuItem("Avanserte innstillinger", tabName = "settings", icon = icon("gear",verify_fa = FALSE)),
-    menuItem("Metodikk", icon = icon("globe"),
-             href = "https://martinjullum.com/sideprojects/stromstotte")
+    menuItem("Om siden", tabName = "about", icon = icon("cirle-info",verify_fa = FALSE)),
+    em("Laget av Martin Jullum, Norsk Regnesentral")
+    #menuItem("Metodikk", icon = icon("globe"),
+    #         href = "https://martinjullum.com/sideprojects/stromstotte")
   )
 
 )
 
 body_strompris_naa <- tabItem(tabName = "strompris_naa",
                               h2("NEXT: Try to make a ggplotly plot of the hourly prices here."),
-                              plotlyOutput("spotplot"),
-                              tableOutput("data_nettleie"),
-                              tableOutput("data_spot"),
-                              tableOutput("data_comp")
+                              plotlyOutput("spotplot")
+                              #tableOutput("data_nettleie"),
+                              #tableOutput("data_spot"),
+                              #tableOutput("data_comp")
                              )
 
 body_stromstotte <- tabItem(tabName = "stromstotte",
-                h2("Putt inn noe om strømstøtte her."),
-                fluidRow(
-                  box(plotOutput("plot1", height = 250)),
-                  box(title = "Controls",
-                      sliderInput("slider", "Number of observations:", 1, 100, 50)
-                  )
-                )
+                h2("Putt inn noe om strømstøtte her.")#,
+#                fluidRow(
+#                  box(plotOutput("plot1", height = 250)),
+#                  box(title = "Controls",
+##                      sliderInput("slider", "Number of observations:", 1, 100, 50)
+#                  )
+#                )
 )
 
 body_strompris <- tabItem(tabName = "strompris",
-        h2("Putt inn noe om strømpris her.")
+        h2("Her kan jeg legge inn grafer med observerte strømpriser så langt + stier med predikerte strømpriser resten av måneden.")
 )
 
 body_historic <- tabItem(tabName = "historic",
@@ -101,6 +117,10 @@ body_settings <- tabItem(tabName = "settings",
         h2("Putt inn avanserte innstillinger her, som dato for strømstøtteestimering, konfidensnivå, datoRange for visning av strømpris.")
 )
 
+body_about <- tabItem(tabName = "about",
+                         h2("Putt inn litt om hvor data er hentet, og hva som gjøres. Kanskje bare linke til martinjullum.com/sideprojects/stromstotte herfra.")
+)
+
 
 
 body <-  dashboardBody(
@@ -108,13 +128,17 @@ body <-  dashboardBody(
            body_stromstotte,
            body_strompris,
            body_historic,
-           body_settings)
+           body_settings,
+           body_about)
 )
 
 
 ui <- dashboardPage(header, sidebar, body)
 
 server <- function(input, output,session) {
+
+  # Server-side updating as you type with postnr
+  updateSelectizeInput(session, 'postnr', choices = unique_postnr, server = TRUE)
 
   # Update the nettselskap input
   updated_nettselskap <- reactive({
@@ -208,7 +232,7 @@ server <- function(input, output,session) {
 
      for(i in seq_len(nrow(plot_strompris_naa_dt_ints))){
        p <- p + geom_ribbon(data=rbind(plot_strompris_naa_dt_ints[i],
-                                       plot_strompris_naa_dt_ints2[i]),alpha=0.3,inherit.aes=FALSE, direction = "hv",fill=scales::hue_pal()(3)[1],
+                                       plot_strompris_naa_dt_ints2[i]),alpha=0.3,inherit.aes=FALSE, fill=scales::hue_pal()(3)[1],
                    mapping=aes(ymin=totalpris_lower_CI,
                                ymax=totalpris_upper_CI,
                                x=start_hour))
