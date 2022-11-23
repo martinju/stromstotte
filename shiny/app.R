@@ -161,50 +161,64 @@ server <- function(input, output,session) {
    output$data_nettleie <- renderTable(updated_dt_nettleie())
 
 
-   updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-   updated_dt_hourly0 <- dt_hourly[area=="NO1" & date==today]
-   updated_dt_comp <- dt_comp[area == "NO1" & estimation_date==today-1,]
-
-   plot_strompris_naa_dt <- updated_dt_hourly0
-   setnames(plot_strompris_naa_dt,"price","spotpris")
-
-   tmp_comp_dt <- updated_dt_comp[type%in%c("median","quantile_0.025","quantile_0.975","lower_bound"),.(type,compensation)]
-   tmp_comp_dt[,type:=c("stotte_median","stotte_lower_CI","stotte_upper_CI","stotte_lower_bound")]
-
-   plot_strompris_naa_dt[start_hour %in% seq(6,21),nettleie:=updated_dt_nettleie0[pristype=="Dag",Energiledd]]
-   plot_strompris_naa_dt[is.na(nettleie),nettleie:=updated_dt_nettleie0[pristype=="Natt",Energiledd]]
-   plot_strompris_naa_dt[,totalpris_median := spotpris+nettleie-tmp_comp_dt[type=="stotte_median",compensation]]
-   plot_strompris_naa_dt[,totalpris_upper_CI := spotpris+nettleie-tmp_comp_dt[type=="stotte_lower_CI",compensation]]
-   plot_strompris_naa_dt[,totalpris_lower_CI := spotpris+nettleie-tmp_comp_dt[type=="stotte_upper_CI",compensation]]
-   plot_strompris_naa_dt[,totalpris_upper_bound := spotpris+nettleie-tmp_comp_dt[type=="stotte_lower_bound",compensation]]
-
-   tmp_melting_dt <- plot_strompris_naa_dt[,.(start_hour,nettleie,spotpris,totalpris_median,totalpris_lower_CI, totalpris_upper_CI, totalpris_lower_bound)]
-   plot_strompris_naa_dt_melted <- melt(tmp_melting_dt,id.vars = "start_hour",variable.name = "type",value.name = "pris")
-   plot_strompris_naa_dt_ints <- plot_strompris_naa_dt[,.(start_hour,totalpris_lower_CI,totalpris_upper_CI)]
 
 
-   ggplot(mapping=aes(x=start_hour,y=pris))+
-     geom_step(data=plot_strompris_naa_dt_melted[type=="spotpris"],direction = "hv",col=scales::hue_pal()(3)[3],size=1)+
-     geom_step(data=plot_strompris_naa_dt_melted[type=="nettleie"],direction = "hv",col=scales::hue_pal()(3)[2],size=1)+
-     geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_median"],direction = "hv",col=scales::hue_pal()(3)[1],size=1)+
-     geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_lower_CI"],direction = "hv",col=scales::hue_pal()(3)[1],alpha=0.5)+
-     geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_upper_CI"],direction = "hv",col=scales::hue_pal()(3)[1],alpha=0.5)+
-     geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_lower_bound"],direction = "hv",col=scales::hue_pal()(3)[1],linetype=2,alpha=0.5)+
-     geom_stepribbon(data=plot_strompris_naa_dt_ints,alpha=0.3,inherit.aes=FALSE, direction = "hv",fill=scales::hue_pal()(3)[1],
-                 mapping=aes(ymin=totalpris_lower_CI,
-                             ymax=totalpris_upper_CI,
-                             x=start_hour))+
-     ylim(0,NA)+
-     ggtitle("Estimert reell strømpris")
 
 
    output$spotplot <- renderPlotly({
-#     req(input$postnr,input$nettselskap, input$prisomraade)
-#     if (identical(input$prisomraade, "")) return(NULL)
-#     if (identical(input$nettselskap, "")) return(NULL)
-     p <- ggplot(data = updated_dt_hourly(),aes(x=start_hour,y=price))+
-       geom_line()+
-       geom_point(aes(y=price-1))
+     req(input$postnr,input$nettselskap, input$prisomraade)
+     if (identical(input$prisomraade, "")) return(NULL)
+     if (identical(input$nettselskap, "")) return(NULL)
+
+     updated_dt_nettleie0 <- updated_dt_nettleie()#dt_nettleie[Nettselskap=="ELVIA AS"]
+     updated_dt_hourly0 <- updated_dt_hourly()#dt_hourly[area=="NO1" & date==today]
+     updated_dt_comp0 <- updated_dt_comp()#dt_comp[area == "NO1" & estimation_date==today-1,]
+
+     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     #updated_dt_hourly0 <- dt_hourly[area=="NO1" & date==today]
+     #updated_dt_comp0 <- dt_comp[area == "NO1" & estimation_date==today-1,]
+
+
+     plot_strompris_naa_dt <- copy(updated_dt_hourly0)
+     setnames(plot_strompris_naa_dt,"price","spotpris")
+
+     tmp_comp_dt <- updated_dt_comp0[type%in%c("median","quantile_0.025","quantile_0.975","lower_bound"),.(type,compensation)]
+     tmp_comp_dt[,type:=c("stotte_median","stotte_lower_CI","stotte_upper_CI","stotte_lower_bound")]
+
+     plot_strompris_naa_dt[start_hour %in% seq(6,21),nettleie:=updated_dt_nettleie0[pristype=="Dag",Energiledd]]
+     plot_strompris_naa_dt[is.na(nettleie),nettleie:=updated_dt_nettleie0[pristype=="Natt",Energiledd]]
+     plot_strompris_naa_dt[,totalpris_median := spotpris+nettleie-tmp_comp_dt[type=="stotte_median",compensation]]
+     plot_strompris_naa_dt[,totalpris_upper_CI := spotpris+nettleie-tmp_comp_dt[type=="stotte_lower_CI",compensation]]
+     plot_strompris_naa_dt[,totalpris_lower_CI := spotpris+nettleie-tmp_comp_dt[type=="stotte_upper_CI",compensation]]
+     plot_strompris_naa_dt[,totalpris_upper_bound := spotpris+nettleie-tmp_comp_dt[type=="stotte_lower_bound",compensation]]
+
+     tmp_melting_dt <- plot_strompris_naa_dt[,.(start_hour,nettleie,spotpris,totalpris_median,totalpris_lower_CI, totalpris_upper_CI, totalpris_upper_bound)]
+     plot_strompris_naa_dt_melted <- melt(tmp_melting_dt,id.vars = "start_hour",variable.name = "type",value.name = "pris")
+     plot_strompris_naa_dt_ints <- plot_strompris_naa_dt[,.(start_hour,totalpris_lower_CI,totalpris_upper_CI)]
+     plot_strompris_naa_dt_ints2 <- copy(plot_strompris_naa_dt_ints)
+     plot_strompris_naa_dt_ints2[,start_hour:=start_hour+1]
+
+     p <- ggplot(mapping=aes(x=start_hour,y=pris))+
+       geom_step(data=plot_strompris_naa_dt_melted[type=="spotpris"],direction = "hv",col=scales::hue_pal()(3)[3],size=1)+
+       geom_step(data=plot_strompris_naa_dt_melted[type=="nettleie"],direction = "hv",col=scales::hue_pal()(3)[2],size=1)+
+       geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_median"],direction = "hv",col=scales::hue_pal()(3)[1],size=1)+
+       geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_lower_CI"],direction = "hv",col=scales::hue_pal()(3)[1],alpha=0.5)+
+       geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_upper_CI"],direction = "hv",col=scales::hue_pal()(3)[1],alpha=0.5)+
+       geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_upper_bound"],direction = "hv",col=scales::hue_pal()(3)[1],linetype=2,alpha=0.5)
+
+     for(i in seq_len(nrow(plot_strompris_naa_dt_ints))){
+       p <- p + geom_ribbon(data=rbind(plot_strompris_naa_dt_ints[i],
+                                       plot_strompris_naa_dt_ints2[i]),alpha=0.3,inherit.aes=FALSE, direction = "hv",fill=scales::hue_pal()(3)[1],
+                   mapping=aes(ymin=totalpris_lower_CI,
+                               ymax=totalpris_upper_CI,
+                               x=start_hour))
+     }
+      p <- p + ylim(0,NA)+
+       ggtitle("Estimert reell strømpris")
+
+     #p <- ggplot(data = updated_dt_hourly(),aes(x=start_hour,y=price))+
+    #   geom_line()+
+    #   geom_point(aes(y=price-1))
 
 
      height <- session$clientData$output_p_height
