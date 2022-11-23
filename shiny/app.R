@@ -79,8 +79,8 @@ sidebar <- dashboardSidebar(
     menuItem("Fremtidig strømpris", tabName = "strompris", icon = icon("bolt",verify_fa = FALSE)),
     menuItem("Historisk estimering", tabName = "historic", icon = icon("bolt",verify_fa = FALSE)),
     menuItem("Avanserte innstillinger", tabName = "settings", icon = icon("gear",verify_fa = FALSE)),
-    menuItem("Om siden", tabName = "about", icon = icon("cirle-info",verify_fa = FALSE)),
-    em("Laget av Martin Jullum, Norsk Regnesentral")
+    menuItem("Om siden", tabName = "about", icon = icon("info",verify_fa = FALSE)),
+    em("_Laget av "),tags$a(href="https://martinjullum.com", "Martin Jullum"),em(" Norsk Regnesentral")
     #menuItem("Metodikk", icon = icon("globe"),
     #         href = "https://martinjullum.com/sideprojects/stromstotte")
   )
@@ -88,7 +88,6 @@ sidebar <- dashboardSidebar(
 )
 
 body_strompris_naa <- tabItem(tabName = "strompris_naa",
-                              h2("NEXT: Try to make a ggplotly plot of the hourly prices here."),
                               plotlyOutput("spotplot")
                               #tableOutput("data_nettleie"),
                               #tableOutput("data_spot"),
@@ -198,9 +197,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- updated_dt_hourly()#dt_hourly[area=="NO1" & date==today]
      updated_dt_comp0 <- updated_dt_comp()#dt_comp[area == "NO1" & estimation_date==today-1,]
 
-     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     #updated_dt_hourly0 <- dt_hourly[area=="NO1" & date==today]
-     #updated_dt_comp0 <- dt_comp[area == "NO1" & estimation_date==today-1,]
+     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     updated_dt_hourly0 <- dt_hourly[area=="NO1" & date==today]
+     updated_dt_comp0 <- dt_comp[area == "NO1" & estimation_date==today-1,]
 
 
      plot_strompris_naa_dt <- copy(updated_dt_hourly0)
@@ -223,6 +222,13 @@ server <- function(input, output,session) {
      plot_strompris_naa_dt_ints2[,start_hour:=start_hour+1]
 
      p <- ggplot(mapping=aes(x=start_hour,y=pris))+
+       geom_line(aes(y=nettleie,text=paste0("<b>Priser (NOK/kWh) kl ",start_hour,"-",start_hour+1,":</b>\n",
+                                            "<span style='color:#619CFF'>Spot: ",round(spotpris,2),"</span>\n",
+                                            "<span style='color:#00BA38'>Nettleie: ",round(nettleie,2),"</span>\n\n",
+                                            "<span style='color:#F8766D'><b>Reell pris m/strømstøtte og nettleie:</b>\n",
+                                            "Estimat (95% int): ",round(totalpris_median,2)," (",round(totalpris_lower_CI,2),", ",round(totalpris_upper_CI,2),")","\n",
+                                            "Øvre grense: ",round(totalpris_upper_bound,2),"</span>")),
+                 size=0.0001,data=plot_strompris_naa_dt)+
        geom_step(data=plot_strompris_naa_dt_melted[type=="spotpris"],direction = "hv",col=scales::hue_pal()(3)[3],size=1)+
        geom_step(data=plot_strompris_naa_dt_melted[type=="nettleie"],direction = "hv",col=scales::hue_pal()(3)[2],size=1)+
        geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_median"],direction = "hv",col=scales::hue_pal()(3)[1],size=1)+
@@ -247,8 +253,9 @@ server <- function(input, output,session) {
 
      height <- session$clientData$output_p_height
      width <- session$clientData$output_p_width
-     ggplotly(p, height = height, width = width) %>%
-       layout(hovermode = "x unified")
+     ggplotly(p, height = height, width = width,tooltip = "text") %>%
+       layout(hovermode = "x unified") %>%
+       style(p, hoverinfo = "none", traces = 2:31)
     })
 
   ### OLD ###
