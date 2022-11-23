@@ -48,19 +48,41 @@ basic_nordpoolAPI_to_dt <- function(path="https://www.nordpoolgroup.com/api/mark
 
   area_tab <- c("NO1","NO2","NO5","NO3","NO3","NO4")
   area_nums <- match(areas,area_tab)
-  price_mat <- matrix(0,nrow=24,ncol=length(area_nums))
-  colnames(price_mat) <- areas
-  for(j in seq_len(24)){
-    for (i in seq_along(area_nums)){
-      ii <- area_nums[i]
-      price_mat[j,i] <- as.numeric(gsub(" ","",gsub(",",".",dat$data$Rows[[j]]$Columns[[ii]]$Value,fixed=T)))
-    }
-  }
-  price_dt <- as.data.table(price_mat)
 
-  date0 <- as.IDate(lubridate::ymd_hms(dat$data$DataStartdate)) # Avoid time zone issues
-  price_dt[,date:=date0]
-  price_dt[,start_hour:=0:23]
+
+
+  if(dat$data$DataStartdate=="2022-10-30T00:00:00"){ # Handling extra hour in date specially
+    price_mat <- matrix(0,nrow=25,ncol=length(area_nums))
+    colnames(price_mat) <- areas
+    for(j in seq_len(25)){
+      for (i in seq_along(area_nums)){
+        ii <- area_nums[i]
+        price_mat[j,i] <- as.numeric(gsub(" ","",gsub(",",".",dat$data$Rows[[j]]$Columns[[ii]]$Value,fixed=T)))
+      }
+    }
+    price_dt <- as.data.table(price_mat)
+    date0 <- as.IDate(lubridate::ymd_hms(dat$data$DataStartdate)) # Avoid time zone issues
+    price_dt[,date:=date0]
+    price_dt[,start_hour:=c(0:2,2,3:23)]
+
+
+  } else {
+    price_mat <- matrix(0,nrow=24,ncol=length(area_nums))
+    colnames(price_mat) <- areas
+    for(j in seq_len(24)){
+      for (i in seq_along(area_nums)){
+        ii <- area_nums[i]
+        price_mat[j,i] <- as.numeric(gsub(" ","",gsub(",",".",dat$data$Rows[[j]]$Columns[[ii]]$Value,fixed=T)))
+      }
+    }
+    price_dt <- as.data.table(price_mat)
+    date0 <- as.IDate(lubridate::ymd_hms(dat$data$DataStartdate)) # Avoid time zone issues
+    price_dt[,date:=date0]
+    price_dt[,start_hour:=0:23]
+
+  }
+
+
 
   dt <- melt(price_dt,id.vars = c("date","start_hour"),variable.name = "area",value.name = "price")
 
