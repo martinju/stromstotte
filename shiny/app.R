@@ -49,6 +49,12 @@ dt_postnr_nettselskap_prisomraader_map[,prisomraade:=gsub(" ","",prisomraade,fix
 
 dt_nettleie[,Energiledd:=Energiledd/100]
 
+twodigits <- function(x){
+  format(round(x,2),nsmall=2)
+}
+
+
+
 ######
 
 today <- Sys.Date()
@@ -93,12 +99,27 @@ sidebar <- dashboardSidebar(
 )
 
 body_strompris_naa <- tabItem(tabName = "strompris_naa",
-                              plotlyOutput("spotplot")
-                              #tableOutput("data_nettleie"),
-                              #tableOutput("data_spot"),
-                              #tableOutput("data_comp")
-                             )
-
+                              fluidPage(
+                                plotlyOutput("spotplot"),
+                                fluidRow(
+                                  box(width = 6,
+                                    h2("Forklaring"),
+                                    p("På grunn av at den månedlige strømstøtten fra staten ikke foreligger før månedens slutt,
+                                    vet man ikke hva strømmen man bruker faktisk koster når man bruker den."),
+                                    p("Denne varierer mellom de ulike prisområdene i Norge."),
+                                    p("Nettleverandør har i tillegg et påslag per kWh, som ofte er ulikt på dagen og natten."),
+                                    p("Reell pris = spot + nettleie - strømstøtte"),
+                                    p("Strømstøtten er estimert (med usikkerhet) ved en statistisk modell beskrevet her [LINK HER]."),
+                                    p("PS: Eventuelt påslag fra strømleverandør kommer i tillegg (ligger typisk mellom 0-5 øre/kWh).")
+                                  ),
+                                  box(width = 6,
+                                    title = "Påslag",
+                                    uiOutput("nettleie"),
+                                    uiOutput("stromstotte")
+                                  )
+                                )
+                              )
+)
 body_stromstotte <- tabItem(tabName = "stromstotte",
                 h2("Putt inn noe om strømstøtte her.")#,
 #                fluidRow(
@@ -188,6 +209,28 @@ server <- function(input, output,session) {
    output$data_comp <- renderTable(updated_dt_comp())
    output$data_nettleie <- renderTable(updated_dt_nettleie())
 
+   output$nettleie <- renderUI({
+     dagpris <- updated_dt_nettleie()[pristype=="Dag",Energiledd]
+     nattpris <- updated_dt_nettleie()[pristype=="Natt",Energiledd]
+
+     div(
+       p("Nettselskap: ",strong(paste0(input$nettselskap))),
+       p(paste0("Nettleie dag (06-22): ",twodigits(dagpris)," kr/kWh")),
+       p(paste0("Nettleie natt (22-06): ",twodigits(nattpris)," kr/kWh"))
+     )
+   })
+
+   output$stromstotte <- renderUI({
+     med <- updated_dt_comp()[type=="median",compensation]
+     upper <- updated_dt_comp()[type=="quantile_0.975",compensation]
+     lower <- updated_dt_comp()[type=="quantile_0.025",compensation]
+
+     div(
+       p("Estimert strømstøtte for prisområde: ",strong(input$prisomraade)),
+       p("Estimat: ",twodigits(med)," kr/kWh"),
+       p("95% konfidensintervall: (",twodigits(lower),",",twodigits(upper),") kr/kWh")
+     )
+   })
 
 
 
@@ -202,10 +245,13 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- updated_dt_hourly()#dt_hourly[area=="NO1" & date==today]
      updated_dt_comp0 <- updated_dt_comp()#dt_comp[area == "NO1" & estimation_date==today-1,]
 
-     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     updated_dt_hourly0 <- dt_hourly[area=="NO1" & date==today]
-     updated_dt_comp0 <- dt_comp[area == "NO1" & estimation_date==today-1,]
+     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     #updated_dt_hourly0 <- dt_hourly[area=="NO1" & date==today]
+     #updated_dt_comp0 <- dt_comp[area == "NO1" & estimation_date==today-1,]
 
+     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="BARENTS NETT AS"]
+     #updated_dt_hourly0 <- dt_hourly[area=="NO4" & date==today]
+     #updated_dt_comp0 <- dt_comp[area == "NO4" & estimation_date==today-1,]
 
      plot_strompris_naa_dt <- copy(updated_dt_hourly0)
      setnames(plot_strompris_naa_dt,"price","spotpris")
@@ -221,25 +267,29 @@ server <- function(input, output,session) {
      plot_strompris_naa_dt[,totalpris_upper_bound := spotpris+nettleie-tmp_comp_dt[type=="stotte_lower_bound",compensation]]
 
      tmp_melting_dt <- plot_strompris_naa_dt[,.(start_hour,nettleie,spotpris,totalpris_median,totalpris_lower_CI, totalpris_upper_CI, totalpris_upper_bound)]
+     tmp_melting_dt0 <- tail(tmp_melting_dt,1)
+     tmp_melting_dt0[,start_hour:=24]
+     tmp_melting_dt <- rbind(tmp_melting_dt,tmp_melting_dt0)
+
      plot_strompris_naa_dt_melted <- melt(tmp_melting_dt,id.vars = "start_hour",variable.name = "type",value.name = "pris")
      plot_strompris_naa_dt_ints <- plot_strompris_naa_dt[,.(start_hour,totalpris_lower_CI,totalpris_upper_CI)]
      plot_strompris_naa_dt_ints2 <- copy(plot_strompris_naa_dt_ints)
      plot_strompris_naa_dt_ints2[,start_hour:=start_hour+1]
 
      p <- ggplot(mapping=aes(x=start_hour,y=pris))+
-       geom_line(aes(y=nettleie,text=paste0("<b>Priser (NOK/kWh) kl ",start_hour,"-",start_hour+1,":</b>\n",
-                                            "<span style='color:#619CFF'>Spot: ",round(spotpris,2),"</span>\n",
-                                            "<span style='color:#00BA38'>Nettleie: ",round(nettleie,2),"</span>\n\n",
-                                            "<span style='color:#F8766D'><b>Reell pris m/strømstøtte og nettleie:</b>\n",
-                                            "Estimat (95% int): ",round(totalpris_median,2)," (",round(totalpris_lower_CI,2),", ",round(totalpris_upper_CI,2),")","\n",
-                                            "Øvre grense: ",round(totalpris_upper_bound,2),"</span>")),
+       geom_line(aes(y=nettleie,text=paste0("<span style='text-decoration:underline'><b>Priser (NOK/kWh) kl ",start_hour,"-",start_hour+1,": </b></span>\n",
+                                            "<span style='color:#619CFF'>Spot: ",twodigits(spotpris),"</span>\n",
+                                            "<span style='color:#00BA38'>Nettleie: ",twodigits(nettleie),"</span>\n\n",
+                                            "<span style='color:#F8766D'><b>Reell pris:</b>\n",
+                                            "Estimat: ",twodigits(totalpris_median)," (",twodigits(totalpris_lower_CI),", ",twodigits(totalpris_upper_CI),")","\n",
+                                            "Øvre grense: ",twodigits(totalpris_upper_bound),"</span>")),
                  size=0.0001,data=plot_strompris_naa_dt)+
-       geom_step(data=plot_strompris_naa_dt_melted[type=="spotpris"],direction = "hv",col=scales::hue_pal()(3)[3],size=1)+
-       geom_step(data=plot_strompris_naa_dt_melted[type=="nettleie"],direction = "hv",col=scales::hue_pal()(3)[2],size=1)+
-       geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_median"],direction = "hv",col=scales::hue_pal()(3)[1],size=1)+
+       geom_step(data=plot_strompris_naa_dt_melted[type=="spotpris"],direction = "hv",col=scales::hue_pal()(3)[3])+
+       geom_step(data=plot_strompris_naa_dt_melted[type=="nettleie"],direction = "hv",col=scales::hue_pal()(3)[2])+
+       geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_upper_bound"],direction = "hv",col=scales::hue_pal()(3)[1],linetype=2,alpha=0.5)+
        geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_lower_CI"],direction = "hv",col=scales::hue_pal()(3)[1],alpha=0.5)+
        geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_upper_CI"],direction = "hv",col=scales::hue_pal()(3)[1],alpha=0.5)+
-       geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_upper_bound"],direction = "hv",col=scales::hue_pal()(3)[1],linetype=2,alpha=0.5)
+       geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_median"],direction = "hv",col=scales::hue_pal()(3)[1],size=1)
 
      for(i in seq_len(nrow(plot_strompris_naa_dt_ints))){
        p <- p + geom_ribbon(data=rbind(plot_strompris_naa_dt_ints[i],
@@ -249,7 +299,8 @@ server <- function(input, output,session) {
                                x=start_hour))
      }
       p <- p + ylim(0,NA)+
-       ggtitle("Estimert reell strømpris")
+       ggtitle("Estimert reell strømpris")+
+        xlab("Pris (NOK/kWh)")
 
      #p <- ggplot(data = updated_dt_hourly(),aes(x=start_hour,y=price))+
     #   geom_line()+
