@@ -1,14 +1,18 @@
 # TODO:
 
-# Editer hoovertekst
-# Plot innværende døgn hvis før kl 13, plot fra nå og ut neste døgn hvis neste døgn er kjørt.
-# Legg til tekst på siden som viser nettleie, estimert strømstøtte osv for aktuelt valg.
+#DONE# Editer hoovertekst
+# Plot innværende døgn hvis før kl 13, plot fra nå og ut neste døgn hvis neste døgn er kjørt. # 1
+#DONE # Legg til tekst på siden som viser nettleie, estimert strømstøtte osv for aktuelt valg.
 # Sjekk at nettleie-navn er kompatibelt på tvers av datasett
 # Legg til valg av konfidensgrad i avanserte innstillinger.
-# Legg til en tab som heter "Om siden" der du forklarer hva som gjøres, hvor data er hentet fra osv.
-# Legg til "Laget av Martin Jullum, Norsk Regnesentral" nederst på side panel
+# Legg til en tab som heter "Om siden" der du forklarer hva som gjøres, hvor data er hentet fra osv. # 2
+#DONE # Legg til "Laget av Martin Jullum, Norsk Regnesentral" nederst på side panel
 # Sjekk bug med postnr 2863 + "SØR AURDAL ENERGI AS"
-# Kan jeg vise nettselskap/prisområdevalg kun dersom det er flere valg?
+#LATER # Kan jeg vise nettselskap/prisområdevalg kun dersom det er flere valg?
+# Bruk visningsdato + estimeringsdato i plottet.
+# Historisk estimering
+# Lagre simulerte stier for fremtidige strømpriser i egen fil
+# La strømstøtteordning ligge i selve appen
 
 #
 # This is a Shiny web application. You can run the application by clicking
@@ -110,7 +114,9 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                     p("Nettleverandør har i tillegg et påslag per kWh, som ofte er ulikt på dagen og natten."),
                                     p("Reell pris = spot + nettleie - strømstøtte"),
                                     p("Strømstøtten er estimert (med usikkerhet) ved en statistisk modell beskrevet her [LINK HER]."),
-                                    p("PS: Eventuelt påslag fra strømleverandør kommer i tillegg (ligger typisk mellom 0-5 øre/kWh).")
+                                    p("PS1: Prisene i grafen ovenfor gjelder kun deg med timespotavtale."),
+                                    p("PS2: Eventuelt påslag fra strømleverandør kommer i tillegg (ligger typisk mellom 0-5 øre/kWh)."),
+                                    p("PS3: Faste månedlige kostnader fra både nettselskap og strømselskap, samt effekttariff fra førstnevnte, kommer også i tillegg.")
                                   ),
                                   box(width = 6,
                                     title = "Påslag",
@@ -139,7 +145,40 @@ body_historic <- tabItem(tabName = "historic",
 )
 
 body_settings <- tabItem(tabName = "settings",
-        h2("Putt inn avanserte innstillinger her, som dato for strømstøtteestimering, konfidensnivå, datoRange for visning av strømpris.")
+                         h2("Avanserte innstillinger"),
+                         fluidPage(
+                           box(
+                             dateRangeInput("daterange_strompris_naa", "Datoer visning strømpris:",
+                                            start = Sys.Date(),
+                                            end = Sys.Date()+1,
+                                            min = "2022-09-01",
+                                            max = Sys.Date()+1,
+                                            language = "no",
+                                            weekstart = 1,
+                                            format = "dd-mm-yyyy"),
+                             sliderInput("hourstart_strompris_naa","Første time, visning strømpris",
+                                         min = 0,
+                                         max=23,
+                                         value = 0, # TODO: Make floor if start data is current day
+                                         step = 1),
+                             sliderInput("hourend_strompris_naa","Siste time, visning strømpris",
+                                         min = 0,
+                                         max = 23,
+                                         value = 23,
+                                         step = 1)
+                           ),
+                           box(
+                             dateInput("date_estimation", "Estimeringsdato strømstøtte:", # TODO: Make this update as visningsdato is changed.
+                                       value = Sys.Date(),
+                                       min = "2022-11-01", # TODO: Make generic
+                                       max = "2022-11-30", # TODO: Make generic
+                                       language = "no",
+                                       weekstart = 1,
+                                       format = "dd-mm-yyyy")
+                           )
+                         ),
+                         p("TODO: Muliggjør valg av konfidensnivå her."),
+                         p("TODO: Muliggjør valg av type strømstøtte her (beregn i så fall støtten til slutt).")
 )
 
 body_about <- tabItem(tabName = "about",
@@ -300,7 +339,7 @@ server <- function(input, output,session) {
      }
       p <- p + ylim(0,NA)+
        ggtitle("Estimert reell strømpris")+
-        xlab("Pris (NOK/kWh)")
+        ylab("Pris (NOK/kWh)")
 
      #p <- ggplot(data = updated_dt_hourly(),aes(x=start_hour,y=price))+
     #   geom_line()+
