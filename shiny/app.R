@@ -80,11 +80,16 @@ sidebar <- dashboardSidebar(
     menuItem("Historisk estimering", tabName = "historic", icon = icon("bolt",verify_fa = FALSE)),
     menuItem("Avanserte innstillinger", tabName = "settings", icon = icon("gear",verify_fa = FALSE)),
     menuItem("Om siden", tabName = "about", icon = icon("info",verify_fa = FALSE)),
-    em("_Laget av "),tags$a(href="https://martinjullum.com", "Martin Jullum"),em(" Norsk Regnesentral")
-    #menuItem("Metodikk", icon = icon("globe"),
-    #         href = "https://martinjullum.com/sideprojects/stromstotte")
+    tags$html(
+      tags$h5(
+        tags$em("Laget av ",
+                tags$a(href="https://martinjullum.com", "Martin Jullum"),
+                " Norsk Regnesentral"
+        ),
+        style = "text-align: center"
+      )
+    )
   )
-
 )
 
 body_strompris_naa <- tabItem(tabName = "strompris_naa",
