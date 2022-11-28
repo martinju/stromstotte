@@ -9,10 +9,11 @@
 #DONE # Legg til "Laget av Martin Jullum, Norsk Regnesentral" nederst på side panel
 # Sjekk bug med postnr 2863 + "SØR AURDAL ENERGI AS"
 #LATER # Kan jeg vise nettselskap/prisområdevalg kun dersom det er flere valg?
-# Bruk visningsdato + estimeringsdato i plottet.
+# Bruk visningsdato + estimeringsdato i plottet. # 0
 # Historisk estimering
 # Lagre simulerte stier for fremtidige strømpriser i egen fil
 # La strømstøtteordning ligge i selve appen
+# Knapper som fjerner noen av grafene (make color an aes by adding a new column for that to the data and add it to tooltip) # 3
 
 #
 # This is a Shiny web application. You can run the application by clicking
@@ -57,6 +58,7 @@ twodigits <- function(x){
   format(round(x,2),nsmall=2)
 }
 
+scaleFUN <- function(x) sprintf("%.2f", x)
 
 
 ######
@@ -72,6 +74,7 @@ library(shiny)
 library(shinydashboard)
 library(plotly)
 library(ggplot2)
+library(scales)
 #library(pammtools)
 
 ## app.R ##
@@ -169,7 +172,7 @@ body_settings <- tabItem(tabName = "settings",
                            ),
                            box(
                              dateInput("date_estimation", "Estimeringsdato strømstøtte:", # TODO: Make this update as visningsdato is changed.
-                                       value = Sys.Date(),
+                                       value = Sys.Date()-1,
                                        min = "2022-11-01", # TODO: Make generic
                                        max = "2022-11-30", # TODO: Make generic
                                        language = "no",
@@ -182,7 +185,8 @@ body_settings <- tabItem(tabName = "settings",
 )
 
 body_about <- tabItem(tabName = "about",
-                         h2("Putt inn litt om hvor data er hentet, og hva som gjøres. Kanskje bare linke til martinjullum.com/sideprojects/stromstotte herfra.")
+                         h2("Putt inn litt om hvor data er hentet, og hva som gjøres. Kanskje bare linke til martinjullum.com/sideprojects/stromstotte herfra."),
+                      verbatimTextOutput("datarange_strompris_naa")
 )
 
 
@@ -229,12 +233,18 @@ server <- function(input, output,session) {
 
    # Filter dt_hourly based on input
    updated_dt_hourly <- reactive({
-     dt_hourly[area ==input$prisomraade & date==today,]
+     tmp <- dt_hourly[area ==input$prisomraade & date%in%seq(input$daterange_strompris_naa[1], input$daterange_strompris_naa[2],by="day"),]
+     tmp[,keep:=TRUE]
+     tmp[date==input$daterange_strompris_naa[1] & start_hour < input$hourstart_strompris_naa, keep:=FALSE]
+     tmp[date==input$daterange_strompris_naa[2] & start_hour > input$hourend_strompris_naa, keep:=FALSE]
+     ret <- tmp[keep==TRUE]
+     ret[,keep:=NULL]
+     ret
    })
 
    # Filter dt_comp based on input
    updated_dt_comp <- reactive({
-     dt_comp[area == input$prisomraade & estimation_date==today-1,]
+     dt_comp[area == input$prisomraade & estimation_date==input$date_estimation,]
    })
 
    # Filter dt_comp based on input
@@ -247,6 +257,7 @@ server <- function(input, output,session) {
    output$data_spot <- renderTable(updated_dt_hourly())
    output$data_comp <- renderTable(updated_dt_comp())
    output$data_nettleie <- renderTable(updated_dt_nettleie())
+   output$datarange_strompris_naa <- renderPrint(input$daterange_strompris_naa)
 
    output$nettleie <- renderUI({
      dagpris <- updated_dt_nettleie()[pristype=="Dag",Energiledd]
@@ -285,8 +296,8 @@ server <- function(input, output,session) {
      updated_dt_comp0 <- updated_dt_comp()#dt_comp[area == "NO1" & estimation_date==today-1,]
 
      #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     #updated_dt_hourly0 <- dt_hourly[area=="NO1" & date==today]
-     #updated_dt_comp0 <- dt_comp[area == "NO1" & estimation_date==today-1,]
+     #updated_dt_hourly0 <- dt_hourly[area=="NO1" & date%in%(c(today-1,today)-27)]
+     #updated_dt_comp0 <- dt_comp[area == "NO1" & estimation_date==today-1-27,]
 
      #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="BARENTS NETT AS"]
      #updated_dt_hourly0 <- dt_hourly[area=="NO4" & date==today]
@@ -304,18 +315,22 @@ server <- function(input, output,session) {
      plot_strompris_naa_dt[,totalpris_upper_CI := spotpris+nettleie-tmp_comp_dt[type=="stotte_lower_CI",compensation]]
      plot_strompris_naa_dt[,totalpris_lower_CI := spotpris+nettleie-tmp_comp_dt[type=="stotte_upper_CI",compensation]]
      plot_strompris_naa_dt[,totalpris_upper_bound := spotpris+nettleie-tmp_comp_dt[type=="stotte_lower_bound",compensation]]
+     plot_strompris_naa_dt[,datetime:=as.POSIXct(date)+start_hour*60*60]
 
-     tmp_melting_dt <- plot_strompris_naa_dt[,.(start_hour,nettleie,spotpris,totalpris_median,totalpris_lower_CI, totalpris_upper_CI, totalpris_upper_bound)]
+
+
+     tmp_melting_dt <- plot_strompris_naa_dt[,.(datetime,nettleie,spotpris,totalpris_median,totalpris_lower_CI, totalpris_upper_CI, totalpris_upper_bound)]
      tmp_melting_dt0 <- tail(tmp_melting_dt,1)
-     tmp_melting_dt0[,start_hour:=24]
+     tmp_melting_dt0[,datetime:=datetime+1*60*60-1]
      tmp_melting_dt <- rbind(tmp_melting_dt,tmp_melting_dt0)
+     setkey(tmp_melting_dt,datetime)
+     plot_strompris_naa_dt_melted <- melt(tmp_melting_dt,id.vars = c("datetime"),variable.name = "type",value.name = "pris")
 
-     plot_strompris_naa_dt_melted <- melt(tmp_melting_dt,id.vars = "start_hour",variable.name = "type",value.name = "pris")
-     plot_strompris_naa_dt_ints <- plot_strompris_naa_dt[,.(start_hour,totalpris_lower_CI,totalpris_upper_CI)]
+     plot_strompris_naa_dt_ints <- plot_strompris_naa_dt[,.(datetime,totalpris_lower_CI,totalpris_upper_CI)]
      plot_strompris_naa_dt_ints2 <- copy(plot_strompris_naa_dt_ints)
-     plot_strompris_naa_dt_ints2[,start_hour:=start_hour+1]
+     plot_strompris_naa_dt_ints2[,datetime:=datetime+1*60*60-1]
 
-     p <- ggplot(mapping=aes(x=start_hour,y=pris))+
+     p <- ggplot(mapping=aes(x=datetime,y=pris))+
        geom_line(aes(y=nettleie,text=paste0("<span style='text-decoration:underline'><b>Priser (NOK/kWh) kl ",start_hour,"-",start_hour+1,": </b></span>\n",
                                             "<span style='color:#619CFF'>Spot: ",twodigits(spotpris),"</span>\n",
                                             "<span style='color:#00BA38'>Nettleie: ",twodigits(nettleie),"</span>\n\n",
@@ -335,12 +350,12 @@ server <- function(input, output,session) {
                                        plot_strompris_naa_dt_ints2[i]),alpha=0.3,inherit.aes=FALSE, fill=scales::hue_pal()(3)[1],
                    mapping=aes(ymin=totalpris_lower_CI,
                                ymax=totalpris_upper_CI,
-                               x=start_hour))
+                               x=datetime))
      }
-      p <- p + ylim(0,NA)+
+      p <- p + expand_limits(y=0)+
        ggtitle("Estimert reell strømpris")+
-        ylab("Pris (NOK/kWh)")
-
+        scale_y_continuous(name = "Pris (NOK/kWh)",labels=scaleFUN)+
+        scale_x_datetime(breaks=breaks_pretty(12),minor_breaks = breaks_pretty(24),labels = label_date_short(format = c("%Y", "", "%d.%b\n", "%H:%M\n"),sep="")) # TODO: Get Norwegian months
      #p <- ggplot(data = updated_dt_hourly(),aes(x=start_hour,y=price))+
     #   geom_line()+
     #   geom_point(aes(y=price-1))
@@ -348,9 +363,11 @@ server <- function(input, output,session) {
 
      height <- session$clientData$output_p_height
      width <- session$clientData$output_p_width
-     ggplotly(p, height = height, width = width,tooltip = "text") %>%
-       layout(hovermode = "x unified") %>%
-       style(p, hoverinfo = "none", traces = 2:31)
+     ggplotly(p, height = height, width = width,tooltip = "text",dynamicTicks = "x") %>%
+       layout(hovermode = "x unified",
+#              yaxis=list(fixedrange=TRUE),
+              xaxis = list(rangeslider = list(visible = FALSE,type="date"))) %>%
+       style(p, hoverinfo = "none", traces = 2:(length(p$layers)))
     })
 
   ### OLD ###
