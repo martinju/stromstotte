@@ -104,7 +104,7 @@ if(remaining_days>0){
     for(i in 1:k_sim){
 
 
-      samps <- simulate(pred_mod_list[[j]],nsim=remaining_days,future=TRUE,bootstrap=bootstrap_residuals,xreg=wday_numeric_future[,-1])
+      samps <- simulate(pred_mod_list[[j]],nsim=remaining_days,future=TRUE,bootstrap=bootstrap_residuals,xreg=wday_numeric_future[,-1,drop=FALSE])
       samp_price_mat[i,j] <- mean(pmax(0,samps))
     }
   }
