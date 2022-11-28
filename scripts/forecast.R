@@ -67,7 +67,7 @@ this_month_dt[,wday:=date_to_wday_factor(date)]
 
 
 
-wday_numeric_future <- model.matrix(~wday,data=this_month_dt[is.na(price)])
+wday_numeric_future <- model.matrix(~wday,data=this_month_dt[area==areas[1] & is.na(price)])
 
 prediction_dt <- database_daily[date>tomorrow-predict_based_on_past_k_days & date<=tomorrow]
 
