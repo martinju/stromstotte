@@ -1,7 +1,7 @@
 # TODO:
 
 #DONE# Editer hoovertekst
-# Plot innværende døgn hvis før kl 13, plot fra nå og ut neste døgn hvis neste døgn er kjørt. # 1
+#DONE (for now)# Plot innværende døgn hvis før kl 13, plot fra nå og ut neste døgn hvis neste døgn er kjørt. # 1
 #DONE # Legg til tekst på siden som viser nettleie, estimert strømstøtte osv for aktuelt valg.
 # Sjekk at nettleie-navn er kompatibelt på tvers av datasett
 # Legg til valg av konfidensgrad i avanserte innstillinger.
@@ -109,22 +109,33 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                               fluidPage(
                                 plotlyOutput("spotplot"),
                                 fluidRow(
-                                  box(width = 6,
-                                    h2("Forklaring"),
-                                    p("På grunn av at den månedlige strømstøtten fra staten ikke foreligger før månedens slutt,
-                                    vet man ikke hva strømmen man bruker faktisk koster når man bruker den."),
-                                    p("Denne varierer mellom de ulike prisområdene i Norge."),
-                                    p("Nettleverandør har i tillegg et påslag per kWh, som ofte er ulikt på dagen og natten."),
-                                    p("Reell pris = spot + nettleie - strømstøtte"),
-                                    p("Strømstøtten er estimert (med usikkerhet) ved en statistisk modell beskrevet her [LINK HER]."),
-                                    p("PS1: Prisene i grafen ovenfor gjelder kun deg med timespotavtale."),
-                                    p("PS2: Eventuelt påslag fra strømleverandør kommer i tillegg (ligger typisk mellom 0-5 øre/kWh)."),
-                                    p("PS3: Faste månedlige kostnader fra både nettselskap og strømselskap, samt effekttariff fra førstnevnte, kommer også i tillegg.")
+                                  box(width = 8,
+                                      h3("Forklaring"),
+                                      #                                    p("Dagens strømprissytem med store svininger variabel og effektbasert nettleie")
+                                      p("Grafen ovenfor viser den reelle forbruksbaserte prisen for spotpriskunder:"),
+                                      p(
+                                        strong(
+                                          tags$span(style="color:#F8766D","Reell pris"),
+                                          "=",
+                                          tags$span(style="color:#619CFF","spotpris"),
+                                          "+",
+                                          tags$span(style="color:#00BA38","nettleie"),
+                                          "-",
+                                          tags$span("strømstøtte")
+                                        )
+                                      ),
+                                      p("Grunnen til at den reelle prisen vises som et estimat (m/usikkerhet) er at strømstøtten er ikke er kjent før månedsslutt,",
+                                        "og strømstøtten derfor er estimert basert på en ",
+                                        tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","statistisk modell")
+                                      ),
+                                      h4("Merk:"),
+                                      p("Faste og effektbasert månedsavgift fra nettleverandør kommer i tillegg på regningen fra nettleverandør."),
+                                      p("Faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kommer i tillegg på regningen fra din strømleverandør.")
                                   ),
-                                  box(width = 6,
-                                    title = "Påslag",
-                                    uiOutput("nettleie"),
-                                    uiOutput("stromstotte")
+                                  box(width = 4,
+                                      title = "Oppsummert ",
+                                      uiOutput("nettleie"),
+                                      uiOutput("stromstotte")
                                   )
                                 )
                               )
@@ -185,8 +196,49 @@ body_settings <- tabItem(tabName = "settings",
 )
 
 body_about <- tabItem(tabName = "about",
-                         h2("Putt inn litt om hvor data er hentet, og hva som gjøres. Kanskje bare linke til martinjullum.com/sideprojects/stromstotte herfra."),
-                      verbatimTextOutput("datarange_strompris_naa")
+                      box(
+                        h2("Om siden"),
+                        p("Hensikten med denne er å samle daglige spotpriser, nettleie og strømstøtte i en og samme løsning og presentere det i et brukervennlig format."),
+                        p("Ved å taste inn postnummer, identifiseres både nettleverandør og spotprisområde og dagens (+ ev. morgendagens priser visualiseres).",
+                          "I enkelte tilfeller må brukeren velge blant 2 eller 3 nettleverandører/prisområder da postnummer overlapper med flere av disse."),
+                        p("Siden strømstøtten ikke er kjent før måneden er over, er denne basert på et estimat (m/ usikkerhet) fra en ",
+                          tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","statistisk modell"),". ",
+                          "Dette er grunnen til at reell pris er angitt som et intervall."),
+                        p("Disse estimatene oppdateres daglig etter hvert som morgendags spotpriser blir tilgjenglig, og fremtidige spotpriser blir simulert (ca kl. 13.30)."),
+                        p("Siden er laget av ",
+                          tags$a(href="https://martinjullum.com/","Martin Jullum"),
+                          "seniorforsker ",
+                          tags$a(href="https://nr.no/","Norsk Regnesentral"),
+                          "basert på åpne datakilder (se til høyre)."
+                        ),
+                        p("All kildekode tilhørende dette prosjektet er tilgjenglig på ",
+                          tags$a(href="https://github.com/martinju/stromstotte","github.com/martinju/stromstotte"),
+                          "Fremtidige spotpriser simuleres automatisk ved hjelp av ",
+                          tags$a(href="https://github.com/features/actions","GitHub actions"),".")
+                      ),
+                      box(
+                        h2("Data"),
+                        h4("Spotpriser"),
+                        p("Spotpriser hentes daglig fra Nordpool sitt",
+                          tags$a(href="https://www.nordpoolgroup.com/api/marketdata/page/23?currency=NOK","API")),
+
+                        h4("Nettleie"),
+                        p("Data med nettleie for nettselskapene i Norge er mottatt på epost 25.10.22 fra Roald Lien Glad, NVE. Samme informasjon er tilgjengelig gjennom NVEs ",
+                          tags$a(href="https://biapi.nve.no/nettleietariffer/swagger/index.html", "API")),
+
+                        h4("Postnummerområde"),
+                        p("Data med geografisk område for postnumre er hentet i GeoJson format fra Kartverket via",
+                          tags$a(href="https://kartkatalog.geonorge.no/metadata/postnummeromraader/462a5297-33ef-438a-82a5-07fff5799be3", "GeoNorge")),
+
+                        h4("Nettkonsesjonsområder"),
+                        p("Data med geografisk område for de ulike nettselskapene er hentet i GeoJson format fra NVEs",
+                          tags$a(href="https://nedlasting.nve.no/gis/", "GIS tjeneste"), "(herunder 'Nettanlegg' -> 'Områdekonsesjonærer'"),
+
+                        h4("Spotprisområder"),
+                        p("Data med geografisk område for de fem spotprisområdene er 'manuelt' ekportet i GeoJson format fra NVEs",
+                          tags$a(href="https://temakart.nve.no/tema/nettanlegg", "temakart for nettanlegg")),
+                      )
+                      #                      verbatimTextOutput("datarange_strompris_naa")
 )
 
 
@@ -296,8 +348,8 @@ server <- function(input, output,session) {
      updated_dt_comp0 <- updated_dt_comp()#dt_comp[area == "NO1" & estimation_date==today-1,]
 
      #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     #updated_dt_hourly0 <- dt_hourly[area=="NO1" & date%in%(c(today-1,today)-27)]
-     #updated_dt_comp0 <- dt_comp[area == "NO1" & estimation_date==today-1-27,]
+     #updated_dt_hourly0 <- dt_hourly[area=="NO1" & date%in%(c(today-1,today))]
+     #updated_dt_comp0 <- dt_comp[area == "NO1" & estimation_date==today-1,]
 
      #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="BARENTS NETT AS"]
      #updated_dt_hourly0 <- dt_hourly[area=="NO4" & date==today]
@@ -330,6 +382,17 @@ server <- function(input, output,session) {
      plot_strompris_naa_dt_ints2 <- copy(plot_strompris_naa_dt_ints)
      plot_strompris_naa_dt_ints2[,datetime:=datetime+1*60*60-1]
 
+
+     now_h =as.POSIXct(as.IDate(Sys.Date()))+hour(Sys.time())*60*60
+     now_hms =as.POSIXct(as.IDate(Sys.Date()))+hour(Sys.time())*60*60+minute(Sys.time())*60+second(Sys.time())
+
+     tmp_now <- plot_strompris_naa_dt[datetime==now_h]
+     tmp_now[,datetime:=now_hms]
+
+     plot_strompris_naa_dt <- rbind(plot_strompris_naa_dt,tmp_now)
+     setkey(plot_strompris_naa_dt,datetime)
+
+
      p <- ggplot(mapping=aes(x=datetime,y=pris))+
        geom_line(aes(y=nettleie,text=paste0("<span style='text-decoration:underline'><b>Priser (NOK/kWh) kl ",start_hour,"-",start_hour+1,": </b></span>\n",
                                             "<span style='color:#619CFF'>Spot: ",twodigits(spotpris),"</span>\n",
@@ -343,7 +406,8 @@ server <- function(input, output,session) {
        geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_upper_bound"],direction = "hv",col=scales::hue_pal()(3)[1],linetype=2,alpha=0.5)+
        geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_lower_CI"],direction = "hv",col=scales::hue_pal()(3)[1],alpha=0.5)+
        geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_upper_CI"],direction = "hv",col=scales::hue_pal()(3)[1],alpha=0.5)+
-       geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_median"],direction = "hv",col=scales::hue_pal()(3)[1],size=1)
+       geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_median"],direction = "hv",col=scales::hue_pal()(3)[1],size=1)+
+       geom_vline(xintercept=Sys.time(),type=2,col="grey") # TODO: Fix such that this is not displayed in the hoover
 
      for(i in seq_len(nrow(plot_strompris_naa_dt_ints))){
        p <- p + geom_ribbon(data=rbind(plot_strompris_naa_dt_ints[i],
@@ -355,7 +419,10 @@ server <- function(input, output,session) {
       p <- p + expand_limits(y=0)+
        ggtitle("Estimert reell strømpris")+
         scale_y_continuous(name = "Pris (NOK/kWh)",labels=scaleFUN)+
-        scale_x_datetime(breaks=breaks_pretty(12),minor_breaks = breaks_pretty(24),labels = label_date_short(format = c("%Y", "", "%d.%b\n", "%H:%M\n"),sep="")) # TODO: Get Norwegian months
+        scale_x_datetime(name = "Tid/dato",
+                         breaks=breaks_pretty(12),
+                         minor_breaks = breaks_pretty(24),
+                         labels = label_date_short(format = c("%Y", "", "%d.%b\n", "%H:%M\n"),sep="")) # TODO: Get Norwegian months
      #p <- ggplot(data = updated_dt_hourly(),aes(x=start_hour,y=price))+
     #   geom_line()+
     #   geom_point(aes(y=price-1))
