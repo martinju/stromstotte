@@ -36,6 +36,18 @@ dcast_dat[,mean(inside_90),by=area]
 dcast_dat[,mean(inside_80),by=area]
 dcast_dat[,mean(inside_50),by=area]
 
+dcast_dat[,.(mean(inside_99),
+              mean(inside_95),
+              mean(inside_90),
+              mean(inside_80),
+              mean(inside_50))]
+dcast_dat[,mean(inside_95),by=area]
+dcast_dat[,mean(inside_90),by=area]
+dcast_dat[,mean(inside_80),by=area]
+dcast_dat[,mean(inside_50),by=area]
+
+
+
 dcast_dat[,mean(abs(actual_mean-median)),by=area]
 dcast_dat[,mean(abs(actual_mean-mean)),by=area]
 dcast_dat[,.(current_mean =mean(abs(actual_mean-current_mean)),
