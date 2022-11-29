@@ -347,9 +347,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- updated_dt_hourly()#dt_hourly[area=="NO1" & date==today]
      updated_dt_comp0 <- updated_dt_comp()#dt_comp[area == "NO1" & estimation_date==today-1,]
 
-     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     #updated_dt_hourly0 <- dt_hourly[area=="NO1" & date%in%(c(today-1,today))]
-     #updated_dt_comp0 <- dt_comp[area == "NO1" & estimation_date==today-1,]
+    # updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+    # updated_dt_hourly0 <- dt_hourly[area=="NO1" & date%in%(c(today-1,today))]
+    # updated_dt_comp0 <- dt_comp[area == "NO1" & estimation_date==today-1,]
 
      #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="BARENTS NETT AS"]
      #updated_dt_hourly0 <- dt_hourly[area=="NO4" & date==today]
@@ -409,16 +409,29 @@ server <- function(input, output,session) {
        geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_median"],direction = "hv",col=scales::hue_pal()(3)[1],size=1)+
        geom_vline(xintercept=Sys.time(),type=2,col="grey") # TODO: Fix such that this is not displayed in the hoover
 
-     for(i in seq_len(nrow(plot_strompris_naa_dt_ints))){
-       p <- p + geom_ribbon(data=rbind(plot_strompris_naa_dt_ints[i],
-                                       plot_strompris_naa_dt_ints2[i]),alpha=0.3,inherit.aes=FALSE, fill=scales::hue_pal()(3)[1],
-                   mapping=aes(ymin=totalpris_lower_CI,
-                               ymax=totalpris_upper_CI,
-                               x=datetime))
-     }
+#     for(i in seq_len(nrow(plot_strompris_naa_dt_ints))){
+#       p <- p + geom_ribbon(data=rbind(plot_strompris_naa_dt_ints[i],
+#                                       plot_strompris_naa_dt_ints2[i]),alpha=0.3,inherit.aes=FALSE, fill=scales::hue_pal()(3)[1],
+#                   mapping=aes(ymin=totalpris_lower_CI,
+#                               ymax=totalpris_upper_CI,
+#                               x=datetime))
+#     }
+
+
+     plot_strompris_naa_dt_ints_comb <- rbind(plot_strompris_naa_dt_ints,
+                                              plot_strompris_naa_dt_ints2)
+
+     setkey(plot_strompris_naa_dt_ints_comb,datetime)
+     p <- p + geom_ribbon(data=plot_strompris_naa_dt_ints_comb,alpha=0.3,inherit.aes=FALSE,
+                          fill=scales::hue_pal()(3)[1],
+                          mapping=aes(ymin=totalpris_lower_CI,
+                                      ymax=totalpris_upper_CI,
+                                      x=datetime))
+
+
       p <- p + expand_limits(y=0)+
        ggtitle("Estimert reell strømpris")+
-        scale_y_continuous(name = "Pris (NOK/kWh)",labels=scaleFUN)+
+        scale_y_continuous(name = "Pris (NOK/kWh)",labels=scaleFUN,breaks = breaks_extended(15))+
         scale_x_datetime(name = "Tid/dato",
                          breaks=breaks_pretty(12),
                          minor_breaks = breaks_pretty(24),
