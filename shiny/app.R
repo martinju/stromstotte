@@ -15,6 +15,10 @@
 # La strømstøtteordning ligge i selve appen
 # Knapper som fjerner noen av grafene (make color an aes by adding a new column for that to the data and add it to tooltip) # 3
 
+### Nytt oppsett
+# Vis
+
+
 #
 # This is a Shiny web application. You can run the application by clicking
 # the 'Run App' button above.
@@ -389,8 +393,10 @@ server <- function(input, output,session) {
      tmp_now <- plot_strompris_naa_dt[datetime==now_h]
      tmp_now[,datetime:=now_hms]
 
-     plot_strompris_naa_dt <- rbind(plot_strompris_naa_dt,tmp_now)
-     setkey(plot_strompris_naa_dt,datetime)
+     if(now_h<=plot_strompris_naa_dt[,max(datetime)]){
+       plot_strompris_naa_dt <- rbind(plot_strompris_naa_dt,tmp_now)
+       setkey(plot_strompris_naa_dt,datetime)
+     }
 
 
      p <- ggplot(mapping=aes(x=datetime,y=pris))+
@@ -406,9 +412,11 @@ server <- function(input, output,session) {
        geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_upper_bound"],direction = "hv",col=scales::hue_pal()(3)[1],linetype=2,alpha=0.5)+
        geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_lower_CI"],direction = "hv",col=scales::hue_pal()(3)[1],alpha=0.5)+
        geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_upper_CI"],direction = "hv",col=scales::hue_pal()(3)[1],alpha=0.5)+
-       geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_median"],direction = "hv",col=scales::hue_pal()(3)[1],size=1)+
-       geom_vline(xintercept=Sys.time(),type=2,col="grey") # TODO: Fix such that this is not displayed in the hoover
+       geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_median"],direction = "hv",col=scales::hue_pal()(3)[1],size=1)
 
+     if(now_h<=plot_strompris_naa_dt[,max(datetime)]){
+       p <- p + geom_vline(xintercept=Sys.time(),type=2,col="grey") # TODO: Fix such that this is not displayed in the hoover
+       }
 #     for(i in seq_len(nrow(plot_strompris_naa_dt_ints))){
 #       p <- p + geom_ribbon(data=rbind(plot_strompris_naa_dt_ints[i],
 #                                       plot_strompris_naa_dt_ints2[i]),alpha=0.3,inherit.aes=FALSE, fill=scales::hue_pal()(3)[1],
