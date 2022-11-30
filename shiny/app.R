@@ -40,11 +40,19 @@ Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
 
 library(data.table)
 
-dt_nettleie <- fread("../data/database_nettleie_simple.csv")
-dt_nettleie_kl6 <- fread("../data/database_nettleie_simple_kl_6.csv")
-dt_hourly <- fread("../data/database_nordpool_hourly.csv")
-dt_comp <- fread("../data/historic_estimated_compensation.csv")
-dt_postnr_nettselskap_prisomraader_map <- fread("../data/simple_postnr_nettselskap_prisomraader_dt.csv")
+deployed <- TRUE
+
+if(deployed){
+  path <- "https://raw.githubusercontent.com/martinju/stromstotte/shinyApp/"
+} else{
+  path <- "../"
+}
+
+dt_nettleie <- fread(file.path(path,"data/database_nettleie_simple.csv"))
+dt_nettleie_kl6 <- fread(file.path(path,"data/database_nettleie_simple_kl_6.csv"))
+dt_hourly <- fread(file.path(path,"data/database_nordpool_hourly.csv"))
+dt_comp <- fread(file.path(path,"data/historic_estimated_compensation.csv"))
+dt_postnr_nettselskap_prisomraader_map <- fread(file.path(path,"data/simple_postnr_nettselskap_prisomraader_dt.csv"))
 
 # Should do this in another file!
 dt_postnr_nettselskap_prisomraader_map[,postnr:=as.character(postnr)]
@@ -351,9 +359,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- updated_dt_hourly()#dt_hourly[area=="NO1" & date==today]
      updated_dt_comp0 <- updated_dt_comp()#dt_comp[area == "NO1" & estimation_date==today-1,]
 
-    # updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-    # updated_dt_hourly0 <- dt_hourly[area=="NO1" & date%in%(c(today-1,today))]
-    # updated_dt_comp0 <- dt_comp[area == "NO1" & estimation_date==today-1,]
+     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     #updated_dt_hourly0 <- dt_hourly[area=="NO1" & date%in%(c(today-1,today))]
+     #updated_dt_comp0 <- dt_comp[area == "NO1" & estimation_date==today-1,]
 
      #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="BARENTS NETT AS"]
      #updated_dt_hourly0 <- dt_hourly[area=="NO4" & date==today]
