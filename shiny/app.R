@@ -40,7 +40,7 @@ Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
 
 library(data.table)
 
-deployed <- TRUE
+deployed <- FALSE
 
 if(deployed){
   path <- "https://raw.githubusercontent.com/martinju/stromstotte/shinyApp/"
