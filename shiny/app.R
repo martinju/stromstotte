@@ -197,7 +197,7 @@ body_settings <- tabItem(tabName = "settings",
                              dateInput("date_estimation", "Estimeringsdato strømstøtte:", # TODO: Make this update as visningsdato is changed.
                                        value = Sys.Date()-1,
                                        min = "2022-11-01", # TODO: Make generic
-                                       max = "2022-11-30", # TODO: Make generic
+                                       max = Sys.Date(), # TODO: Make generic
                                        language = "no",
                                        weekstart = 1,
                                        format = "dd-mm-yyyy")
