@@ -1,3 +1,17 @@
+textfunc <- function(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI){
+  date <- as.Date(datetime)
+  start_hour <- lubridate::hour(datetime)
+
+  paste0("<span style='text-decoration:underline'><b>Priser (NOK/kWh) kl ",start_hour,"-",start_hour+1,": </b></span>\n",
+         "<span style='color:#619CFF'>Spot: ",twodigits(spotpris),"</span>\n",
+         "<span style='color:#00BA38'>Nettleie: ",twodigits(nettleie),"</span>\n",
+         "<span style='color:#619CFF'>Strømstøtte: ",twodigits(stotte)," (",twodigits(stotte_lower_CI),", ",twodigits(stotte_upper_CI),")","</span>\n\n",
+         "<span style='color:#F8766D'><b>Reell pris:</b>\n",
+         "Estimat: ",twodigits(totalpris)," (",twodigits(totalpris_lower_CI),", ",twodigits(totalpris_upper_CI),")</span>")
+}
+
+
+
 estimation_date0=today#today-1
 
 updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
@@ -46,6 +60,10 @@ plot_strompris_naa_dt0_dup[,datetime:=datetime+1*60*60-1]
 plot_strompris_naa_dt00 <- rbind(plot_strompris_naa_dt0,plot_strompris_naa_dt0_dup)
 setkey(plot_strompris_naa_dt00,datetime)
 
+plot_strompris_naa_dt00[lubridate::second(datetime)==0,text:=textfunc(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI)]
+plot_strompris_naa_dt00[,text:=textfunc(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI)]
+
+
 plot_strompris_naa_dt_ints_totalpris <- plot_strompris_naa_dt00[,.(datetime,lower_CI=totalpris_lower_CI,upper_CI=totalpris_upper_CI)]
 plot_strompris_naa_dt_ints_totalpris[,type:="totalpris"]
 
@@ -54,13 +72,16 @@ plot_strompris_naa_dt_ints_stotte[,type:="stotte"]
 
 plot_strompris_naa_dt_ints <- rbind(plot_strompris_naa_dt_ints_totalpris,plot_strompris_naa_dt_ints_stotte)
 
-plot_strompris_naa_dt_melted <- melt(plot_strompris_naa_dt00[,.(datetime,spotpris,nettleie,totalpris,stotte)],
-                                     id.vars = c("datetime"),variable.name = "type",value.name = "pris")
+plot_strompris_naa_dt_melted <- melt(plot_strompris_naa_dt00[,.(datetime,spotpris,nettleie,totalpris,stotte,text)],
+                                     id.vars = c("datetime","text"),variable.name = "type",value.name = "pris")
 
 plot_dt_final <- merge(plot_strompris_naa_dt_melted,plot_strompris_naa_dt_ints,by=c("datetime","type"),all = T)
 
 plot_dt_final[,linesize := "b"]
 plot_dt_final[type%in% c("totalpris","stotte"),linesize := "a"]
+
+setcolorder(plot_dt_final,c("datetime","type","pris","lower_CI","upper_CI","linesize"))
+
 
 setkey(plot_dt_final,datetime)
 
@@ -112,7 +133,7 @@ ggp_history <- layout(
 ggp_history <- style(ggp_history,visible="legendonly",traces=c(3,7)) #trace=2 identified through plotly_json(ggp_history)
 ggp_history
 
-p_now <- ggplot(data=plot_dt_final[datetime>=today-1],mapping=aes(x=datetime,y=pris,col=type,fill=type))+
+p_now <- ggplot(data=plot_dt_final[datetime>=today-1],mapping=aes(x=datetime,y=pris,col=type,fill=type,text=text))+
   geom_line(aes(size=linesize))+
   geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.5)+
   ggtitle("Estimert reell strømpris")+
@@ -126,7 +147,7 @@ p_now <- ggplot(data=plot_dt_final[datetime>=today-1],mapping=aes(x=datetime,y=p
 
 p_now
 
-ggp_now <- ggplotly(p_now,dynamicTicks = TRUE)
+ggp_now <- ggplotly(p_now,dynamicTicks = TRUE,tooltip = "text")
 ggp_now <- layout(
   ggp_now,
   hovermode = "x unified"
