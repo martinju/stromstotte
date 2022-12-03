@@ -16,7 +16,18 @@
 # Knapper som fjerner noen av grafene (make color an aes by adding a new column for that to the data and add it to tooltip) # 3
 
 ### Nytt oppsett
-# Vis
+# Vis alle historiske strømpriser (så langt jeg har observert), men default view er to siste dager som nå
+# vis strømstøtten for siste observerte dag
+# dragslider under samt knapper med siste uke, måned, år og alt bør med
+# Under der igjen vises slider som man kan dra på for å vise andre konfidensintervaller.
+## TODO for nytt oppsett
+# Lag 1 kombinert datasett som kan brukes til ALT. Skill på estimert og faktisk strømstøtte
+
+
+
+# Hvis båndbredde blir et problem enten ved at server bruker for mye ram, eller at det tar tid så kan jeg lage meg ny fil som inneholder nyeste
+# for inneværende måned (med alle kvantiler) + fullobserverte for alle tidligere måneder. Dersom jeg ønsker s¨å vise strømstøtten for andre dager,
+# får jeg så laste inn en annen fil
 
 
 #
@@ -359,9 +370,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- updated_dt_hourly()#dt_hourly[area=="NO1" & date==today]
      updated_dt_comp0 <- updated_dt_comp()#dt_comp[area == "NO1" & estimation_date==today-1,]
 
-     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     #updated_dt_hourly0 <- dt_hourly[area=="NO1" & date%in%(c(today-1,today))]
-     #updated_dt_comp0 <- dt_comp[area == "NO1" & estimation_date==today-1,]
+     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     updated_dt_hourly0 <- dt_hourly[area=="NO1" & date%in%(c(today-1,today))]
+     updated_dt_comp0 <- dt_comp[area == "NO1" & estimation_date==today-1,]
 
      #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="BARENTS NETT AS"]
      #updated_dt_hourly0 <- dt_hourly[area=="NO4" & date==today]
