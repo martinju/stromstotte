@@ -67,7 +67,7 @@ this_month_dt[,wday:=date_to_wday_factor(date)]
 
 
 
-wday_numeric_future <- model.matrix(~wday,data=this_month_dt[is.na(price)])
+wday_numeric_future <- model.matrix(~wday,data=this_month_dt[area==areas[1] & is.na(price)])
 
 prediction_dt <- database_daily[date>tomorrow-predict_based_on_past_k_days & date<=tomorrow]
 
@@ -104,7 +104,7 @@ if(remaining_days>0){
     for(i in 1:k_sim){
 
 
-      samps <- simulate(pred_mod_list[[j]],nsim=remaining_days,future=TRUE,bootstrap=bootstrap_residuals,xreg=wday_numeric_future[,-1])
+      samps <- simulate(pred_mod_list[[j]],nsim=remaining_days,future=TRUE,bootstrap=bootstrap_residuals,xreg=wday_numeric_future[,-1,drop=FALSE])
       samp_price_mat[i,j] <- mean(pmax(0,samps))
     }
   }

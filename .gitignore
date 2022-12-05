@@ -3,6 +3,6 @@
 .RData
 .Ruserdata
 
-*.Rout
-
 *.out
+
+*.Rout

@@ -23,7 +23,7 @@ model_filename <- "models/model_list.RData"
 
 current_density_compensation_filename <- "data/current_estimated_compensation_density.csv"
 current_compensation_filename <- "data/current_estimated_compensation.csv"
-historic_compensation_filename <- "data/historic_estimated_compensation.csv"
+historic_compensation_filename <- "data/historic_estimated_compensation_full.csv"
 
 ### Input
 
@@ -35,7 +35,7 @@ database_daily <- fread(database_filename)
 
 setkey(database_daily,"area","date")
 
-today_dates <- seq(as.IDate("2022-09-29"),as.IDate("2022-10-04"),by=1)
+today_dates <- seq(as.IDate("2022-03-01"),as.IDate("2022-08-31"),by=1)
 
 for(kkk in seq_along(today_dates)){
 
@@ -72,7 +72,7 @@ for(kkk in seq_along(today_dates)){
 
 
 
-  wday_numeric_future <- model.matrix(~wday,data=this_month_dt[is.na(price)])
+  wday_numeric_future <- model.matrix(~wday,data=this_month_dt[area==areas[1] & is.na(price)])
 
   prediction_dt <- database_daily[date>tomorrow-predict_based_on_past_k_days & date<=tomorrow]
 
@@ -175,8 +175,8 @@ for(kkk in seq_along(today_dates)){
 
   setkey(res_dt,estimation_date,area)
 
-  fwrite(density_dt,current_density_compensation_filename)
-  fwrite(res_dt,current_compensation_filename)
+  #fwrite(density_dt,current_density_compensation_filename)
+  #fwrite(res_dt,current_compensation_filename)
 
 
   prev_historic_compensation <- fread(historic_compensation_filename)
