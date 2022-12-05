@@ -117,7 +117,7 @@ sidebar <- dashboardSidebar(
     selectInput("nettselskap","Velg Nettselskap",""),
     selectInput("prisomraade","Velg Prisområde",""),
     menuItem("Reell strømpris NÅ", tabName = "strompris_naa", icon = icon("dashboard",verify_fa = FALSE)),
-    menuItem("Historisk reell strømpris", tabName = "test", icon = icon("dashboard",verify_fa = FALSE)),
+    menuItem("Historisk reell strømpris", tabName = "strompris_history", icon = icon("dashboard",verify_fa = FALSE)),
     menuItem("Strømstøtte", tabName = "stromstotte", icon = icon("bolt",verify_fa = FALSE)),
     menuItem("Fremtidig strømpris", tabName = "strompris", icon = icon("bolt",verify_fa = FALSE)),
     menuItem("Historisk estimering", tabName = "historic", icon = icon("bolt",verify_fa = FALSE)),
@@ -154,25 +154,53 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                           tags$span(style=paste0("color:",mycols['stotte']),"strømstøtte")
                                         )
                                       ),
-                                      p("Grunnen til at den reelle prisen vises som et estimat (m/usikkerhet) er at strømstøtten er ikke er kjent før månedsslutt,",
+                                      p("Grunnen til at den reelle prisen for innværende måned vises som et estimat (m/usikkerhet) er at strømstøtten er ikke er kjent før månedsslutt,",
                                         "og strømstøtten derfor er estimert basert på en ",
-                                        tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","statistisk modell")
+                                        tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","statistisk modell"),
+                                        "For tidligere måneder er strømstøtten nå kjent, så der vises den endelige strømstøtten."
                                       ),
                                       h4("Merk"),
                                       p("Faste og effektbasert månedsavgift fra nettleverandør kommer i tillegg på regningen fra nettleverandør."),
                                       p("Faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kommer i tillegg på regningen fra din strømleverandør.")
                                   ),
                                   box(width = 4,
-                                      title = "Oppsummert ",
+                                      title = "Oversikt",
                                       uiOutput("nettleie"),
                                       uiOutput("stromstotte")
                                   )
                                 )
                               )
 )
-body_strompris_history <- tabItem(tabName = "test",
-                                  h2("testing123")#,
-#                                  uiOutput("nettleie")
+body_strompris_history <- tabItem(tabName = "strompris_history",
+                                  h3("Historisk reell strømpris"),
+                                  fluidPage(
+                                    plotlyOutput("history_spotplot"),
+                                    fluidRow(
+                                      box(width = 12,
+                                          h3("Forklaring"),
+                                          #                                    p("Dagens strømprissytem med store svininger variabel og effektbasert nettleie")
+                                          p("Grafen ovenfor viser den reelle forbruksbaserte prisen for spotpriskunder:"),
+                                          p(
+                                            strong(
+                                              tags$span(style=paste0("color:",mycols['totalpris']),"Reell pris"),
+                                              "=",
+                                              tags$span(style=paste0("color:",mycols['spotpris']),"spotpris"),
+                                              "+",
+                                              tags$span(style=paste0("color:",mycols['nettleie']),"nettleie"),
+                                              "-",
+                                              tags$span(style=paste0("color:",mycols['stotte']),"strømstøtte")
+                                            )
+                                          ),
+                                          p("Grunnen til at den reelle prisen vises som et estimat (m/usikkerhet) er at strømstøtten er ikke er kjent før månedsslutt,",
+                                            "og strømstøtten derfor er estimert basert på en ",
+                                            tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","statistisk modell")
+                                          ),
+                                          h4("Merk"),
+                                          p("Faste og effektbasert månedsavgift fra nettleverandør kommer i tillegg på regningen fra nettleverandør."),
+                                          p("Faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kommer i tillegg på regningen fra din strømleverandør.")
+                                      ),
+                                    )
+                                  )
 )
 
 
@@ -365,7 +393,7 @@ server <- function(input, output,session) {
      lower <- updated_dt_comp()[type=="quantile_0.025",compensation]
 
      div(
-       p("Estimert strømstøtte for prisområde: ",strong(input$prisomraade)),
+       p("Strømstøtte for prisområde: ",strong(input$prisomraade)),
        p("Estimat: ",twodigits(med)," kr/kWh"),
        p("95% konfidensintervall: (",twodigits(lower),",",twodigits(upper),") kr/kWh")
      )
@@ -374,13 +402,13 @@ server <- function(input, output,session) {
    plot_dt_final <- reactive({
      estimation_date0=today-1 # Fix this!
 
-     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap == input$nettselskap]
-     #updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
-     #updated_dt_comp0 <- dt_comp[area == input$prisomraade]
+     updated_dt_nettleie0 <- dt_nettleie[Nettselskap == input$nettselskap]
+     updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
+     updated_dt_comp0 <- dt_comp[area == input$prisomraade]
 
-     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
-     updated_dt_comp0 <- dt_comp[area == "NO1"]
+     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     #updated_dt_hourly0 <- dt_hourly[area=="NO1"]
+     #updated_dt_comp0 <- dt_comp[area == "NO1"]
 
      updated_dt_hourly0[,computation_year:=year(date)]
      updated_dt_hourly0[,computation_month:=month(date)]
@@ -463,8 +491,8 @@ server <- function(input, output,session) {
 
      p_now <- ggplot(data=dt_list$plot_dt_final[datetime>=today-1],mapping=aes(x=datetime,y=pris,col=type,fill=type))+
        geom_line(aes(size=linesize))+
-       geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.5)+
-       #ggtitle("Estimert reell strømpris")+
+       geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.3)+
+       ggtitle("Estimert reell strømpris")+
        scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(15))+
        scale_x_datetime(name = "Tid/dato",
                         breaks=breaks_pretty(12),
@@ -494,10 +522,10 @@ server <- function(input, output,session) {
 
      dt_list <- plot_dt_final()
 
-     p_history <- ggplot(data=plot_dt_final,mapping=aes(x=datetime,y=pris,col=type,fill=type))+
+     p_history <- ggplot(data=dt_list$plot_dt_final,mapping=aes(x=datetime,y=pris,col=type,fill=type))+
        geom_line(aes(size=linesize))+
-       geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.5)+
-       #ggtitle("Estimert reell strømpris")+
+       geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.3)+
+#       ggtitle("Estimert reell strømpris")+
        scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(15))+
        scale_x_datetime(name = "Tid/dato",
                         breaks=breaks_pretty(12),
@@ -507,7 +535,7 @@ server <- function(input, output,session) {
        scale_color_manual(name="",values = mycols)+
        scale_fill_manual(name="",values = mycols)+
        guides(size="none")+
-       geom_line(data=texthelper_dt,aes(x=datetime,y=0,text=text),inherit.aes = F,size=0.00001)
+       geom_line(data=dt_list$texthelper_dt,aes(x=datetime,y=0,text=text),inherit.aes = F,size=0.00001)
 
      ggp_history <- ggplotly(p_history,dynamicTicks = TRUE,tooltip = "text")
      ggp_history <- layout(
