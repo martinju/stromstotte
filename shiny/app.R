@@ -118,10 +118,10 @@ sidebar <- dashboardSidebar(
     selectInput("prisomraade","Velg Prisområde",""),
     menuItem("Reell strømpris NÅ", tabName = "strompris_naa", icon = icon("dashboard",verify_fa = FALSE)),
     menuItem("Historisk reell strømpris", tabName = "strompris_history", icon = icon("dashboard",verify_fa = FALSE)),
-    menuItem("Strømstøtte", tabName = "stromstotte", icon = icon("bolt",verify_fa = FALSE)),
-    menuItem("Fremtidig strømpris", tabName = "strompris", icon = icon("bolt",verify_fa = FALSE)),
-    menuItem("Historisk estimering", tabName = "historic", icon = icon("bolt",verify_fa = FALSE)),
-    menuItem("Avanserte innstillinger", tabName = "settings", icon = icon("gear",verify_fa = FALSE)),
+#    menuItem("Strømstøtte", tabName = "stromstotte", icon = icon("bolt",verify_fa = FALSE)),
+#    menuItem("Fremtidig strømpris", tabName = "strompris", icon = icon("bolt",verify_fa = FALSE)),
+#    menuItem("Historisk estimering", tabName = "historic", icon = icon("bolt",verify_fa = FALSE)),
+    menuItem("Eksperimentering", tabName = "experimental", icon = icon("gear",verify_fa = FALSE)),
     menuItem("Om siden", tabName = "about", icon = icon("info",verify_fa = FALSE)),
     tags$html(
       tags$h5(
@@ -222,8 +222,8 @@ body_historic <- tabItem(tabName = "historic",
         h2("Putt inn noe om historisk tilpasning her.")
 )
 
-body_settings <- tabItem(tabName = "settings",
-                         h2("Avanserte innstillinger"),
+body_experimental <- tabItem(tabName = "experimental",
+                         h2("Eksperimentering"),
                          fluidPage(
                            box(
                              dateRangeInput("daterange_strompris_naa", "Datoer visning strømpris:",
@@ -255,8 +255,9 @@ body_settings <- tabItem(tabName = "settings",
                                        format = "dd-mm-yyyy")
                            )
                          ),
-                         p("TODO: Muliggjør valg av konfidensnivå her."),
-                         p("TODO: Muliggjør valg av type strømstøtte her (beregn i så fall støtten til slutt).")
+                         box(width = 12,
+                           plotlyOutput("spotplot")
+                         )
 )
 
 body_about <- tabItem(tabName = "about",
@@ -313,7 +314,7 @@ body <-  dashboardBody(
            body_stromstotte,
            body_strompris,
            body_historic,
-           body_settings,
+           body_experimental,
            body_about)
 )
 
@@ -586,9 +587,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- updated_dt_hourly()#dt_hourly[area=="NO1" & date==today]
      updated_dt_comp0 <- updated_dt_comp()#dt_comp[area == "NO1" & estimation_date==today-1,]
 
-     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     updated_dt_hourly0 <- dt_hourly[area=="NO1" & date%in%(c(today-1,today))]
-     updated_dt_comp0 <- dt_comp[area == "NO1" & estimation_date==today-1,]
+     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     #updated_dt_hourly0 <- dt_hourly[area=="NO1" & date%in%(c(today-1,today))]
+     #updated_dt_comp0 <- dt_comp[area == "NO1" & estimation_date==today-1,]
 
      #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="BARENTS NETT AS"]
      #updated_dt_hourly0 <- dt_hourly[area=="NO4" & date==today]
