@@ -1,24 +1,41 @@
 # TODO:
-# Fix header conflict with buttons for history
-# Fjern "estimat" fra text der strømstøtten er kjent.
-# Fiks farger i text slik at de passer med dem for
-# Endre legend title fra "type" til noe annet
+# DONE# Fix header conflict with buttons for history
+#DONE# Fjern "estimat" fra text der strømstøtten er kjent.
+#DONE# Fiks farger i text slik at de passer med dem for
+#DONE# Endre legend title fra "type" til noe annet
 # Legg now inn i min strømpris nå, og tilsvarende history inn i historiske reelle strømpriser
-
+# Knapp for å vise/ikke vise hover info.
 
 
 textfunc <- function(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI){
   date <- as.Date(datetime)
   start_hour <- lubridate::hour(datetime)
 
-  paste0("<span style='text-decoration:underline'><b>Priser (NOK/kWh) kl ",start_hour,"-",start_hour+1,": </b></span>\n",
-         "<span style='color:#619CFF'>Spot: ",twodigits(spotpris),"</span>\n",
-         "<span style='color:#00BA38'>Nettleie: ",twodigits(nettleie),"</span>\n",
-         "<span style='color:#619CFF'>Strømstøtte: ",twodigits(stotte)," (",twodigits(stotte_lower_CI),", ",twodigits(stotte_upper_CI),")","</span>\n\n",
-         "<span style='color:#F8766D'><b>Reell pris:</b>\n",
-         "Estimat: ",twodigits(totalpris)," (",twodigits(totalpris_lower_CI),", ",twodigits(totalpris_upper_CI),")</span>")
+  text_prev_month <-   paste0("<span style='text-decoration:underline'><b>",format(date,'%d.%m.%y')," kl. ",sprintf("%02d", start_hour),"-",sprintf("%02d", start_hour+1)," </b></span>\n",
+                              "<span style='color:",mycols['spotpris'],"'>Spot: ",twodigits(spotpris),"</span>\n",
+                              "<span style='color:",mycols['nettleie'],"'>Nettleie: ",twodigits(nettleie),"</span>\n",
+                              "<span style='color:",mycols['stotte'],"'>Strømstøtte: ",twodigits(stotte),"</span>\n\n",
+                              "<span style='color:",mycols['totalpris'],"'><b>Reell pris:</b>",twodigits(totalpris),"</span>")
+
+  text_this_month <-   paste0("<span style='text-decoration:underline'><b>",format(date,'%d.%m.%y')," kl. ",sprintf("%02d", start_hour),"-",sprintf("%02d", start_hour+1)," </b></span>\n",
+                              "<span style='color:",mycols['spotpris'],"'>Spot: ",twodigits(spotpris),"</span>\n",
+                              "<span style='color:",mycols['nettleie'],"'>Nettleie: ",twodigits(nettleie),"</span>\n",
+                              "<span style='color:",mycols['stotte'],"'>Estimert støtte: ",twodigits(stotte)," (",twodigits(stotte_lower_CI),", ",twodigits(stotte_upper_CI),")","</span>\n\n",
+                              "<span style='color:",mycols['totalpris'],"'><b>Reell pris:</b>\n",
+                              "Estimat: ",twodigits(totalpris)," (",twodigits(totalpris_lower_CI),", ",twodigits(totalpris_upper_CI),")</span>")
+
+  ret <- text_prev_month
+  ret[!is.na(stotte_lower_CI)] <- text_this_month[!is.na(stotte_lower_CI)]
+
+  return(ret)
 }
 
+# Colorblind friendly colors from here: http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/#a-colorblind-friendly-palette
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+mycols <- c(spotpris=cbbPalette[1],
+            nettleie = cbbPalette[2],
+            stotte = cbbPalette[4],
+            totalpris = cbbPalette[3])
 
 
 estimation_date0=today#today-1
@@ -95,6 +112,7 @@ plot_dt_final[type%in% c("totalpris","stotte"),linesize := "a"]
 #plot_dt_final <- merge(plot_dt_final,texthelper_dt,by=c("datetime","type"),all = T)
 
 setcolorder(plot_dt_final,c("datetime","type","pris","lower_CI","upper_CI","linesize"))
+plot_dt_final[,type:=factor(type,levels=c("spotpris","nettleie","stotte","totalpris"))]
 
 
 setkey(plot_dt_final,datetime)
@@ -102,18 +120,20 @@ setkey(plot_dt_final,datetime)
 p_history <- ggplot(data=plot_dt_final,mapping=aes(x=datetime,y=pris,col=type,fill=type))+
   geom_line(aes(size=linesize))+
   geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.5)+
-  ggtitle("Estimert reell strømpris")+
-  scale_y_continuous(name = "Pris (NOK/kWh)",labels=scaleFUN,breaks = breaks_extended(15))+
+  #ggtitle("Estimert reell strømpris")+
+  scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(15))+
   scale_x_datetime(name = "Tid/dato",
                    breaks=breaks_pretty(12),
                    minor_breaks = breaks_pretty(24),
                    labels = label_date_short(format = c("%Y", "", "%d.%b\n", "%H:%M\n"),sep=""))+ # TODO: Get Norwegian months
   scale_size_manual(values=c("a" = 1,"b"=0.5))+
+  scale_color_manual(name="",values = mycols)+
+  scale_fill_manual(name="",values = mycols)+
   guides(size="none")+
   geom_line(data=texthelper_dt,aes(x=datetime,y=0,text=text),inherit.aes = F,size=0.00001)
 
 
-p_history
+#p_history
 
 ggp_history <- ggplotly(p_history,dynamicTicks = TRUE,tooltip = "text")
 ggp_history <- layout(
@@ -155,14 +175,16 @@ ggp_history
 p_now <- ggplot(data=plot_dt_final[datetime>=today-1],mapping=aes(x=datetime,y=pris,col=type,fill=type))+
   geom_line(aes(size=linesize))+
   geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.5)+
-  ggtitle("Estimert reell strømpris")+
-  scale_y_continuous(name = "Pris (NOK/kWh)",labels=scaleFUN,breaks = breaks_extended(15))+
+  #ggtitle("Estimert reell strømpris")+
+  scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(15))+
   scale_x_datetime(name = "Tid/dato",
                    breaks=breaks_pretty(12),
                    minor_breaks = breaks_pretty(24),
                    labels = label_date_short(format = c("%Y", "", "%d.%b\n", "%H:%M\n"),sep=""))+ # TODO: Get Norwegian months
   scale_size_manual(values=c("a" = 1,"b"=0.5))+
   guides(size="none")+
+  scale_color_manual(name="",values = mycols)+
+  scale_fill_manual(name="",values = mycols)+
   geom_line(data=texthelper_dt[datetime>=today-1],aes(x=datetime,y=0,text=text),inherit.aes = F,size=0.00001)
 
 p_now
@@ -177,7 +199,7 @@ ggp_now <- style(ggp_now,hoverinfo="none",traces=1:8)
 ggp_now
 
 
-style(ggplotly(p),visible="legendonly", traces = 2)
+#style(ggplotly(p),visible="legendonly", traces = 2)
 
 
 # TODO:
