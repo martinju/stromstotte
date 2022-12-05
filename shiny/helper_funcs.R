@@ -4,7 +4,7 @@ twodigits <- function(x){
 
 scaleFUN <- function(x) sprintf("%.2f", x)
 
-textfunc <- function(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI){
+textfunc <- function(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols){
   date <- as.Date(datetime)
   start_hour <- lubridate::hour(datetime)
 

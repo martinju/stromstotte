@@ -364,7 +364,7 @@ server <- function(input, output,session) {
    })
 
    plot_dt_final <- reactive({
-     estimation_date0=today#today-1
+     estimation_date0=today-1 # Fix this!
 
      #updated_dt_nettleie0 <- dt_nettleie[Nettselskap == input$nettselskap]
      #updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
@@ -410,7 +410,7 @@ server <- function(input, output,session) {
 
      plot_strompris_naa_dt0 <- plot_strompris_naa_dt[,.(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI)]
 
-     texthelper_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI))]
+     texthelper_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols))]
 
      plot_strompris_naa_dt0_dup <- copy(plot_strompris_naa_dt0)
      plot_strompris_naa_dt0_dup[,datetime:=datetime+1*60*60-1]
@@ -442,7 +442,8 @@ server <- function(input, output,session) {
      setkey(plot_dt_final,datetime)
 
 
-     plot_dt_final
+     list(plot_dt_final=plot_dt_final,
+          texthelper_dt=texthelper_dt)
    })
 
 
@@ -451,9 +452,9 @@ server <- function(input, output,session) {
      if (identical(input$prisomraade, "")) return(NULL)
      if (identical(input$nettselskap, "")) return(NULL)
 
-     plot_dt_final0 <- plot_dt_final()
+     dt_list <- plot_dt_final()
 
-     p_now <- ggplot(data=plot_dt_final[datetime>=today-1],mapping=aes(x=datetime,y=pris,col=type,fill=type))+
+     p_now <- ggplot(data=dt_list$plot_dt_final[datetime>=today-1],mapping=aes(x=datetime,y=pris,col=type,fill=type))+
        geom_line(aes(size=linesize))+
        geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.5)+
        #ggtitle("Estimert reell strømpris")+
@@ -466,7 +467,7 @@ server <- function(input, output,session) {
        guides(size="none")+
        scale_color_manual(name="",values = mycols)+
        scale_fill_manual(name="",values = mycols)+
-       geom_line(data=texthelper_dt[datetime>=today-1],aes(x=datetime,y=0,text=text),inherit.aes = F,size=0.00001)
+       geom_line(data=dt_list$texthelper_dt[datetime>=today-1],aes(x=datetime,y=0,text=text),inherit.aes = F,size=0.00001)
 
      ggp_now <- ggplotly(p_now,dynamicTicks = TRUE,tooltip = "text")
      ggp_now <- layout(
