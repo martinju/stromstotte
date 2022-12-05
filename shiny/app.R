@@ -504,6 +504,7 @@ server <- function(input, output,session) {
        guides(size="none")+
        scale_color_manual(name="",values = mycols)+
        scale_fill_manual(name="",values = mycols)+
+       geom_vline(xintercept=Sys.time(),linetype=2,col="grey",inherit.aes=F)+
        geom_line(data=dt_list$texthelper_dt[datetime>=dt_list$estimation_date0],aes(x=datetime,y=0,text=text),inherit.aes = F,size=0.00001)
 
      ggp_now <- ggplotly(p_now,dynamicTicks = TRUE,tooltip = "text")
@@ -512,7 +513,7 @@ server <- function(input, output,session) {
        hovermode = "x unified"
      )
      ggp_now <- style(ggp_now,visible="legendonly",traces=c(3,7)) #trace=2 identified through plotly_json(ggp_now)
-     ggp_now <- style(ggp_now,hoverinfo="none",traces=1:8)
+     ggp_now <- style(ggp_now,hoverinfo="none",traces=1:9)
      ggp_now
 
    })
