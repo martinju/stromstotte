@@ -54,7 +54,7 @@ library(data.table)
 deployed <- TRUE
 
 if(deployed){
-  path <- "https://raw.githubusercontent.com/martinju/stromstotte/"
+  path <- "https://raw.githubusercontent.com/martinju/stromstotte/master/"
 } else{
   path <- "../"
 }
