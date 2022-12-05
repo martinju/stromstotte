@@ -116,7 +116,8 @@ sidebar <- dashboardSidebar(
     selectizeInput("postnr","Skriv inn postnummer",choices=NULL),
     selectInput("nettselskap","Velg Nettselskap",""),
     selectInput("prisomraade","Velg Prisområde",""),
-    menuItem("Din reelle strømpris", tabName = "strompris_naa", icon = icon("dashboard",verify_fa = FALSE)),
+    menuItem("Reell strømpris NÅ", tabName = "strompris_naa", icon = icon("dashboard",verify_fa = FALSE)),
+#    menuItem("Historisk reell strømpris", tabName = "strompris_history", icon = icon("dashboard",verify_fa = FALSE)),
     menuItem("Strømstøtte", tabName = "stromstotte", icon = icon("bolt",verify_fa = FALSE)),
     menuItem("Fremtidig strømpris", tabName = "strompris", icon = icon("bolt",verify_fa = FALSE)),
     menuItem("Historisk estimering", tabName = "historic", icon = icon("bolt",verify_fa = FALSE)),
@@ -144,20 +145,20 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                       p("Grafen ovenfor viser den reelle forbruksbaserte prisen for spotpriskunder:"),
                                       p(
                                         strong(
-                                          tags$span(style="color:#F8766D","Reell pris"),
+                                          tags$span(style=paste0("color:",mycols['totalpris']),"Reell pris"),
                                           "=",
-                                          tags$span(style="color:#619CFF","spotpris"),
+                                          tags$span(style=paste0("color:",mycols['spotpris']),"spotpris"),
                                           "+",
-                                          tags$span(style="color:#00BA38","nettleie"),
+                                          tags$span(style=paste0("color:",mycols['nettleie']),"nettleie"),
                                           "-",
-                                          tags$span("strømstøtte")
+                                          tags$span(style=paste0("color:",mycols['stotte']),"strømstøtte")
                                         )
                                       ),
                                       p("Grunnen til at den reelle prisen vises som et estimat (m/usikkerhet) er at strømstøtten er ikke er kjent før månedsslutt,",
                                         "og strømstøtten derfor er estimert basert på en ",
                                         tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","statistisk modell")
                                       ),
-                                      h4("Merk:"),
+                                      h4("Merk"),
                                       p("Faste og effektbasert månedsavgift fra nettleverandør kommer i tillegg på regningen fra nettleverandør."),
                                       p("Faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kommer i tillegg på regningen fra din strømleverandør.")
                                   ),
@@ -169,6 +170,44 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                 )
                               )
 )
+body_strompris_history <- tabItem(tabName = "strompris_history",
+                              fluidPage(
+                                plotlyOutput("history_spotplot"),
+                                fluidRow(
+                                  box(width = 8,
+                                      h3("Forklaring"),
+                                      #                                    p("Dagens strømprissytem med store svininger variabel og effektbasert nettleie")
+                                      p("Grafen ovenfor viser den reelle forbruksbaserte prisen for spotpriskunder:"),
+                                      p(
+                                        strong(
+                                          tags$span(style=paste0("color:",mycols['totalpris']),"Reell pris"),
+                                          "=",
+                                          tags$span(style=paste0("color:",mycols['spotpris']),"spotpris"),
+                                          "+",
+                                          tags$span(style=paste0("color:",mycols['nettleie']),"nettleie"),
+                                          "-",
+                                          tags$span(style=paste0("color:",mycols['stotte']),"strømstøtte")
+                                        )
+                                      ),
+                                      p("Grunnen til at den reelle prisen for inneværende måned vises som et estimat (m/usikkerhet) er at strømstøtten er ikke er kjent før månedsslutt,",
+                                        "og strømstøtten derfor er estimert basert på en ",
+                                        tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","statistisk modell")
+                                      ),
+                                      p("For tidligere måneder er strømstøtten per nå kjent. Der vises den faktiske strømstøtten."),
+                                      h4("Merk"),
+                                      p("Faste og effektbasert månedsavgift fra nettleverandør kommer i tillegg på regningen fra nettleverandør."),
+                                      p("Faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kommer i tillegg på regningen fra din strømleverandør.")
+                                  ),
+                                  box(width = 4,
+                                      title = "Oppsummert ",
+                                      uiOutput("nettleie")#,
+#                                      uiOutput("stromstotte")
+                                  )
+                                )
+                              )
+)
+
+
 body_stromstotte <- tabItem(tabName = "stromstotte",
                 h2("Putt inn noe om strømstøtte her.")#,
 #                fluidRow(
@@ -274,6 +313,7 @@ body_about <- tabItem(tabName = "about",
 
 body <-  dashboardBody(
   tabItems(body_strompris_naa,
+#           body_strompris_history,
            body_stromstotte,
            body_strompris,
            body_historic,
@@ -480,7 +520,67 @@ server <- function(input, output,session) {
 
    })
 
+   output$history_spotplot <- renderPlotly({
+     req(input$postnr,input$nettselskap, input$prisomraade)
+     if (identical(input$prisomraade, "")) return(NULL)
+     if (identical(input$nettselskap, "")) return(NULL)
 
+     dt_list <- plot_dt_final()
+
+     p_history <- ggplot(data=plot_dt_final,mapping=aes(x=datetime,y=pris,col=type,fill=type))+
+       geom_line(aes(size=linesize))+
+       geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.5)+
+       #ggtitle("Estimert reell strømpris")+
+       scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(15))+
+       scale_x_datetime(name = "Tid/dato",
+                        breaks=breaks_pretty(12),
+                        minor_breaks = breaks_pretty(24),
+                        labels = label_date_short(format = c("%Y", "", "%d.%b\n", "%H:%M\n"),sep=""))+ # TODO: Get Norwegian months
+       scale_size_manual(values=c("a" = 1,"b"=0.5))+
+       scale_color_manual(name="",values = mycols)+
+       scale_fill_manual(name="",values = mycols)+
+       guides(size="none")+
+       geom_line(data=texthelper_dt,aes(x=datetime,y=0,text=text),inherit.aes = F,size=0.00001)
+
+     ggp_history <- ggplotly(p_history,dynamicTicks = TRUE,tooltip = "text")
+     ggp_history <- layout(
+       ggp_history,
+       hovermode = "x unified",
+       xaxis = list(
+         rangeselector = list(
+           buttons = list(
+             list(
+               count = 1,
+               label = "denne måned",
+               step = "month",
+               stepmode = "todate"),
+             list(
+               count = lubridate::wday(Sys.Date(),week_start=1),
+               label = "denne uka",
+               step = "day",
+               stepmode = "todate"),
+             list(
+               count = 1,
+               label = "idag",
+               step = "day",
+               stepmode = "todate"),
+             list(
+               count = 2,
+               label = "2 siste dager",
+               step = "day",
+               stepmode = "todate")
+           )),
+         rangeslider = list(type = "date")
+       )
+     )
+
+     ggp_history <- style(ggp_history,visible="legendonly",traces=c(3,7)) #trace=2 identified through plotly_json(ggp_history)
+     ggp_history <- style(ggp_history,hoverinfo="none",traces=1:8)
+     ggp_history
+
+   })
+
+   ### OLD ###
 
    output$spotplot <- renderPlotly({
      req(input$postnr,input$nettselskap, input$prisomraade)
@@ -598,7 +698,6 @@ server <- function(input, output,session) {
        style(p, hoverinfo = "none", traces = 2:(length(p$layers)))
     })
 
-  ### OLD ###
   set.seed(122)
   histdata <- rnorm(500)
 
