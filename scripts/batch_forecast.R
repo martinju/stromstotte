@@ -23,7 +23,10 @@ model_filename <- "models/model_list.RData"
 
 current_density_compensation_filename <- "data/current_estimated_compensation_density.csv"
 current_compensation_filename <- "data/current_estimated_compensation.csv"
-historic_compensation_filename <- "data/historic_estimated_compensation_full.csv"
+historic_compensation_filename <- "data/historic_estimated_compensation.csv"
+
+current_compensation_filename_json <- "data/current_estimated_compensation.json"
+historic_compensation_filename_json <- "data/historic_estimated_compensation.json"
 
 ### Input
 
@@ -35,7 +38,7 @@ database_daily <- fread(database_filename)
 
 setkey(database_daily,"area","date")
 
-today_dates <- seq(as.IDate("2022-03-01"),as.IDate("2022-08-31"),by=1)
+today_dates <- seq(as.IDate("2022-11-30"),as.IDate("2022-12-06"),by=1)
 
 for(kkk in seq_along(today_dates)){
 
@@ -46,6 +49,7 @@ for(kkk in seq_along(today_dates)){
   if(database_daily[date==tomorrow,.N]==0){
     stop("Data for tomorrow not recorded!")
   }
+
 
 
   this_month <- month(tomorrow)
@@ -89,7 +93,7 @@ for(kkk in seq_along(today_dates)){
 
     wday_numeric_list[[j]] <- model.matrix(~wday,data=prediction_dt_list[[j]])
 
-    pred_mod_list[[j]] <- forecast::Arima(y=prediction_dt_list[[j]]$price,model=this_mod,xreg = wday_numeric_list[[j]][,-1])
+    pred_mod_list[[j]] <- forecast::Arima(y=prediction_dt_list[[j]]$price,model=this_mod,xreg = wday_numeric_list[[j]][,-1,drop=FALSE])
 
   }
 
@@ -109,7 +113,7 @@ for(kkk in seq_along(today_dates)){
       for(i in 1:k_sim){
 
 
-        samps <- simulate(pred_mod_list[[j]],nsim=remaining_days,future=TRUE,bootstrap=bootstrap_residuals,xreg=wday_numeric_future[,-1])
+        samps <- simulate(pred_mod_list[[j]],nsim=remaining_days,future=TRUE,bootstrap=bootstrap_residuals,xreg=wday_numeric_future[,-1,drop=FALSE])
         samp_price_mat[i,j] <- mean(pmax(0,samps))
       }
     }
@@ -127,6 +131,9 @@ for(kkk in seq_along(today_dates)){
                                                    compensation_prop = compensation_prop)]
 
 
+  pos_comp <- function(x){mean(x>0)}
+  pos_comp_dt <- estimation_dt[,lapply(.SD,pos_comp),.SDcols=c("mean_price","compensation"),by=area]
+  pos_comp_dt[,type:="pos_comp"]
 
 
 
@@ -156,7 +163,7 @@ for(kkk in seq_along(today_dates)){
   current_monthly_mean_dt[,type:="current_mean"]
 
 
-  res_dt <- rbind(means_dt,medians_dt,quants_dt,lower_bound_dt,current_monthly_mean_dt)
+  res_dt <- rbind(pos_comp_dt,means_dt,medians_dt,quants_dt,lower_bound_dt,current_monthly_mean_dt)
   res_dt[,estimation_date:=today]
   res_dt[,computation_year:=data.table::year(tomorrow)]
   res_dt[,computation_month:=data.table::month(tomorrow)]
@@ -175,8 +182,9 @@ for(kkk in seq_along(today_dates)){
 
   setkey(res_dt,estimation_date,area)
 
-  #fwrite(density_dt,current_density_compensation_filename)
-  #fwrite(res_dt,current_compensation_filename)
+  fwrite(density_dt,current_density_compensation_filename)
+  fwrite(res_dt,current_compensation_filename)
+  jsonlite::write_json(res_dt,current_compensation_filename_json)
 
 
   prev_historic_compensation <- fread(historic_compensation_filename)
@@ -195,6 +203,10 @@ for(kkk in seq_along(today_dates)){
   } else {
     fwrite(res_dt,historic_compensation_filename,append=T)
   }
+
+  new_historic_res_dt <- fread(historic_compensation_filename)
+
+  jsonlite::write_json(new_historic_res_dt,historic_compensation_filename_json)
 
   print(paste0("COMP DONE FOR ",today))
 }

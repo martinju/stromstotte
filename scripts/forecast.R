@@ -84,7 +84,7 @@ for(j in seq_along(areas)){
 
   wday_numeric_list[[j]] <- model.matrix(~wday,data=prediction_dt_list[[j]])
 
-  pred_mod_list[[j]] <- forecast::Arima(y=prediction_dt_list[[j]]$price,model=this_mod,xreg = wday_numeric_list[[j]][,-1])
+  pred_mod_list[[j]] <- forecast::Arima(y=prediction_dt_list[[j]]$price,model=this_mod,xreg = wday_numeric_list[[j]][,-1,drop=FALSE])
 
 }
 
