@@ -3,10 +3,13 @@
 #TODO før release
 # Sjekk at nettleie-navn er kompatibelt på tvers av datasett
 # Sjekk bug med postnr 2863 + "SØR AURDAL ENERGI AS"
-# Lag tab med endringslog (som henter .md fil som oppdateres)
+## Lag tab med endringslog (som henter .md fil som oppdateres)
 # Lag fane med strømstøtte der Rmarkdown-fila legges inn.
 # Legg til feedback-knapp som linker til issues på github, samt epostdresse
 # Last opp app til AWS
+### END ###
+
+# Automatisk deployment ved opplasting til GitHub
 
 #DONE# Editer hoovertekst
 #DONE (for now)# Plot innværende døgn hvis før kl 13, plot fra nå og ut neste døgn hvis neste døgn er kjørt. # 1
@@ -131,6 +134,7 @@ sidebar <- dashboardSidebar(
 #    menuItem("Historisk estimering", tabName = "historic", icon = icon("bolt",verify_fa = FALSE)),
     menuItem("Eksperimentering", tabName = "experimental", icon = icon("gear",verify_fa = FALSE)),
     menuItem("Om siden", tabName = "about", icon = icon("info",verify_fa = FALSE)),
+    menuItem("Endringslogg", tabName = "changelog", icon = icon("info",verify_fa = FALSE)),
     tags$html(
       tags$h5(
         tags$em("Laget av ",
@@ -314,6 +318,10 @@ body_about <- tabItem(tabName = "about",
                       #                      verbatimTextOutput("datarange_strompris_naa")
 )
 
+body_changelog <- tabItem(tabName = "changelog",
+                         htmltools::includeMarkdown("changelog.md")
+)
+
 
 
 body <-  dashboardBody(
@@ -323,7 +331,8 @@ body <-  dashboardBody(
            body_strompris,
            body_historic,
            body_experimental,
-           body_about)
+           body_about,
+           body_changelog)
 )
 
 
