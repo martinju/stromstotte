@@ -1,5 +1,13 @@
 # TODO:
 
+#TODO før release
+# Sjekk at nettleie-navn er kompatibelt på tvers av datasett
+# Sjekk bug med postnr 2863 + "SØR AURDAL ENERGI AS"
+# Lag tab med endringslog (som henter .md fil som oppdateres)
+# Lag fane med strømstøtte der Rmarkdown-fila legges inn.
+# Legg til feedback-knapp som linker til issues på github, samt epostdresse
+# Last opp app til AWS
+
 #DONE# Editer hoovertekst
 #DONE (for now)# Plot innværende døgn hvis før kl 13, plot fra nå og ut neste døgn hvis neste døgn er kjørt. # 1
 #DONE # Legg til tekst på siden som viser nettleie, estimert strømstøtte osv for aktuelt valg.
@@ -21,7 +29,7 @@
 # dragslider under samt knapper med siste uke, måned, år og alt bør med
 # Under der igjen vises slider som man kan dra på for å vise andre konfidensintervaller.
 ## TODO for nytt oppsett
-# Lag 1 kombinert datasett som kan brukes til ALT. Skill på estimert og faktisk strømstøtte
+## Lag 1 kombinert datasett som kan brukes til ALT. Skill på estimert og faktisk strømstøtte
 
 
 
@@ -51,7 +59,7 @@ Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
 
 library(data.table)
 
-deployed <- TRUE
+deployed <- FALSE
 
 if(deployed){
   path <- "https://raw.githubusercontent.com/martinju/stromstotte/master/"
@@ -438,8 +446,8 @@ server <- function(input, output,session) {
      plot_strompris_naa_dt <- merge(plot_strompris_naa_dt,dc3,by=c("computation_year", "computation_month"))
 
      plot_strompris_naa_dt[,totalpris:=spotpris+nettleie-stotte]
-     plot_strompris_naa_dt[,totalpris_lower_CI:=spotpris+nettleie-stotte_lower_CI]
-     plot_strompris_naa_dt[,totalpris_upper_CI:=spotpris+nettleie-stotte_upper_CI]
+     plot_strompris_naa_dt[,totalpris_lower_CI:=spotpris+nettleie-stotte_upper_CI]
+     plot_strompris_naa_dt[,totalpris_upper_CI:=spotpris+nettleie-stotte_lower_CI]
 
 
      plot_strompris_naa_dt[,datetime:=as.POSIXct(date)+start_hour*60*60]
