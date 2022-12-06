@@ -3,10 +3,13 @@
 #TODO før release
 # Sjekk at nettleie-navn er kompatibelt på tvers av datasett
 # Sjekk bug med postnr 2863 + "SØR AURDAL ENERGI AS"
-## Lag tab med endringslog (som henter .md fil som oppdateres)
-# Lag fane med strømstøtte der Rmarkdown-fila legges inn.
-# Legg til feedback-knapp som linker til issues på github, samt epostdresse
+#DONE## Lag tab med endringslog (som henter .md fil som oppdateres)
+#DON## Lag fane med strømstøtte der Rmarkdown-fila legges inn.
+#DONE# Legg til feedback-knapp som linker til issues på github, samt epostdresse
 # Last opp app til AWS
+# sotte -> støtte i plotlytab-vinduet
+# Gjør "Oversikt" litt bedre
+# Legg til google analytics.
 ### END ###
 
 # Automatisk deployment ved opplasting til GitHub
@@ -103,6 +106,12 @@ mycols <- c(spotpris=cbbPalette[1],
 
 ######
 
+rmdfiles <- c("stromstotte_shiny_description.Rmd")
+sapply(rmdfiles, knitr::knit, quiet = T)
+
+
+#######
+
 today <- Sys.Date()
 
 
@@ -115,11 +124,12 @@ library(shinydashboard)
 library(plotly)
 library(ggplot2)
 library(scales)
+library(knitr)
 #library(pammtools)
 
 ## app.R ##
 
-header <- dashboardHeader(title = "Strømpris med strømstøtte",titleWidth = 300)
+header <- dashboardHeader(title = "Din reelle strømpris",titleWidth = 300)
 
 sidebar <- dashboardSidebar(
   width = 300,
@@ -129,10 +139,10 @@ sidebar <- dashboardSidebar(
     selectInput("prisomraade","Velg Prisområde",""),
     menuItem("Reell strømpris NÅ", tabName = "strompris_naa", icon = icon("dashboard",verify_fa = FALSE)),
     menuItem("Historisk reell strømpris", tabName = "strompris_history", icon = icon("dashboard",verify_fa = FALSE)),
-#    menuItem("Strømstøtte", tabName = "stromstotte", icon = icon("bolt",verify_fa = FALSE)),
+    menuItem("Estimering av strømstøtte", tabName = "stromstotte", icon = icon("bolt",verify_fa = FALSE)),
 #    menuItem("Fremtidig strømpris", tabName = "strompris", icon = icon("bolt",verify_fa = FALSE)),
 #    menuItem("Historisk estimering", tabName = "historic", icon = icon("bolt",verify_fa = FALSE)),
-    menuItem("Eksperimentering", tabName = "experimental", icon = icon("gear",verify_fa = FALSE)),
+#    menuItem("Eksperimentering", tabName = "experimental", icon = icon("gear",verify_fa = FALSE)),
     menuItem("Om siden", tabName = "about", icon = icon("info",verify_fa = FALSE)),
     menuItem("Endringslogg", tabName = "changelog", icon = icon("info",verify_fa = FALSE)),
     tags$html(
@@ -149,6 +159,7 @@ sidebar <- dashboardSidebar(
 
 body_strompris_naa <- tabItem(tabName = "strompris_naa",
                               fluidPage(
+                                tags$head(includeScript("google_analytics.html")),
                                 plotlyOutput("now_spotplot"),
                                 fluidRow(
                                   box(width = 8,
@@ -217,13 +228,9 @@ body_strompris_history <- tabItem(tabName = "strompris_history",
 
 
 body_stromstotte <- tabItem(tabName = "stromstotte",
-                h2("Putt inn noe om strømstøtte her.")#,
-#                fluidRow(
-#                  box(plotOutput("plot1", height = 250)),
-#                  box(title = "Controls",
-##                      sliderInput("slider", "Number of observations:", 1, 100, 50)
-#                  )
-#                )
+                            fluidPage(
+                              withMathJax(includeMarkdown("stromstotte_shiny_description.md"))
+                            )
 )
 
 body_strompris <- tabItem(tabName = "strompris",
@@ -284,10 +291,13 @@ body_about <- tabItem(tabName = "about",
                         p("Disse estimatene oppdateres daglig etter hvert som morgendags spotpriser blir tilgjenglig, og fremtidige spotpriser blir simulert (ca kl. 13.30)."),
                         p("Siden er laget av ",
                           tags$a(href="https://martinjullum.com/","Martin Jullum"),
+                          "(",
+                          tags$a(href="mailto:jullum@nr.no?subject=minstrompris.no","epost: jullum@nr.no"),
+                          ") ",
                           "seniorforsker ",
-                          tags$a(href="https://nr.no/","Norsk Regnesentral"),
-                          "basert på åpne datakilder (se til høyre)."
-                        ),
+                          tags$a(href="https://nr.no/","Norsk Regnesentral")
+                          ),
+                        p("Det er kun benyttet åpne datakilder (se til høyre)."),
                         p("All kildekode tilhørende dette prosjektet er tilgjenglig på ",
                           tags$a(href="https://github.com/martinju/stromstotte","github.com/martinju/stromstotte"),
                           "Fremtidige spotpriser simuleres automatisk ved hjelp av ",
@@ -314,6 +324,12 @@ body_about <- tabItem(tabName = "about",
                         h4("Spotprisområder"),
                         p("Data med geografisk område for de fem spotprisområdene er 'manuelt' ekportet i GeoJson format fra NVEs",
                           tags$a(href="https://temakart.nve.no/tema/nettanlegg", "temakart for nettanlegg")),
+                      ),
+                      box(
+                        h2("Innspill"),
+                        p("Har du funnet feil, eller har forslag til forbedringer av tjenesten? Opprett gjerne et ",
+                          tags$a(href="https://github.com/martinju/stromstotte/issues","'issue'"), "på sidens ",
+                          tags$a(href="https://github.com/martinju/stromstotte/","GitHub repo"),".")
                       )
                       #                      verbatimTextOutput("datarange_strompris_naa")
 )
