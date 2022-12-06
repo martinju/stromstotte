@@ -4,3 +4,4 @@
 - La til endringslogg
 - La til forklaring av strømstøtteestimering
 - La til midlertidig tracking fra Google analytics
+

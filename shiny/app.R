@@ -60,15 +60,16 @@
 # 2. Estimert strømstøtte
 # 3. Estimert strømpris
 
-Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
+#Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
+#Sys.setlocale("LC_ALL", "en_US") # UTF-8 to get latin letters
 
 
 library(data.table)
 
-deployed <- FALSE
+deployed <- TRUE
 
 if(deployed){
-  path <- "https://raw.githubusercontent.com/martinju/stromstotte/master/"
+  path <- "https://raw.githubusercontent.com/martinju/stromstotte/before_release/"
 } else{
   path <- "../"
 }
@@ -129,7 +130,7 @@ library(knitr)
 
 ## app.R ##
 
-header <- dashboardHeader(title = "Din reelle strømpris",titleWidth = 300)
+header <- dashboardHeader(title = "Min reelle strømpris",titleWidth = 300)
 
 sidebar <- dashboardSidebar(
   width = 300,
