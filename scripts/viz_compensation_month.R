@@ -21,8 +21,13 @@ res_dt[,computation_date:=estimation_date+1]
 
 res_dt <- res_dt[area%in% areas]
 
+# To re-run figures for single dates
+#aa = "2022-12-07"
+#res_dt <- res_dt[computation_date<=aa]
+#daily_dt <- daily_dt[date<=aa]
+
 this_date <- res_dt[,max(computation_date)]
-#this_date <- as.IDate("2022-09-30")
+#this_date <- as.IDate("2022-12-01")
 
 this_month <- data.table::month(this_date)
 this_year <- data.table::year(this_date)
