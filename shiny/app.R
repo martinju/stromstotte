@@ -126,7 +126,7 @@ library(plotly)
 library(ggplot2)
 library(scales)
 library(knitr)
-#library(pammtools)
+library(htmltools)
 
 ## app.R ##
 
