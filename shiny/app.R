@@ -10,6 +10,7 @@
 # sotte -> støtte i plotlytab-vinduet
 # Gjør "Oversikt" litt bedre
 # Legg til google analytics.
+# Legg til fast og effektbasert nettleie i oppsummeringen under til høyre.
 ### END ###
 
 # Automatisk deployment ved opplasting til GitHub
@@ -66,7 +67,7 @@
 
 library(data.table)
 
-deployed <- TRUE
+deployed <- FALSE
 
 if(deployed){
   path <- "https://raw.githubusercontent.com/martinju/stromstotte/before_release/"
@@ -103,6 +104,10 @@ mycols <- c(spotpris=cbbPalette[1],
             nettleie = cbbPalette[2],
             stotte = cbbPalette[4],
             totalpris = cbbPalette[3])
+mylabels <- c(spotpris= "Spotpris",
+            nettleie = "Nettleie",
+            stotte = "Strømstøtte",
+            totalpris = "Din strømpris")
 
 
 ######
@@ -130,7 +135,7 @@ library(htmltools)
 
 ## app.R ##
 
-header <- dashboardHeader(title = "Min reelle strømpris",titleWidth = 300)
+header <- dashboardHeader(title = "Min strømpris",titleWidth = 300)
 
 sidebar <- dashboardSidebar(
   width = 300,
@@ -138,8 +143,8 @@ sidebar <- dashboardSidebar(
     selectizeInput("postnr","Skriv inn postnummer",choices=NULL),
     selectInput("nettselskap","Velg Nettselskap",""),
     selectInput("prisomraade","Velg Prisområde",""),
-    menuItem("Reell strømpris NÅ", tabName = "strompris_naa", icon = icon("dashboard",verify_fa = FALSE)),
-    menuItem("Historisk reell strømpris", tabName = "strompris_history", icon = icon("dashboard",verify_fa = FALSE)),
+    menuItem("Min strømpris NÅ", tabName = "strompris_naa", icon = icon("dashboard",verify_fa = FALSE)),
+    menuItem("Detaljert historisk strømpris", tabName = "strompris_history", icon = icon("dashboard",verify_fa = FALSE)),
     menuItem("Estimering av strømstøtte", tabName = "stromstotte", icon = icon("bolt",verify_fa = FALSE)),
 #    menuItem("Fremtidig strømpris", tabName = "strompris", icon = icon("bolt",verify_fa = FALSE)),
 #    menuItem("Historisk estimering", tabName = "historic", icon = icon("bolt",verify_fa = FALSE)),
@@ -164,12 +169,13 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                 plotlyOutput("now_spotplot"),
                                 fluidRow(
                                   box(width = 8,
-                                      h3("Forklaring"),
+                                      h3("Hva ser du?"),
                                       #                                    p("Dagens strømprissytem med store svininger variabel og effektbasert nettleie")
-                                      p("Grafen ovenfor viser den reelle forbruksbaserte prisen for spotpriskunder:"),
+                                      p("Statens strømstøtteordning har direkte påvirkning på din timespris på strøm."),
+                                      p("Ved å taste inn ditt postnummer i margen til venstre viser frafen ovenfor dagens/morgendagens strømpris for deg, angitt som:"),
                                       p(
                                         strong(
-                                          tags$span(style=paste0("color:",mycols['totalpris']),"Reell pris"),
+                                          tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
                                           "=",
                                           tags$span(style=paste0("color:",mycols['spotpris']),"spotpris"),
                                           "+",
@@ -178,10 +184,9 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                           tags$span(style=paste0("color:",mycols['stotte']),"strømstøtte")
                                         )
                                       ),
-                                      p("Grunnen til at den reelle prisen for innværende måned vises som et estimat (m/usikkerhet) er at strømstøtten er ikke er kjent før månedsslutt,",
-                                        "og strømstøtten derfor er estimert basert på en ",
-                                        tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","statistisk modell"),
-                                        "For tidligere måneder er strømstøtten nå kjent, så der vises den endelige strømstøtten."
+                                      p("Grunnen til at din strømpris vises som et estimat (m/usikkerhet) er at strømstøtten er basert på gjennomsnittlig spotpris i inneværende måned, og dermed ikke er kjent før månedsslutt.",
+                                        "Strømstøtten vist ovenfor derfor basert på simuleringer av fremtidige spotpriser ",
+                                        tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","(fra en statistisk modell)"),"."
                                       ),
                                       h4("Merk"),
                                       p("Faste og effektbasert månedsavgift fra nettleverandør kommer i tillegg på regningen fra nettleverandør."),
@@ -196,17 +201,17 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                               )
 )
 body_strompris_history <- tabItem(tabName = "strompris_history",
-                                  h3("Historisk reell strømpris"),
+                                  h3("Detaljert/historisk strømpris"),
                                   fluidPage(
                                     plotlyOutput("history_spotplot"),
                                     fluidRow(
                                       box(width = 12,
                                           h3("Forklaring"),
                                           #                                    p("Dagens strømprissytem med store svininger variabel og effektbasert nettleie")
-                                          p("Grafen ovenfor viser den reelle forbruksbaserte prisen for spotpriskunder:"),
+                                          p("Grafen ovenfor viser den forbruksbaserte prisen for spotpriskunder:"),
                                           p(
                                             strong(
-                                              tags$span(style=paste0("color:",mycols['totalpris']),"Reell pris"),
+                                              tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
                                               "=",
                                               tags$span(style=paste0("color:",mycols['spotpris']),"spotpris"),
                                               "+",
@@ -215,7 +220,7 @@ body_strompris_history <- tabItem(tabName = "strompris_history",
                                               tags$span(style=paste0("color:",mycols['stotte']),"strømstøtte")
                                             )
                                           ),
-                                          p("Grunnen til at den reelle prisen vises som et estimat (m/usikkerhet) er at strømstøtten er ikke er kjent før månedsslutt,",
+                                          p("Grunnen til at din pris vises som et estimat (m/usikkerhet) er at strømstøtten er ikke er kjent før månedsslutt,",
                                             "og strømstøtten derfor er estimert basert på en ",
                                             tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","statistisk modell")
                                           ),
@@ -284,12 +289,13 @@ body_about <- tabItem(tabName = "about",
                       box(
                         h2("Om siden"),
                         p("Hensikten med denne er å samle daglige spotpriser, nettleie og strømstøtte i en og samme løsning og presentere det i et brukervennlig format."),
-                        p("Ved å taste inn postnummer, identifiseres både nettleverandør og spotprisområde og dagens (+ ev. morgendagens priser visualiseres).",
+                        p("Ved å taste inn postnummer, identifiseres både nettleverandør og spotprisområde og dagens (+ ev. morgendagens) priser visualiseres.",
                           "I enkelte tilfeller må brukeren velge blant 2 eller 3 nettleverandører/prisområder da postnummer overlapper med flere av disse."),
-                        p("Siden strømstøtten ikke er kjent før måneden er over, er denne basert på et estimat (m/ usikkerhet) fra en ",
-                          tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","statistisk modell"),". ",
-                          "Dette er grunnen til at reell pris er angitt som et intervall."),
-                        p("Disse estimatene oppdateres daglig etter hvert som morgendags spotpriser blir tilgjenglig, og fremtidige spotpriser blir simulert (ca kl. 13.30)."),
+                        p("Grunnen til at din strømpris vises som et estimat (m/usikkerhet) er at strømstøtten er basert på gjennomsnittlig spotpris i inneværende måned, og dermed ikke er kjent før månedsslutt.",
+                          "Strømstøtten er derfor basert på simuleringer av fremtidige spotpriser ",
+                          tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","(fra en statistisk modell)"),"."
+                        ),
+                        p("Det gjennomføres nye simuleringene daglig når morgendags spotpriser blir tilgjenglig  (ca kl. 13.30), som dermed endrer estimatet (og usikkerheten) til strømstøtten."),
                         p("Siden er laget av ",
                           tags$a(href="https://martinjullum.com/","Martin Jullum"),
                           "(",
@@ -441,9 +447,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
      updated_dt_comp0 <- dt_comp[area == input$prisomraade]
 
-     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     #updated_dt_hourly0 <- dt_hourly[area=="NO1"]
-     #updated_dt_comp0 <- dt_comp[area == "NO1"]
+     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
+     updated_dt_comp0 <- dt_comp[area == "NO1"]
 
      updated_dt_hourly0[,computation_year:=year(date)]
      updated_dt_hourly0[,computation_month:=month(date)]
@@ -482,6 +488,7 @@ server <- function(input, output,session) {
      plot_strompris_naa_dt0 <- plot_strompris_naa_dt[,.(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI)]
 
      texthelper_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols))]
+     texthelper_simple_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc_simple(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols))]
 
      plot_strompris_naa_dt0_dup <- copy(plot_strompris_naa_dt0)
      plot_strompris_naa_dt0_dup[,datetime:=datetime+1*60*60-1]
@@ -515,6 +522,7 @@ server <- function(input, output,session) {
 
      list(plot_dt_final=plot_dt_final,
           texthelper_dt=texthelper_dt,
+          texthelper_simple_dt=texthelper_simple_dt,
           estimation_date0 = estimation_date0)
    })
 
@@ -528,7 +536,7 @@ server <- function(input, output,session) {
      p_now <- ggplot(data=dt_list$plot_dt_final[datetime>=dt_list$estimation_date0],mapping=aes(x=datetime,y=pris,col=type,fill=type))+
        geom_line(aes(size=linesize))+
        geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.3)+
-       ggtitle("Estimert reell strømpris")+
+       ggtitle("Din strømpris")+
        scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(15))+
        scale_x_datetime(name = "Tid/dato",
                         breaks=breaks_pretty(12),
@@ -536,17 +544,17 @@ server <- function(input, output,session) {
                         labels = label_date_short(format = c("%Y", "", "%d.%b\n", "%H:%M\n"),sep=""))+ # TODO: Get Norwegian months
        scale_size_manual(values=c("a" = 1,"b"=0.5))+
        guides(size="none")+
-       scale_color_manual(name="",values = mycols)+
-       scale_fill_manual(name="",values = mycols)+
+       scale_color_manual(name="",values = mycols,labels = mylabels)+
+       scale_fill_manual(name="",values = mycols,labels = mylabels)+
        geom_vline(xintercept=Sys.time(),linetype=2,col="grey",inherit.aes=F)+
-       geom_line(data=dt_list$texthelper_dt[datetime>=dt_list$estimation_date0],aes(x=datetime,y=0,text=text),inherit.aes = F,size=0.00001)
+       geom_line(data=dt_list$texthelper_simple_dt[datetime>=dt_list$estimation_date0],aes(x=datetime,y=0,text=text),inherit.aes = F,size=0.00001)
 
      ggp_now <- ggplotly(p_now,dynamicTicks = TRUE,tooltip = "text")
      ggp_now <- layout(
        ggp_now,
        hovermode = "x unified"
      )
-     ggp_now <- style(ggp_now,visible="legendonly",traces=c(3,7)) #trace=2 identified through plotly_json(ggp_now)
+     ggp_now <- style(ggp_now,visible="legendonly",traces=c(1,2,3,7)) #trace=2 identified through plotly_json(ggp_now)
      ggp_now <- style(ggp_now,hoverinfo="none",traces=1:9)
      ggp_now
 
@@ -562,7 +570,7 @@ server <- function(input, output,session) {
      p_history <- ggplot(data=dt_list$plot_dt_final,mapping=aes(x=datetime,y=pris,col=type,fill=type))+
        geom_line(aes(size=linesize))+
        geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.3)+
-#       ggtitle("Estimert reell strømpris")+
+#       ggtitle("Din strømpris")+
        scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(15))+
        scale_x_datetime(name = "Tid/dato",
                         breaks=breaks_pretty(12),
@@ -675,7 +683,7 @@ server <- function(input, output,session) {
        geom_line(aes(y=nettleie,text=paste0("<span style='text-decoration:underline'><b>Priser (NOK/kWh) kl ",start_hour,"-",start_hour+1,": </b></span>\n",
                                             "<span style='color:#619CFF'>Spot: ",twodigits(spotpris),"</span>\n",
                                             "<span style='color:#00BA38'>Nettleie: ",twodigits(nettleie),"</span>\n\n",
-                                            "<span style='color:#F8766D'><b>Reell pris:</b>\n",
+                                            "<span style='color:#F8766D'><b>Din pris:</b>\n",
                                             "Estimat: ",twodigits(totalpris_median)," (",twodigits(totalpris_lower_CI),", ",twodigits(totalpris_upper_CI),")","\n",
                                             "Øvre grense: ",twodigits(totalpris_upper_bound),"</span>")),
                  size=0.0001,data=plot_strompris_naa_dt)+
@@ -710,7 +718,7 @@ server <- function(input, output,session) {
 
 
       p <- p + expand_limits(y=0)+
-       ggtitle("Estimert reell strømpris")+
+       ggtitle("Din strømpris")+
         scale_y_continuous(name = "Pris (NOK/kWh)",labels=scaleFUN,breaks = breaks_extended(15))+
         scale_x_datetime(name = "Tid/dato",
                          breaks=breaks_pretty(12),
