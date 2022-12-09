@@ -6,11 +6,17 @@
 #DONE## Lag tab med endringslog (som henter .md fil som oppdateres)
 #DON## Lag fane med strømstøtte der Rmarkdown-fila legges inn.
 #DONE# Legg til feedback-knapp som linker til issues på github, samt epostdresse
-# Last opp app til AWS
 # sotte -> støtte i plotlytab-vinduet
-# Gjør "Oversikt" litt bedre
+# Gjør "Oversikt" litt bedre (få inn fast og effektbasert nettleie her)
 # Legg til google analytics.
 # Legg til fast og effektbasert nettleie i oppsummeringen under til høyre.
+# Skaler y-aksen slik at den passer til input
+# Sjekk hvorfor ting ikke blir riktig i linux.
+# Ha to desimaler på y-aksen i plot.
+# Diskuter med ELin: Utforming av tekst + hvordan få frem at dette er noe annnet enne alle andre gjør.
+# Nevn at det senere blir mulig å legge inn strømavtale
+# Send mail til drift om å sette kjøre dette på virtuell maskin.
+# La elin vurdere farger og bakgrunn.
 ### END ###
 
 # Automatisk deployment ved opplasting til GitHub
@@ -63,6 +69,7 @@
 
 #Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
 #Sys.setlocale("LC_ALL", "en_US") # UTF-8 to get latin letters
+Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
 
 
 library(data.table)
@@ -519,11 +526,12 @@ server <- function(input, output,session) {
 
      setkey(plot_dt_final,datetime)
 
-
+     #dt_list <-
      list(plot_dt_final=plot_dt_final,
           texthelper_dt=texthelper_dt,
           texthelper_simple_dt=texthelper_simple_dt,
           estimation_date0 = estimation_date0)
+
    })
 
    output$now_spotplot <- renderPlotly({
@@ -552,10 +560,15 @@ server <- function(input, output,session) {
      ggp_now <- ggplotly(p_now,dynamicTicks = TRUE,tooltip = "text")
      ggp_now <- layout(
        ggp_now,
-       hovermode = "x unified"
+       hovermode = "x unified",
+       xaxis = list(fixedrange = TRUE),
+       yaxis = list(fixedrange = TRUE)
      )
      ggp_now <- style(ggp_now,visible="legendonly",traces=c(1,2,3,7)) #trace=2 identified through plotly_json(ggp_now)
      ggp_now <- style(ggp_now,hoverinfo="none",traces=1:9)
+     ggp_now <- style(ggp_now,name="strømstøtte",traces=3)
+     ggp_now <- style(ggp_now,name="Din strømpris",traces=4)
+
      ggp_now
 
    })
