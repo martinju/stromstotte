@@ -11,7 +11,7 @@
 # Legg til google analytics.
 # Legg til fast og effektbasert nettleie i oppsummeringen under til høyre.
 # Skaler y-aksen slik at den passer til input
-# Sjekk hvorfor ting ikke blir riktig i linux.
+#DONE (oppdatert plotly)# Sjekk hvorfor ting ikke blir riktig i linux.
 # Ha to desimaler på y-aksen i plot.
 # Diskuter med ELin: Utforming av tekst + hvordan få frem at dette er noe annnet enne alle andre gjør.
 # Nevn at det senere blir mulig å legge inn strømavtale
@@ -70,7 +70,7 @@
 #Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
 #Sys.setlocale("LC_ALL", "en_US") # UTF-8 to get latin letters
 Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
-
+#Sys.setlocale(locale='no_NB')
 
 library(data.table)
 
@@ -455,9 +455,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
      updated_dt_comp0 <- dt_comp[area == input$prisomraade]
 
-     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     #updated_dt_hourly0 <- dt_hourly[area=="NO1"]
-     #updated_dt_comp0 <- dt_comp[area == "NO1"]
+     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
+     updated_dt_comp0 <- dt_comp[area == "NO1"]
 
      updated_dt_hourly0[,computation_year:=year(date)]
      updated_dt_hourly0[,computation_month:=month(date)]
@@ -542,6 +542,8 @@ server <- function(input, output,session) {
 
      dt_list <- plot_dt_final()
 
+     max_dinstrompris <- dt_list$plot_dt_final[datetime>=dt_list$estimation_date0,max(upper_CI,na.rm = T)]
+
      p_now <- ggplot(data=dt_list$plot_dt_final[datetime>=dt_list$estimation_date0],mapping=aes(x=datetime,y=pris,col=type,fill=type))+
        geom_line(aes(size=linesize))+
        geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.3)+
@@ -550,25 +552,28 @@ server <- function(input, output,session) {
        scale_x_datetime(name = "Tid/dato",
                         breaks=breaks_pretty(12),
                         minor_breaks = breaks_pretty(24),
-                        labels = label_date_short(format = c("%Y", "", "%d.%b\n", "%H:%M\n"),sep=""))+ # TODO: Get Norwegian months
+                        labels = label_date_short(format = c("%Y", "", "%d.%b\n", "%H:%M\n"),sep=""))+
        scale_size_manual(values=c("a" = 1,"b"=0.5))+
        guides(size="none")+
        scale_color_manual(name="",values = mycols,labels = mylabels)+
        scale_fill_manual(name="",values = mycols,labels = mylabels)+
-       geom_vline(xintercept=Sys.time(),linetype=2,col="grey",inherit.aes=F)+
-       geom_line(data=dt_list$texthelper_simple_dt[datetime>=dt_list$estimation_date0],aes(x=datetime,y=0,text=text),inherit.aes = F,size=0.00001)
+       #geom_vline(xintercept=Sys.time(),linetype=2,col="grey",inherit.aes=F)+
+       geom_line(data=dt_list$texthelper_simple_dt[datetime>=dt_list$estimation_date0],aes(x=datetime,y=max_dinstrompris,text=text),inherit.aes = F,size=0.00001)
 
      ggp_now <- ggplotly(p_now,dynamicTicks = TRUE,tooltip = "text")
      ggp_now <- layout(
        ggp_now,
        hovermode = "x unified",
-       xaxis = list(fixedrange = TRUE),
-       yaxis = list(fixedrange = TRUE)
+       xaxis = list(fixedrange = TRUE, nticks=18),
+       yaxis = list(fixedrange = TRUE, tickformat = ".2f",nticks=20),
+       legend = list(orientation = 'h')
      )
      ggp_now <- style(ggp_now,visible="legendonly",traces=c(1,2,3,7)) #trace=2 identified through plotly_json(ggp_now)
-     ggp_now <- style(ggp_now,hoverinfo="none",traces=1:9)
+     ggp_now <- style(ggp_now,hoverinfo="none",traces=1:8)
      ggp_now <- style(ggp_now,name="strømstøtte",traces=3)
      ggp_now <- style(ggp_now,name="Din strømpris",traces=4)
+
+     ggp_now <- config(ggp_now,locale="no")
 
      ggp_now
 
@@ -589,7 +594,7 @@ server <- function(input, output,session) {
        scale_x_datetime(name = "Tid/dato",
                         breaks=breaks_pretty(12),
                         minor_breaks = breaks_pretty(24),
-                        labels = label_date_short(format = c("%Y", "", "%d.%b\n", "%H:%M\n"),sep=""))+ # TODO: Get Norwegian months
+                        labels = label_date_short(format = c("%Y", "", "%d.%b\n", "%H:%M\n"),sep=""))+
        scale_size_manual(values=c("a" = 1,"b"=0.5))+
        scale_color_manual(name="",values = mycols)+
        scale_fill_manual(name="",values = mycols)+
@@ -625,11 +630,15 @@ server <- function(input, output,session) {
                stepmode = "todate")
            )),
          rangeslider = list(type = "date")
-       )
+       ),
+       yaxis = list(tickformat = ".2f",fixedrange = FALSE)
      )
 
      ggp_history <- style(ggp_history,visible="legendonly",traces=c(3,7)) #trace=2 identified through plotly_json(ggp_history)
      ggp_history <- style(ggp_history,hoverinfo="none",traces=1:8)
+
+     ggp_history <- config(ggp_history,locale="no")
+
      ggp_history
 
    })

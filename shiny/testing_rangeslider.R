@@ -86,3 +86,17 @@ b <- a +rangeslider(a,d$time[5], d$time[50])
 b
 
 
+
+
+dt <- data.table(x=rep(Sys.Date()-(1:5),2),y=1:10,type=as.character(c(rep(1,5),rep(2,5))))
+
+p <- ggplot(dt,aes(x=x,y=y,col=type))+geom_line()
+
+p_pl <- ggplotly(p,dynamicTicks = TRUE)
+
+p_pl <- style(p_pl,visible="legendonly",traces=1) #trace=2 identified through plotly_json(p_pl)
+
+p_pl
+
+
+
