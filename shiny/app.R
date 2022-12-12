@@ -10,12 +10,12 @@
 # Gjør "Oversikt" litt bedre (få inn fast og effektbasert nettleie her)
 # Legg til google analytics.
 # Legg til fast og effektbasert nettleie i oppsummeringen under til høyre.
-# Skaler y-aksen slik at den passer til input
+#DONE# Skaler y-aksen slik at den passer til input
 #DONE (oppdatert plotly)# Sjekk hvorfor ting ikke blir riktig i linux.
-# Ha to desimaler på y-aksen i plot.
+#DONE # Ha to desimaler på y-aksen i plot.
 # Diskuter med ELin: Utforming av tekst + hvordan få frem at dette er noe annnet enne alle andre gjør.
 # Nevn at det senere blir mulig å legge inn strømavtale
-# Send mail til drift om å sette kjøre dette på virtuell maskin.
+#DONE# Send mail til drift om å sette kjøre dette på virtuell maskin.
 # La elin vurdere farger og bakgrunn.
 ### END ###
 
@@ -143,7 +143,7 @@ library(markdown)
 
 ## app.R ##
 
-header <- dashboardHeader(title = "Min strømpris",titleWidth = 300)
+header <- dashboardHeader(title = "Din strømpris",titleWidth = 300)
 
 sidebar <- dashboardSidebar(
   width = 300,
@@ -151,7 +151,7 @@ sidebar <- dashboardSidebar(
     selectizeInput("postnr","Skriv inn postnummer",choices=NULL),
     selectInput("nettselskap","Velg Nettselskap",""),
     selectInput("prisomraade","Velg Prisområde",""),
-    menuItem("Min strømpris NÅ", tabName = "strompris_naa", icon = icon("dashboard",verify_fa = FALSE)),
+    menuItem("Din strømpris nå", tabName = "strompris_naa", icon = icon("dashboard",verify_fa = FALSE)),
     menuItem("Detaljert historisk strømpris", tabName = "strompris_history", icon = icon("dashboard",verify_fa = FALSE)),
     menuItem("Estimering av strømstøtte", tabName = "stromstotte", icon = icon("bolt",verify_fa = FALSE)),
 #    menuItem("Fremtidig strømpris", tabName = "strompris", icon = icon("bolt",verify_fa = FALSE)),
@@ -174,7 +174,7 @@ sidebar <- dashboardSidebar(
 body_strompris_naa <- tabItem(tabName = "strompris_naa",
                               fluidPage(
                                 tags$head(includeHTML("google_analytics.html")),
-                                plotlyOutput("now_spotplot"),
+                                plotlyOutput("now_spotplot2"),
                                 fluidRow(
                                   box(width = 8,
                                       h3("Hva ser du?"),
@@ -543,7 +543,57 @@ server <- function(input, output,session) {
      dt_list <- plot_dt_final()
 
      max_dinstrompris <- dt_list$plot_dt_final[datetime>=dt_list$estimation_date0,max(upper_CI,na.rm = T)]
+     now_hms =as.POSIXct(as.IDate(Sys.Date()))+hour(Sys.time())*60*60+minute(Sys.time())*60+second(Sys.time())
 
+
+     p_now <- ggplot(data=dt_list$plot_dt_final[datetime>=(now_hms-3*60*60)],mapping=aes(x=datetime,y=pris,col=type,fill=type))+
+       geom_line(aes(size=linesize))+
+       geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.3)+
+       ggtitle("Din strømpris")+
+       scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(15))+
+       scale_x_datetime(name = "Tid/dato",
+                        breaks=breaks_pretty(12),
+                        minor_breaks = breaks_pretty(24),
+                        labels = label_date_short(format = c("%Y", "", "%d.%b\n", "%H:%M\n"),sep=""))+
+       scale_size_manual(values=c("a" = 1,"b"=0.5))+
+       guides(size="none")+
+       scale_color_manual(name="",values = mycols,labels = mylabels)+
+       scale_fill_manual(name="",values = mycols,labels = mylabels)+
+       #geom_vline(xintercept=Sys.time(),linetype=2,col="grey",inherit.aes=F)+
+       geom_line(data=dt_list$texthelper_simple_dt[datetime>=(now_hms-3*60*60)],aes(x=datetime,y=max_dinstrompris,text=text),inherit.aes = F,size=0.00001)
+
+     ggp_now <- ggplotly(p_now,dynamicTicks = TRUE,tooltip = "text")
+     ggp_now <- layout(
+       ggp_now,
+       hovermode = "x unified",
+       xaxis = list(fixedrange = TRUE, nticks=12),
+       yaxis = list(fixedrange = TRUE, tickformat = ".2f",nticks=20),
+       legend = list(orientation = 'h')
+     )
+     ggp_now <- style(ggp_now,visible="legendonly",traces=c(1,2,3,7)) #trace=2 identified through plotly_json(ggp_now)
+     ggp_now <- style(ggp_now,hoverinfo="none",traces=1:(length(ggp_now$x$data)-1))
+     ggp_now <- style(ggp_now,name="strømstøtte",traces=3)
+     ggp_now <- style(ggp_now,name="Din strømpris",traces=4)
+
+     ggp_now <- config(ggp_now,locale="no")
+
+     ggp_now
+
+   })
+
+   output$now_spotplot2 <- renderPlotly({
+     req(input$postnr,input$nettselskap, input$prisomraade)
+     if (identical(input$prisomraade, "")) return(NULL)
+     if (identical(input$nettselskap, "")) return(NULL)
+
+     dt_list <- plot_dt_final()
+
+     max_dinstrompris <- dt_list$plot_dt_final[datetime>=dt_list$estimation_date0,max(upper_CI,na.rm = T)]
+     now_hms =as.POSIXct(as.IDate(Sys.Date()))+hour(Sys.time())*60*60+minute(Sys.time())*60+second(Sys.time())
+
+     today_daterange <- as.POSIXct(range(dt_list$plot_dt_final[datetime>=dt_list$estimation_date & datetime<dt_list$estimation_date+1,datetime]))
+
+#     p_now <- ggplot(data=dt_list$plot_dt_final[datetime>=(now_hms-3*60*60)],mapping=aes(x=datetime,y=pris,col=type,fill=type))+
      p_now <- ggplot(data=dt_list$plot_dt_final[datetime>=dt_list$estimation_date0],mapping=aes(x=datetime,y=pris,col=type,fill=type))+
        geom_line(aes(size=linesize))+
        geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.3)+
@@ -558,18 +608,22 @@ server <- function(input, output,session) {
        scale_color_manual(name="",values = mycols,labels = mylabels)+
        scale_fill_manual(name="",values = mycols,labels = mylabels)+
        #geom_vline(xintercept=Sys.time(),linetype=2,col="grey",inherit.aes=F)+
-       geom_line(data=dt_list$texthelper_simple_dt[datetime>=dt_list$estimation_date0],aes(x=datetime,y=max_dinstrompris,text=text),inherit.aes = F,size=0.00001)
+     #  geom_line(data=dt_list$texthelper_simple_dt[datetime>=(now_hms-3*60*60)],aes(x=datetime,y=max_dinstrompris,text=text),inherit.aes = F,size=0.00001)
+     geom_line(data=dt_list$texthelper_simple_dt[datetime>=dt_list$estimation_date0],aes(x=datetime,y=max_dinstrompris,text=text),inherit.aes = F,size=0.00001)
 
-     ggp_now <- ggplotly(p_now,dynamicTicks = TRUE,tooltip = "text")
+     ggp_now <- ggplotly(p_now,tooltip = "text",dynamicTicks = "y")
      ggp_now <- layout(
        ggp_now,
        hovermode = "x unified",
-       xaxis = list(fixedrange = TRUE, nticks=18),
-       yaxis = list(fixedrange = TRUE, tickformat = ".2f",nticks=20),
-       legend = list(orientation = 'h')
-     )
+       xaxis = list(ticks=12,
+                    range = as.numeric(today_daterange),
+                    rangeslider = list(type = "date")),
+       yaxis = list(fixedrange = TRUE, tickformat = ".2f",nticks=20)
+       )
+
+
      ggp_now <- style(ggp_now,visible="legendonly",traces=c(1,2,3,7)) #trace=2 identified through plotly_json(ggp_now)
-     ggp_now <- style(ggp_now,hoverinfo="none",traces=1:8)
+     ggp_now <- style(ggp_now,hoverinfo="none",traces=1:(length(ggp_now$x$data)-1))
      ggp_now <- style(ggp_now,name="strømstøtte",traces=3)
      ggp_now <- style(ggp_now,name="Din strømpris",traces=4)
 
@@ -578,6 +632,7 @@ server <- function(input, output,session) {
      ggp_now
 
    })
+
 
    output$history_spotplot <- renderPlotly({
      req(input$postnr,input$nettselskap, input$prisomraade)
