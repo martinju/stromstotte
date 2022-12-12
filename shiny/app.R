@@ -6,7 +6,7 @@
 #DONE## Lag tab med endringslog (som henter .md fil som oppdateres)
 #DON## Lag fane med strømstøtte der Rmarkdown-fila legges inn.
 #DONE# Legg til feedback-knapp som linker til issues på github, samt epostdresse
-# sotte -> støtte i plotlytab-vinduet
+#DONE # sotte -> støtte i plotlytab-vinduet
 # Gjør "Oversikt" litt bedre (få inn fast og effektbasert nettleie her)
 # Legg til google analytics.
 # Legg til fast og effektbasert nettleie i oppsummeringen under til høyre.
@@ -173,7 +173,7 @@ sidebar <- dashboardSidebar(
 
 body_strompris_naa <- tabItem(tabName = "strompris_naa",
                               fluidPage(
-                                tags$head(includeScript("google_analytics.html")),
+                                tags$head(includeHTML(("google-analytics.html"))),
                                 plotlyOutput("now_spotplot"),
                                 fluidRow(
                                   box(width = 8,
