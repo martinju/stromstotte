@@ -174,7 +174,7 @@ sidebar <- dashboardSidebar(
 body_strompris_naa <- tabItem(tabName = "strompris_naa",
                               fluidPage(
                                 tags$head(includeHTML("google_analytics.html")),
-                                plotlyOutput("now_spotplot2"),
+                                plotlyOutput("now_spotplot",height ="300px"),
                                 fluidRow(
                                   box(width = 8,
                                       h3("Hva ser du?"),
@@ -568,7 +568,8 @@ server <- function(input, output,session) {
        hovermode = "x unified",
        xaxis = list(fixedrange = TRUE, nticks=12),
        yaxis = list(fixedrange = TRUE, tickformat = ".2f",nticks=20),
-       legend = list(orientation = 'h')
+       legend = list(font = list(size=10))#,
+#       legend = list(orientation = 'h')
      )
      ggp_now <- style(ggp_now,visible="legendonly",traces=c(1,2,3,7)) #trace=2 identified through plotly_json(ggp_now)
      ggp_now <- style(ggp_now,hoverinfo="none",traces=1:(length(ggp_now$x$data)-1))
@@ -611,13 +612,29 @@ server <- function(input, output,session) {
      #  geom_line(data=dt_list$texthelper_simple_dt[datetime>=(now_hms-3*60*60)],aes(x=datetime,y=max_dinstrompris,text=text),inherit.aes = F,size=0.00001)
      geom_line(data=dt_list$texthelper_simple_dt[datetime>=dt_list$estimation_date0],aes(x=datetime,y=max_dinstrompris,text=text),inherit.aes = F,size=0.00001)
 
-     ggp_now <- ggplotly(p_now,tooltip = "text",dynamicTicks = "y")
+     ggp_now <- ggplotly(p_now,tooltip = "text",
+                         #dynamicTicks = "y")
+                         dynamicTicks = TRUE)
      ggp_now <- layout(
        ggp_now,
        hovermode = "x unified",
        xaxis = list(ticks=12,
                     range = as.numeric(today_daterange),
-                    rangeslider = list(type = "date")),
+                    rangeselector = list(
+                      buttons = list(
+                        list(
+                          count = 1,
+                          label = "idag",
+                          step = "day",
+                          stepmode = "todate"),
+                        list(
+                          count = 2,
+                          label = "2 siste dager",
+                          step = "day",
+                          stepmode = "todate")
+                      ))#,
+#                    rangeslider = list(type = "date")
+       ),
        yaxis = list(fixedrange = TRUE, tickformat = ".2f",nticks=20)
        )
 
@@ -629,8 +646,20 @@ server <- function(input, output,session) {
 
      ggp_now <- config(ggp_now,locale="no")
 
-     ggp_now
+     ggp_now_true <- ggp_now
+     ggp_now_y <- ggp_now
 
+     all.equal(ggp_now_y,ggp_now_true)
+     all.equal(ggp_now_true,ggp_now_y)
+
+     ggp_now_y$x$layout$xaxis$type <- ggp_now_true$x$layout$xaxis$type
+     ggp_now_y$x$layout$xaxis$autorange <- ggp_now_true$x$layout$xaxis$autorange
+     ggp_now_y$x$layout$xaxis$autorange <- ggp_now_true$x$layout$xaxis$autorange
+
+     # OK, looks like scaling and getting the axis right is conflicting. A workaround might be to work with
+     # as.numeric(datetime) all the way from the start. However, not sure if I can add buttons to non-date data.
+
+     ggp_now_y
    })
 
 
