@@ -173,7 +173,7 @@ sidebar <- dashboardSidebar(
 
 body_strompris_naa <- tabItem(tabName = "strompris_naa",
                               fluidPage(
-                                tags$head(includeHTML(("google-analytics.html"))),
+                                tags$head(includeHTML("google_analytics.html")),
                                 plotlyOutput("now_spotplot"),
                                 fluidRow(
                                   box(width = 8,
