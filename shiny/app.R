@@ -74,7 +74,7 @@ Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
 
 library(data.table)
 
-deployed <- FALSE
+deployed <- TRUE
 
 if(deployed){
   path <- "https://raw.githubusercontent.com/martinju/stromstotte/before_release/"
@@ -82,7 +82,7 @@ if(deployed){
   path <- "../"
 }
 
-source(file.path(path,"shiny/helper_funcs.R"))
+source("helper_funcs.R")
 
 dt_nettleie <- fread(file.path(path,"data/database_nettleie_simple.csv"))
 dt_nettleie_kl6 <- fread(file.path(path,"data/database_nettleie_simple_kl_6.csv"))
@@ -139,6 +139,7 @@ library(ggplot2)
 library(scales)
 library(knitr)
 library(htmltools)
+library(markdown)
 
 ## app.R ##
 
@@ -454,9 +455,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
      updated_dt_comp0 <- dt_comp[area == input$prisomraade]
 
-     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
-     updated_dt_comp0 <- dt_comp[area == "NO1"]
+     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     #updated_dt_hourly0 <- dt_hourly[area=="NO1"]
+     #updated_dt_comp0 <- dt_comp[area == "NO1"]
 
      updated_dt_hourly0[,computation_year:=year(date)]
      updated_dt_hourly0[,computation_month:=month(date)]
@@ -526,7 +527,7 @@ server <- function(input, output,session) {
 
      setkey(plot_dt_final,datetime)
 
-     #dt_list <-
+     dt_list <-
      list(plot_dt_final=plot_dt_final,
           texthelper_dt=texthelper_dt,
           texthelper_simple_dt=texthelper_simple_dt,
