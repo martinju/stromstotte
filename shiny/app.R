@@ -18,6 +18,19 @@
 #DONE# Send mail til drift om å sette kjøre dette på virtuell maskin.
 # La elin vurdere farger og bakgrunn.
 # Fix datoer -- litt på vei der med tickformat
+
+# Neste på lista:
+# Reduser størrelse på hovertext, la det også kun stå klokkeslett og pris
+# Legg til farge på zeroline
+# Legg til "din strømpris nå (detaljert)" (samme som i enkel bare med mulighet til å velge de øvrige)
+# "Oversikt" -> "Tallgrunnlag"
+# Oppdater tekst med hva du ser (link til detaljert oversikt, hva som kommer sendere og ikke er inkludert o.l.)
+# La Elin vurdere
+  # farger,
+  # om jeg skal ha postnummer i header
+  # om jeg KAN ha hele dagens + morgendagens hvis mulig (altså alltid mellom 24 og 48 timer, kontra mellom 12 og 36) -- da kan jeg ha knapper, men default er å vise totalen
+  # Er det problematisk at man ikke får opp valg av postnummer som førstevalg på mobil?
+  # Fiks setlocale = norsk
 ### END ###
 
 # Automatisk deployment ved opplasting til GitHub
@@ -180,12 +193,12 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
 #                            margin-top:-15px;
 #                          }")
                                 #style='padding:-10px;padding:0 !important',
-                                tags$head(tags$style(HTML('
-.box {margin-top: 2px;margin-left: 0px; margin-right: 0px; margin-bottom:2px;padding:-10px}
-div {padding: 0 !important;}'
-                                ))),
+#                                tags$head(tags$style(HTML('
+#.box {margin-top: 2px;margin-left: 0px; margin-right: 0px; margin-bottom:2px;padding:-10px}
+#div {padding: 0 !important;}'
+#                                ))),
                                 tags$head(includeHTML("google_analytics.html")),
-                                plotlyOutput("now_spotplot",height ="300px"),
+                                plotlyOutput("now_spotplot3",height ="300px"),
                                 fluidRow(
                                   box(width = 8,
                                       h3("Hva ser du?"),
@@ -470,9 +483,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
      updated_dt_comp0 <- dt_comp[area == input$prisomraade]
 
-     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     #updated_dt_hourly0 <- dt_hourly[area=="NO1"]
-     #updated_dt_comp0 <- dt_comp[area == "NO1"]
+     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
+     updated_dt_comp0 <- dt_comp[area == "NO1"]
 
      updated_dt_hourly0[,computation_year:=year(date)]
      updated_dt_hourly0[,computation_month:=month(date)]
@@ -581,7 +594,7 @@ server <- function(input, output,session) {
      ggp_now <- layout(
        ggp_now,
        hovermode = "x unified",
-       xaxis = list(fixedrange = TRUE,tickformat="%b<br>%Y"),
+       xaxis = list(fixedrange = TRUE),#,tickformat="%b<br>%Y"),
        yaxis = list(fixedrange = TRUE, tickformat = ".2f",nticks=20),
        legend = list(font = list(size=10))#,
 #       legend = list(orientation = 'h')
@@ -628,8 +641,9 @@ server <- function(input, output,session) {
      geom_line(data=dt_list$texthelper_simple_dt[datetime>=dt_list$estimation_date0],aes(x=datetime,y=max_dinstrompris,text=text),inherit.aes = F,size=0.00001)
 
      ggp_now <- ggplotly(p_now,tooltip = "text",
+                         dynamicTicks = "x")
                          #dynamicTicks = "y")
-                         dynamicTicks = TRUE)
+#                         dynamicTicks = TRUE)
      ggp_now <- layout(
        ggp_now,
        hovermode = "x unified",
@@ -677,6 +691,76 @@ server <- function(input, output,session) {
      ggp_now_y
    })
 
+   output$now_spotplot3 <- renderPlotly({
+     req(input$postnr,input$nettselskap, input$prisomraade)
+     if (identical(input$prisomraade, "")) return(NULL)
+     if (identical(input$nettselskap, "")) return(NULL)
+
+     dt_list <- plot_dt_final()
+
+     max_dinstrompris <- dt_list$plot_dt_final[datetime>=dt_list$estimation_date0,max(upper_CI,na.rm = T)]
+     now_hms =as.POSIXct(as.IDate(Sys.Date()))+hour(Sys.time())*60*60+minute(Sys.time())*60+second(Sys.time())
+
+     dat <- dt_list$plot_dt_final[datetime>=(now_hms-3*60*60) & type=="totalpris"]
+     #helper0 <- dt_list$texthelper_simple_dt[datetime>=(now_hms-3*60*60)]
+     #setnames(helper0,"text","text0")
+     #dat <-merge(dat,helper0,by="datetime",all=T)
+     #dat[, text := text0[nafill(replace(.I, is.na(text0), NA), "locf")]]
+     #dat[,text0:=NULL]
+
+     plotrange <- c(min(dat$lower_CI),max(dat$upper_CI))
+
+     helper0 <- dt_list$texthelper_simple_dt[datetime>=(now_hms-3*60*60)]
+     helper0 <- merge(helper0,dat[,.(datetime,upper_CI)],by="datetime")
+#     helper0[,plotval:=upper_CI+diff(plotrange)*0.1]
+     helper0[,plotval:=max(upper_CI)+diff(plotrange)*0.05]
+
+     helper0[,datetime2:=datetime+0.5*60*60]
+
+     dt <- data.table(x=rep(Sys.time(),2),y=plotrange)
+
+     p_now <- ggplot(data=dat,mapping=aes(x=datetime,y=pris))+
+       geom_line(col=mycols["totalpris"],size=1)+
+       geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI),fill=mycols["totalpris"], alpha = 0.3)+
+       ggtitle("Din strømpris")+
+       scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(15))+
+       scale_x_datetime(name = "Tid/dato",
+                        date_breaks="2 hours",
+                        #minor_breaks = breaks_pretty(24),
+                        labels = label_date_short(format = c("", "", "%d.%b\n", "%H\n"),sep=""))+
+       geom_line(dt,mapping = aes(x=x,y=y),linetype=2,col="grey")+
+#       geom_vline(xintercept=Sys.time(),linetype=2,col="grey",inherit.aes=F)+
+       geom_line(data=helper0,aes(x=datetime2,y=plotval,text=text),inherit.aes = F,size=0.00001)
+
+
+#p_now
+
+     #+
+     #  #                 +
+     #  scale_size_manual(values=c("a" = 1,"b"=0.5))+
+    #   guides(size="none")+
+    #   scale_color_manual(name="",values = mycols,labels = mylabels)+
+    #   scale_fill_manual(name="",values = mycols,labels = mylabels)+
+
+     ggp_now <- ggplotly(p_now,tooltip = "text")
+     ggp_now <- layout(
+       ggp_now,
+       hovermode = "x unified",
+       xaxis = list(fixedrange = TRUE,nticks=24),#,tickformat="%b<br>%Y"),
+       yaxis = list(fixedrange = TRUE, tickformat = ".2f",nticks=20),
+       legend = list(font = list(size=10))#,
+       #       legend = list(orientation = 'h')
+     )
+#     ggp_now <- style(ggp_now,visible="legendonly",traces=c(1,2,3,7)) #trace=2 identified through plotly_json(ggp_now)
+     ggp_now <- style(ggp_now,hoverinfo="none",traces=1:(length(ggp_now$x$data)-1))
+ #    ggp_now <- style(ggp_now,name="strømstøtte",traces=3)
+#     ggp_now <- style(ggp_now,name="Din strømpris",traces=4)
+
+     ggp_now <- config(ggp_now,locale="no")
+
+     ggp_now
+
+   })
 
    output$history_spotplot <- renderPlotly({
      req(input$postnr,input$nettselskap, input$prisomraade)

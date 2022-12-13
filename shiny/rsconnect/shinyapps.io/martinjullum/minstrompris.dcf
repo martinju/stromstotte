@@ -5,7 +5,7 @@ account: martinjullum
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 7770462
-bundleId: 6629360
+bundleId: 6633767
 url: https://martinjullum.shinyapps.io/minstrompris/
-when: 1670889103.73067
-lastSyncTime: 1670889103.73069
+when: 1670971710.76376
+lastSyncTime: 1670971710.76377
