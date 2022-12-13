@@ -17,6 +17,7 @@
 # Nevn at det senere blir mulig å legge inn strømavtale
 #DONE# Send mail til drift om å sette kjøre dette på virtuell maskin.
 # La elin vurdere farger og bakgrunn.
+# Fix datoer -- litt på vei der med tickformat
 ### END ###
 
 # Automatisk deployment ved opplasting til GitHub
@@ -172,7 +173,17 @@ sidebar <- dashboardSidebar(
 )
 
 body_strompris_naa <- tabItem(tabName = "strompris_naa",
-                              fluidPage(
+                              fillPage(
+#                                tags$style(".topimg {
+#                            margin-left:-30px;
+##                            margin-right:-30px;
+#                            margin-top:-15px;
+#                          }")
+                                #style='padding:-10px;padding:0 !important',
+                                tags$head(tags$style(HTML('
+.box {margin-top: 2px;margin-left: 0px; margin-right: 0px; margin-bottom:2px;padding:-10px}
+div {padding: 0 !important;}'
+                                ))),
                                 tags$head(includeHTML("google_analytics.html")),
                                 plotlyOutput("now_spotplot",height ="300px"),
                                 fluidRow(
@@ -356,6 +367,10 @@ body_changelog <- tabItem(tabName = "changelog",
 
 
 body <-  dashboardBody(
+#  tags$head(tags$style(HTML('
+#.box {margin-top: 2px;margin-left: 0px; margin-right: 0px; margin-bottom:2px;padding:-10px}
+#div {padding: 0 !important;}'
+#  ))),
   tabItems(body_strompris_naa,
            body_strompris_history,
            body_stromstotte,
@@ -455,9 +470,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
      updated_dt_comp0 <- dt_comp[area == input$prisomraade]
 
-     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
-     updated_dt_comp0 <- dt_comp[area == "NO1"]
+     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     #updated_dt_hourly0 <- dt_hourly[area=="NO1"]
+     #updated_dt_comp0 <- dt_comp[area == "NO1"]
 
      updated_dt_hourly0[,computation_year:=year(date)]
      updated_dt_hourly0[,computation_month:=month(date)]
@@ -553,8 +568,8 @@ server <- function(input, output,session) {
        scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(15))+
        scale_x_datetime(name = "Tid/dato",
                         breaks=breaks_pretty(12),
-                        minor_breaks = breaks_pretty(24),
-                        labels = label_date_short(format = c("%Y", "", "%d.%b\n", "%H:%M\n"),sep=""))+
+                        minor_breaks = breaks_pretty(24))+
+       #                 labels = label_date_short(format = c("%Y", "", "%d.%b\n", "%H\n"),sep=""))+
        scale_size_manual(values=c("a" = 1,"b"=0.5))+
        guides(size="none")+
        scale_color_manual(name="",values = mycols,labels = mylabels)+
@@ -566,7 +581,7 @@ server <- function(input, output,session) {
      ggp_now <- layout(
        ggp_now,
        hovermode = "x unified",
-       xaxis = list(fixedrange = TRUE, nticks=12),
+       xaxis = list(fixedrange = TRUE,tickformat="%b<br>%Y"),
        yaxis = list(fixedrange = TRUE, tickformat = ".2f",nticks=20),
        legend = list(font = list(size=10))#,
 #       legend = list(orientation = 'h')
