@@ -8,7 +8,7 @@
 #DONE# Legg til feedback-knapp som linker til issues på github, samt epostdresse
 #DONE # sotte -> støtte i plotlytab-vinduet
 # Gjør "Oversikt" litt bedre (få inn fast og effektbasert nettleie her)
-# Legg til google analytics.
+#DONE for minstrompris (ikke dinstrompris)# Legg til google analytics.
 # Legg til fast og effektbasert nettleie i oppsummeringen under til høyre.
 #DONE# Skaler y-aksen slik at den passer til input
 #DONE (oppdatert plotly)# Sjekk hvorfor ting ikke blir riktig i linux.
@@ -30,8 +30,17 @@
   # om jeg skal ha postnummer i header
   # om jeg KAN ha hele dagens + morgendagens hvis mulig (altså alltid mellom 24 og 48 timer, kontra mellom 12 og 36) -- da kan jeg ha knapper, men default er å vise totalen
   # Er det problematisk at man ikke får opp valg av postnummer som førstevalg på mobil?
+  # Hva bør jeg kalle boksen med tallgrunnlag? Priskomponenter kanskje?
 ##DONE Fiks setlocale = norsk
 ### END ###
+
+# Før release:
+#Vis kun nettleverandør + prisområde som selective hvis ikke unik
+# vis postnummer i plotly-header
+# oppdater "estimering av strømstøtte"
+# finpuss modellbeskrivelsen ref slider
+# Få interne linker til å fungere
+# Legg til info om effekttariff
 
 # Automatisk deployment ved opplasting til GitHub
 
@@ -170,7 +179,7 @@ sidebar <- dashboardSidebar(
     menuItem("Estimering av strømstøtte", tabName = "stromstotte", icon = icon("bolt",verify_fa = FALSE)),
 #    menuItem("Fremtidig strømpris", tabName = "strompris", icon = icon("bolt",verify_fa = FALSE)),
 #    menuItem("Historisk estimering", tabName = "historic", icon = icon("bolt",verify_fa = FALSE)),
-#    menuItem("Eksperimentering", tabName = "experimental", icon = icon("gear",verify_fa = FALSE)),
+    menuItem("Eksperimentering", tabName = "experimental", icon = icon("gear",verify_fa = FALSE)),
     menuItem("Om siden", tabName = "about", icon = icon("info",verify_fa = FALSE)),
     menuItem("Endringslogg", tabName = "changelog", icon = icon("info",verify_fa = FALSE)),
     tags$html(
@@ -186,7 +195,7 @@ sidebar <- dashboardSidebar(
 )
 
 body_strompris_naa <- tabItem(tabName = "strompris_naa",
-                              fillPage(
+                              fluidPage(
 #                                tags$style(".topimg {
 #                            margin-left:-30px;
 ##                            margin-right:-30px;
@@ -204,7 +213,7 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                       h3("Hva ser du?"),
                                       #                                    p("Dagens strømprissytem med store svininger variabel og effektbasert nettleie")
                                       p("Statens strømstøtteordning har direkte påvirkning på din timespris på strøm."),
-                                      p("Ved å taste inn ditt postnummer i margen til venstre viser frafen ovenfor dagens/morgendagens strømpris for deg, angitt som:"),
+                                      p("Ved å taste inn ditt postnummer i margen til venstre viser grafen ovenfor din strømpris idag/imorgen for nettopp deg, angitt som:"),
                                       p(
                                         strong(
                                           tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
@@ -492,9 +501,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
      updated_dt_comp0 <- dt_comp[area == input$prisomraade]
 
-     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
-     updated_dt_comp0 <- dt_comp[area == "NO1"]
+     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     #updated_dt_hourly0 <- dt_hourly[area=="NO1"]
+     #updated_dt_comp0 <- dt_comp[area == "NO1"]
 
      updated_dt_hourly0[,computation_year:=year(date)]
      updated_dt_hourly0[,computation_month:=month(date)]
