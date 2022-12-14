@@ -380,6 +380,15 @@ body_changelog <- tabItem(tabName = "changelog",
 
 
 body <-  dashboardBody(
+  tags$script(HTML('
+                                            $(document).ready(function() {
+                                            $("header").find("nav").append(\'<div class="myClass"> &#8592; Velg postnummer </div>\');
+                                            })
+                                            ')),
+  tags$head(
+    # Include our custom CSS
+    includeCSS("styles.css"),
+  ),
 #  tags$head(tags$style(HTML('
 #.box {margin-top: 2px;margin-left: 0px; margin-right: 0px; margin-bottom:2px;padding:-10px}
 #div {padding: 0 !important;}'
