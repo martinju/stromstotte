@@ -40,3 +40,28 @@ textfunc_simple <- function(datetime,spotpris,nettleie,totalpris,totalpris_lower
   return(ret)
 }
 
+textfunc_simple2 <- function(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols,fontsize){
+  date <- as.Date(datetime)
+  start_hour <- lubridate::hour(datetime)
+
+  text_this_month <-   paste0("<span style='color:",mycols['totalpris'],"; font-size:",fontsize,".0pt'><b>Kl. ",sprintf("%02d", start_hour),"-",sprintf("%02d", start_hour+1),": </b>",
+                              twodigits(totalpris)," (",twodigits(totalpris_lower_CI),", ",twodigits(totalpris_upper_CI),")</span>")
+
+  ret <- text_this_month
+  ret
+
+  return(ret)
+}
+
+textfunc_simple3 <- function(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols,fontsize){
+  date <- as.Date(datetime)
+  start_hour <- lubridate::hour(datetime)
+
+  text_this_month <-   paste0("<b>Kl. ",sprintf("%02d", start_hour),"-",sprintf("%02d", start_hour+1),": </b>",
+                              twodigits(totalpris)," (",twodigits(totalpris_lower_CI),", ",twodigits(totalpris_upper_CI),")")
+
+  ret <- text_this_month
+  ret
+
+  return(ret)
+}

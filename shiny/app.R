@@ -20,8 +20,8 @@
 # Fix datoer -- litt på vei der med tickformat
 
 # Neste på lista:
-# Reduser størrelse på hovertext, la det også kun stå klokkeslett og pris
-# Legg til farge på zeroline
+#DONE # Reduser størrelse på hovertext, la det også kun stå klokkeslett og pris
+#DONE # Legg til farge på zeroline
 # Legg til "din strømpris nå (detaljert)" (samme som i enkel bare med mulighet til å velge de øvrige)
 # "Oversikt" -> "Tallgrunnlag"
 # Oppdater tekst med hva du ser (link til detaljert oversikt, hva som kommer sendere og ikke er inkludert o.l.)
@@ -30,7 +30,7 @@
   # om jeg skal ha postnummer i header
   # om jeg KAN ha hele dagens + morgendagens hvis mulig (altså alltid mellom 24 og 48 timer, kontra mellom 12 og 36) -- da kan jeg ha knapper, men default er å vise totalen
   # Er det problematisk at man ikke får opp valg av postnummer som førstevalg på mobil?
-  # Fiks setlocale = norsk
+##DONE Fiks setlocale = norsk
 ### END ###
 
 # Automatisk deployment ved opplasting til GitHub
@@ -83,8 +83,8 @@
 
 #Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
 #Sys.setlocale("LC_ALL", "en_US") # UTF-8 to get latin letters
-Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
-#Sys.setlocale(locale='no_NB')
+#Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
+Sys.setlocale(locale='no_NB.UTF-8')
 
 library(data.table)
 
@@ -483,9 +483,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
      updated_dt_comp0 <- dt_comp[area == input$prisomraade]
 
-     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     #updated_dt_hourly0 <- dt_hourly[area=="NO1"]
-     #updated_dt_comp0 <- dt_comp[area == "NO1"]
+     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
+     updated_dt_comp0 <- dt_comp[area == "NO1"]
 
      updated_dt_hourly0[,computation_year:=year(date)]
      updated_dt_hourly0[,computation_month:=month(date)]
@@ -525,6 +525,7 @@ server <- function(input, output,session) {
 
      texthelper_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols))]
      texthelper_simple_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc_simple(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols))]
+     texthelper_simple2_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc_simple3(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols,fontsize=9))]
 
      plot_strompris_naa_dt0_dup <- copy(plot_strompris_naa_dt0)
      plot_strompris_naa_dt0_dup[,datetime:=datetime+1*60*60-1]
@@ -559,6 +560,7 @@ server <- function(input, output,session) {
      list(plot_dt_final=plot_dt_final,
           texthelper_dt=texthelper_dt,
           texthelper_simple_dt=texthelper_simple_dt,
+          texthelper_simple2_dt=texthelper_simple2_dt,
           estimation_date0 = estimation_date0)
 
    })
@@ -702,6 +704,7 @@ server <- function(input, output,session) {
      now_hms =as.POSIXct(as.IDate(Sys.Date()))+hour(Sys.time())*60*60+minute(Sys.time())*60+second(Sys.time())
 
      dat <- dt_list$plot_dt_final[datetime>=(now_hms-3*60*60) & type=="totalpris"]
+     dat <- dat[-1]
      #helper0 <- dt_list$texthelper_simple_dt[datetime>=(now_hms-3*60*60)]
      #setnames(helper0,"text","text0")
      #dat <-merge(dat,helper0,by="datetime",all=T)
@@ -709,15 +712,19 @@ server <- function(input, output,session) {
      #dat[,text0:=NULL]
 
      plotrange <- c(min(dat$lower_CI),max(dat$upper_CI))
+     plotrange2 <- plotrange
+     plotrange2[2] <- plotrange2[2] + diff(plotrange)*0.05
+     plotrange3 <- plotrange2
+     plotrange3[1] <- plotrange2[1] - diff(plotrange)*0.01
 
-     helper0 <- dt_list$texthelper_simple_dt[datetime>=(now_hms-3*60*60)]
+     helper0 <- dt_list$texthelper_simple2_dt[datetime>=(now_hms-3*60*60)]
      helper0 <- merge(helper0,dat[,.(datetime,upper_CI)],by="datetime")
 #     helper0[,plotval:=upper_CI+diff(plotrange)*0.1]
      helper0[,plotval:=max(upper_CI)+diff(plotrange)*0.05]
 
      helper0[,datetime2:=datetime+0.5*60*60]
 
-     dt <- data.table(x=rep(Sys.time(),2),y=plotrange)
+     dt <- data.table(x=rep(Sys.time(),2),y=plotrange3)
 
      p_now <- ggplot(data=dat,mapping=aes(x=datetime,y=pris))+
        geom_line(col=mycols["totalpris"],size=1)+
@@ -728,7 +735,8 @@ server <- function(input, output,session) {
                         date_breaks="2 hours",
                         #minor_breaks = breaks_pretty(24),
                         labels = label_date_short(format = c("", "", "%d.%b\n", "%H\n"),sep=""))+
-       geom_line(dt,mapping = aes(x=x,y=y),linetype=2,col="grey")+
+       geom_line(dt,mapping = aes(x=x,y=y),linetype=2,col="grey",size=0.75)+
+       #annotate("text", x = dt[1,x]+20*60, y =  plotrange2[1], label = "NÅ")+
 #       geom_vline(xintercept=Sys.time(),linetype=2,col="grey",inherit.aes=F)+
        geom_line(data=helper0,aes(x=datetime2,y=plotval,text=text),inherit.aes = F,size=0.00001)
 
@@ -745,10 +753,26 @@ server <- function(input, output,session) {
      ggp_now <- ggplotly(p_now,tooltip = "text")
      ggp_now <- layout(
        ggp_now,
+       annotations=list(x=as.numeric(dt[1,x]),
+                        y=plotrange3[1],
+                        text="NÅ",
+                        showarrow=FALSE,
+                        font=list(size=10)),
        hovermode = "x unified",
-       xaxis = list(fixedrange = TRUE,nticks=24),#,tickformat="%b<br>%Y"),
-       yaxis = list(fixedrange = TRUE, tickformat = ".2f",nticks=20),
-       legend = list(font = list(size=10))#,
+       xaxis = list(constrain="domain",
+                    fixedrange = TRUE,
+                    nticks=24,
+                    range=dat[,as.numeric(range(datetime))]
+                    ),#,tickformat="%b<br>%Y"),
+       yaxis = list(constrain="domain",
+                    fixedrange = TRUE,
+                    tickformat = ".2f",
+                    nticks=20,
+                    zeroline = TRUE,
+                    range=plotrange3
+                    ),
+       legend = list(font = list(size=10)),
+       hoverlabel = list(font=list(color = mycols["totalpris"],size=9))#,
        #       legend = list(orientation = 'h')
      )
 #     ggp_now <- style(ggp_now,visible="legendonly",traces=c(1,2,3,7)) #trace=2 identified through plotly_json(ggp_now)
