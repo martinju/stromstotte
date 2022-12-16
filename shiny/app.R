@@ -106,7 +106,7 @@ Sys.setlocale(locale='no_NB.UTF-8')
 
 library(data.table)
 
-deployed <- TRUE
+deployed <- FALSE
 
 if(deployed){
   path <- "https://raw.githubusercontent.com/martinju/stromstotte/before_release/"
@@ -151,7 +151,7 @@ mylabels <- c(spotpris= "Spotpris",
 
 ######
 
-rmdfiles <- c("stromstotte_shiny_description.Rmd")
+rmdfiles <- c("stromstotte_shiny_description.Rmd") # Vurdere å ikke hente tidspunkt for kompilering fra nettet inn i denne rmd-fila.
 sapply(rmdfiles, knitr::knit, quiet = T)
 
 
@@ -184,11 +184,12 @@ sidebar <- dashboardSidebar(
     selectInput("nettselskap","Velg Nettselskap",""),
     selectInput("prisomraade","Velg Prisområde",""),
     menuItem("Din strømpris nå", tabName = "strompris_naa", icon = icon("dashboard",verify_fa = FALSE)),
-    menuItem("Detaljert historisk strømpris", tabName = "strompris_history", icon = icon("dashboard",verify_fa = FALSE)),
-#    menuItem("Estimering av strømstøtte", tabName = "stromstotte", icon = icon("bolt",verify_fa = FALSE)),
+    menuItem("Din strømpris nå (detaljert)", tabName = "strompris_naa_detaljert", icon = icon("dashboard",verify_fa = FALSE)),
+    menuItem("Historisk strømpris", tabName = "strompris_history", icon = icon("dashboard",verify_fa = FALSE)),
+    menuItem("Estimering av strømstøtte", tabName = "stromstotte", icon = icon("bolt",verify_fa = FALSE)),
 #    menuItem("Fremtidig strømpris", tabName = "strompris", icon = icon("bolt",verify_fa = FALSE)),
 #    menuItem("Historisk estimering", tabName = "historic", icon = icon("bolt",verify_fa = FALSE)),
-    menuItem("Eksperimentering", tabName = "experimental", icon = icon("gear",verify_fa = FALSE)),
+#    menuItem("Eksperimentering", tabName = "experimental", icon = icon("gear",verify_fa = FALSE)),
     menuItem("Om siden", tabName = "about", icon = icon("info",verify_fa = FALSE)),
     menuItem("Endringslogg", tabName = "changelog", icon = icon("info",verify_fa = FALSE)),
     tags$html(
@@ -250,6 +251,54 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                 )
                               )
 )
+
+body_strompris_naa_detaljert <- tabItem(tabName = "strompris_naa_detaljert",
+                              fluidPage(
+                                #                                tags$style(".topimg {
+                                #                            margin-left:-30px;
+                                ##                            margin-right:-30px;
+                                #                            margin-top:-15px;
+                                #                          }")
+                                #style='padding:-10px;padding:0 !important',
+                                #                                tags$head(tags$style(HTML('
+                                #.box {margin-top: 2px;margin-left: 0px; margin-right: 0px; margin-bottom:2px;padding:-10px}
+                                #div {padding: 0 !important;}'
+                                #                                ))),
+                                plotlyOutput("now_spotplot_detaljert",height ="300px"),
+                                fluidRow(
+                                  box(width = 8,
+                                      h3("Hva ser du?"),
+                                      #                                    p("Dagens strømprissytem med store svininger variabel og effektbasert nettleie")
+                                      p("Statens strømstøtteordning har direkte påvirkning på din timespris på strøm."),
+                                      p("Ved å taste inn ditt postnummer i margen til venstre viser grafen ovenfor din strømpris idag/imorgen for nettopp deg, angitt som:"),
+                                      p(
+                                        strong(
+                                          tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
+                                          "=",
+                                          tags$span(style=paste0("color:",mycols['spotpris']),"spotpris"),
+                                          "+",
+                                          tags$span(style=paste0("color:",mycols['nettleie']),"nettleie"),
+                                          "-",
+                                          tags$span(style=paste0("color:",mycols['stotte']),"strømstøtte")
+                                        )
+                                      ),
+                                      p("Grunnen til at din strømpris vises som et estimat (m/usikkerhet) er at strømstøtten er basert på gjennomsnittlig spotpris i inneværende måned, og dermed ikke er kjent før månedsslutt.",
+                                        "Strømstøtten vist ovenfor derfor basert på simuleringer av fremtidige spotpriser ",
+                                        tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","(fra en statistisk modell)"),"."
+                                      ),
+                                      h4("Merk"),
+                                      p("Faste og effektbasert månedsavgift fra nettleverandør kommer i tillegg på regningen fra nettleverandør."),
+                                      p("Faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kommer i tillegg på regningen fra din strømleverandør.")
+                                  ),
+                                  box(width = 4,
+                                      title = "Oversikt"#, # Kan ikke ha samme objekt flere steder.
+                                  #    uiOutput("nettleie"),
+                                  #    uiOutput("stromstotte")
+                                  )
+                                )
+                              )
+)
+
 body_strompris_history <- tabItem(tabName = "strompris_history",
                                   h3("Detaljert/historisk strømpris"),
                                   fluidPage(
@@ -412,6 +461,7 @@ body <-  dashboardBody(
 #div {padding: 0 !important;}'
 #  ))),
   tabItems(body_strompris_naa,
+           body_strompris_naa_detaljert,
            body_strompris_history,
            body_stromstotte,
            body_strompris,
@@ -510,9 +560,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
      updated_dt_comp0 <- dt_comp[area == input$prisomraade]
 
-     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     #updated_dt_hourly0 <- dt_hourly[area=="NO1"]
-     #updated_dt_comp0 <- dt_comp[area == "NO1"]
+     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
+     updated_dt_comp0 <- dt_comp[area == "NO1"]
 
      updated_dt_hourly0[,computation_year:=year(date)]
      updated_dt_hourly0[,computation_month:=month(date)]
@@ -551,6 +601,7 @@ server <- function(input, output,session) {
      plot_strompris_naa_dt0 <- plot_strompris_naa_dt[,.(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI)]
 
      texthelper_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols))]
+     texthelper2_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc2(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols))]
      texthelper_simple_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc_simple(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols))]
      texthelper_simple2_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc_simple3(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols,fontsize=9))]
 
@@ -586,6 +637,7 @@ server <- function(input, output,session) {
      dt_list <-
      list(plot_dt_final=plot_dt_final,
           texthelper_dt=texthelper_dt,
+          texthelper2_dt = texthelper2_dt,
           texthelper_simple_dt=texthelper_simple_dt,
           texthelper_simple2_dt=texthelper_simple2_dt,
           estimation_date0 = estimation_date0)
@@ -906,6 +958,104 @@ server <- function(input, output,session) {
      ggp_now
 
    })
+
+   output$now_spotplot_detaljert <- renderPlotly({
+     req(input$postnr,input$nettselskap, input$prisomraade)
+     if (identical(input$prisomraade, "")) return(NULL)
+     if (identical(input$nettselskap, "")) return(NULL)
+
+     dt_list <- plot_dt_final()
+
+     max_dinstrompris <- dt_list$plot_dt_final[datetime>=dt_list$estimation_date0,max(upper_CI,na.rm = T)]
+     now_hms =as.POSIXct(as.IDate(Sys.Date()))+hour(Sys.time())*60*60+minute(Sys.time())*60+second(Sys.time())
+
+     dat <- dt_list$plot_dt_final[datetime>=(now_hms-3*60*60)]# & type=="totalpris"]
+     dat <- dat[datetime!=min(datetime)]
+     #helper0 <- dt_list$texthelper_simple_dt[datetime>=(now_hms-3*60*60)]
+     #setnames(helper0,"text","text0")
+     #dat <-merge(dat,helper0,by="datetime",all=T)
+     #dat[, text := text0[nafill(replace(.I, is.na(text0), NA), "locf")]]
+     #dat[,text0:=NULL]
+
+     plotrange <- c(min(c(dat$lower_CI,dat$pris),na.rm = T),max(c(dat$upper_CI,dat$pris),na.rm=T))
+     plotrange2 <- plotrange
+     plotrange2[2] <- plotrange2[2] + diff(plotrange)*0.05
+     plotrange3 <- plotrange2
+     plotrange3[1] <- plotrange2[1] - diff(plotrange)*0.01
+
+
+     helper0 <- dt_list$texthelper2_dt[datetime>=(now_hms-3*60*60)]
+     helper0[,plotval:=plotrange2[2]]
+
+     helper0[,datetime2:=datetime+0.5*60*60]
+
+     dt <- data.table(x=rep(Sys.time(),2),y=plotrange3)
+
+     p_now <- ggplot(data=dat,mapping=aes(x=datetime,y=pris,col=type,fill=type))+
+       geom_line(aes(size=linesize))+
+       geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.3)+
+       ggtitle("Din strømpris")+
+       scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(15))+
+       scale_x_datetime(name = "Tid/dato",
+                        date_breaks="2 hours",
+                        #minor_breaks = breaks_pretty(24),
+                        labels = label_date_short(format = c("", "", "%d.%b\n", "%H\n"),sep=""))+
+       scale_size_manual(values=c("a" = 1,"b"=0.5))+
+       guides(size="none")+
+       scale_color_manual(name="",values = mycols,labels = mylabels)+
+       scale_fill_manual(name="",values = mycols,labels = mylabels)+
+       geom_line(dt,mapping = aes(x=x,y=y),linetype=2,col="grey",size=0.75,inherit.aes = F)+
+       geom_line(data=helper0,aes(x=datetime2,y=plotval,text=text),inherit.aes = F,size=0.00001)
+
+     p_now
+
+
+     #p_now
+
+     #+
+     #  #                 +
+     #  scale_size_manual(values=c("a" = 1,"b"=0.5))+
+     #   guides(size="none")+
+     #   scale_color_manual(name="",values = mycols,labels = mylabels)+
+     #   scale_fill_manual(name="",values = mycols,labels = mylabels)+
+
+     ggp_now <- ggplotly(p_now,tooltip = "text")
+     ggp_now <- layout(
+       ggp_now,
+       annotations=list(x=as.numeric(dt[1,x]),
+                        y=plotrange3[1],
+                        text="NÅ",
+                        showarrow=FALSE,
+                        font=list(size=10)),
+       hovermode = "x unified",
+       xaxis = list(constrain="domain",
+                    fixedrange = TRUE,
+                    nticks=24,
+                    range=dat[,as.numeric(range(datetime))]
+       ),#,tickformat="%b<br>%Y"),
+       yaxis = list(constrain="domain",
+                    fixedrange = TRUE,
+                    tickformat = ".2f",
+                    nticks=20,
+                    zeroline = TRUE,
+                    range=plotrange3
+       ),
+       legend = list(font = list(size=10)),
+       hoverlabel = list(font=list(color = mycols["totalpris"],size=9))#,
+       #       legend = list(orientation = 'h')
+     )
+#     ggp_now <- style(ggp_now,visible="legendonly",traces=c(1,2,3,7)) #trace=2 identified through plotly_json(ggp_now)
+     ggp_now <- style(ggp_now,visible="legendonly",traces=c(3,7)) #trace=2 identified through plotly_json(ggp_now)
+     ggp_now <- style(ggp_now,hoverinfo="none",traces=1:(length(ggp_now$x$data)-1))
+     ggp_now <- style(ggp_now,name="strømstøtte",traces=3)
+     ggp_now <- style(ggp_now,name="Din strømpris",traces=4)
+
+     ggp_now <- config(ggp_now,locale="no")
+
+     ggp_now
+
+   })
+
 
 
    output$history_spotplot <- renderPlotly({
