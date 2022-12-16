@@ -41,7 +41,7 @@
 #DONE # bruk vindu nå + fremover
 # ja til postummer i header på plott ( kanskje i en annen farge)
 # tallgrunnlagboks: Din strømpris består av, og nederest i samme boks kan "din strømregning inkluderer også" der
-# Endringslogg inn i Om siden
+#DONE# Endringslogg inn i Om siden
 
 # Før release:
 #Vis kun nettleverandør + prisområde som selective hvis ikke unik
@@ -50,6 +50,7 @@
 # finpuss modellbeskrivelsen ref slider
 # Få interne linker til å fungere
 # Legg til info om effekttariff
+# vurder å bytte rundt på farger
 
 # Automatisk deployment ved opplasting til GitHub
 
