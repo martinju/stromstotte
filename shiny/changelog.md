@@ -10,3 +10,6 @@
 - Diverse visuelle forbedringer av nå (enkel) for å tilpasse noe bedre til mobilskjerm
 - Ny bakgrunnsfarge og diverse visuelle oppdateringer i alle plott
 - Flyttet endringslogg til om siden
+
+## dinstrompris 0.1.2 [18.12.22]
+- La til valg av nettselskap/prisområde kun når det er nødvendig (flere enn en mulighet)

@@ -193,9 +193,23 @@ sidebar <- dashboardSidebar(
   width = 300,
   sidebarMenu(
     selectizeInput("postnr","Skriv inn postnummer",choices=NULL),
-    selectInput("nettselskap","Velg Nettselskap",""),
-    selectInput("prisomraade","Velg Prisområde",""),
-    menuItem("Din strømpris nå", tabName = "strompris_naa", icon = icon("dashboard",verify_fa = FALSE)),
+    tabsetPanel(
+      id = "select_nettselskap",
+      type = "hidden",
+      tabPanel("multiple_nettselskap",
+               selectInput("nettselskap","Velg Nettselskap","")
+               ),
+      tabPanel("single_nettselskap") # empty
+    ),
+    tabsetPanel(
+      id = "select_prisomraade",
+      type = "hidden",
+      tabPanel("multiple_prisomraade",
+               selectInput("prisomraade","Velg Prisområde","")
+      ),
+      tabPanel("single_prisomraade") # empty
+    ),
+    menuItem("Din strømpris nå", tabName = "strompris_naa", icon = icon("dashboard",verify_fa = FALSE),selected=T),
     menuItem("Din strømpris nå (detaljert)", tabName = "strompris_naa_detaljert", icon = icon("dashboard",verify_fa = FALSE)),
     menuItem("Historisk strømpris", tabName = "strompris_history", icon = icon("dashboard",verify_fa = FALSE)),
     menuItem("Estimering av strømstøtte", tabName = "stromstotte", icon = icon("bolt",verify_fa = FALSE)),
@@ -506,8 +520,21 @@ server <- function(input, output,session) {
   })
 
   observe({
-    updateSelectInput(session, "nettselskap",choices = updated_nettselskap()
-    )})
+    these_nettselskap <- updated_nettselskap()
+    if(length(these_nettselskap)>1){
+      no_nettselskap <- "multiple_nettselskap"
+    } else {
+      no_nettselskap <- "single_nettselskap"
+    }
+
+    updateTabsetPanel(inputId = "select_nettselskap", selected = no_nettselskap)
+    })
+
+  observe({
+    these_nettselskap <- updated_nettselskap()
+    updateSelectInput(session, "nettselskap",choices = these_nettselskap)
+  })
+
 
   # Update the prisomraade input
   updated_prisomraade <- reactive({
@@ -515,8 +542,22 @@ server <- function(input, output,session) {
   })
 
   observe({
-    updateSelectInput(session, "prisomraade",choices = updated_prisomraade()
-    )})
+    these_prisomraade <- updated_prisomraade()
+    if(length(these_prisomraade)>1){
+      no_prisomraade <- "multiple_prisomraade"
+    } else {
+      no_prisomraade <- "single_prisomraade"
+    }
+
+    updateTabsetPanel(inputId = "select_prisomraade", selected = no_prisomraade)
+  })
+
+
+  observe({
+    these_prisomraade <- updated_prisomraade()
+
+    updateSelectInput(session, "prisomraade",choices = these_prisomraade)
+    })
 
    # Filter dt_nettleie based on input
    updated_dt_nettleie <- reactive({
@@ -581,9 +622,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
      updated_dt_comp0 <- dt_comp[area == input$prisomraade]
 
-     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
-     updated_dt_comp0 <- dt_comp[area == "NO1"]
+     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     #updated_dt_hourly0 <- dt_hourly[area=="NO1"]
+     #updated_dt_comp0 <- dt_comp[area == "NO1"]
 
      updated_dt_hourly0[,computation_year:=year(date)]
      updated_dt_hourly0[,computation_month:=month(date)]
