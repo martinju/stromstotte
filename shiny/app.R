@@ -3,7 +3,7 @@
 # Nettleiernavn på tvers av datasett
   # Sjekk bug med postnr 2863 + "SØR AURDAL ENERGI AS"
 #DONE # Vis kun nettleverandør + prisområde som selective hvis ikke unik
-# vis postnummer i plotly-header
+#DONE # vis postnummer i plotly-header
 # oppdater "estimering av strømstøtte"
 # finpuss modellbeskrivelsen ref slider
 # Få interne linker til å fungere
