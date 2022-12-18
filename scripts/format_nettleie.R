@@ -5,7 +5,7 @@ Sys.setlocale(locale='en_US.UTF-8') # Also OK for reading Norwegian letters
 nettleie <- fread("raw-data/innrapportert_nettleie_251022.csv",dec = ",",encoding = "Latin-1")
 
 setnames(nettleie,"Konsesjonær","Nettselskap")
-setnames(nettleie,"Energiledd (øre/kWh) eks. MVA","Energiledd")
+setnames(nettleie,"Energiledd (øre/kWh) ink. MVA","Energiledd")
 
 nettleie[,length(unique(Energiledd)),by=.(Nettselskap,Time,Fylke)][,any(V1!=1)]
 
