@@ -13,3 +13,4 @@
 
 ## dinstrompris 0.1.2 [18.12.22]
 - La til valg av nettselskap/prisområde kun når det er nødvendig (flere enn en mulighet)
+- La til postnummer i tittel på plotly

@@ -2,7 +2,7 @@
 
 # Nettleiernavn på tvers av datasett
   # Sjekk bug med postnr 2863 + "SØR AURDAL ENERGI AS"
-# Vis kun nettleverandør + prisområde som selective hvis ikke unik
+#DONE # Vis kun nettleverandør + prisområde som selective hvis ikke unik
 # vis postnummer i plotly-header
 # oppdater "estimering av strømstøtte"
 # finpuss modellbeskrivelsen ref slider
@@ -622,9 +622,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
      updated_dt_comp0 <- dt_comp[area == input$prisomraade]
 
-     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     #updated_dt_hourly0 <- dt_hourly[area=="NO1"]
-     #updated_dt_comp0 <- dt_comp[area == "NO1"]
+     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
+     updated_dt_comp0 <- dt_comp[area == "NO1"]
 
      updated_dt_hourly0[,computation_year:=year(date)]
      updated_dt_hourly0[,computation_month:=month(date)]
@@ -872,7 +872,7 @@ server <- function(input, output,session) {
      p_now <- ggplot(data=dat,mapping=aes(x=datetime,y=pris))+
        geom_line(col=mycols["totalpris"],size=1)+
        geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI),fill=mycols["totalpris"], alpha = 0.3)+
-       ggtitle("Din strømpris")+
+       ggtitle("")+
        scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(8))+
        scale_x_datetime(name = "Tid/dato",
                         date_breaks="2 hours",
@@ -897,6 +897,8 @@ server <- function(input, output,session) {
      ggp_now <- ggplotly(p_now,tooltip = "text")
      ggp_now <- layout(
        ggp_now,
+       title = list(text = paste0("Din strømpris <span style='color:grey; font-size:small'>(Postnr: ",input$postnr,")</span>")),
+       margin=list(t=35),
        annotations=list(x=as.numeric(dt[1,x]),
                         y=plotrange3[1],
                         text="NÅ",
@@ -1059,7 +1061,7 @@ server <- function(input, output,session) {
      p_now <- ggplot(data=dat,mapping=aes(x=datetime,y=pris,col=type,fill=type))+
        geom_line(aes(size=linesize))+
        geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.3)+
-       ggtitle("Din strømpris")+
+       ggtitle("")+
        scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(8))+
        scale_x_datetime(name = "Tid/dato",
                         date_breaks="2 hours",
@@ -1089,6 +1091,8 @@ server <- function(input, output,session) {
      ggp_now <- ggplotly(p_now,tooltip = "text")
      ggp_now <- layout(
        ggp_now,
+       title = list(text = paste0("Din strømpris <span style='color:grey; font-size:small'>(Postnr: ",input$postnr,")</span>")),
+       margin=list(t=35),
        annotations=list(x=as.numeric(dt[1,x]),
                         y=plotrange3[1],
                         text="NÅ",
@@ -1137,7 +1141,7 @@ server <- function(input, output,session) {
      p_history <- ggplot(data=dt_list$plot_dt_final,mapping=aes(x=datetime,y=pris,col=type,fill=type))+
        geom_line(aes(size=linesize))+
        geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.3)+
-#       ggtitle("Din strømpris")+
+       ggtitle("")+
        scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(8))+
        scale_x_datetime(name = "Tid/dato",
                         breaks=breaks_pretty(15),
@@ -1153,6 +1157,9 @@ server <- function(input, output,session) {
      ggp_history <- ggplotly(p_history,dynamicTicks = TRUE,tooltip = "text")
      ggp_history <- layout(
        ggp_history,
+       title = list(text = paste0("Din strømpris <span style='color:grey; font-size:small'>(Postnr: ",input$postnr,")</span>"),
+                    y=0.99),
+       margin=list(t=35+25),
 #       hovermode = "x unified",
        xaxis = list(
          rangeselector = list(
