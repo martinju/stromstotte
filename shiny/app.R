@@ -1,5 +1,16 @@
 # TODO:
 
+# Nettleiernavn på tvers av datasett
+  # Sjekk bug med postnr 2863 + "SØR AURDAL ENERGI AS"
+# Vis kun nettleverandør + prisområde som selective hvis ikke unik
+# vis postnummer i plotly-header
+# oppdater "estimering av strømstøtte"
+# finpuss modellbeskrivelsen ref slider
+# Få interne linker til å fungere
+# Legg til info om effekttariff
+# vurder å bytte rundt på farger
+
+
 #TODO før release
 # Sjekk at nettleie-navn er kompatibelt på tvers av datasett
 # Sjekk bug med postnr 2863 + "SØR AURDAL ENERGI AS"
@@ -110,7 +121,7 @@ library(data.table)
 deployed <- TRUE
 
 if(deployed){
-  path <- "https://raw.githubusercontent.com/martinju/stromstotte/before_release/"
+  path <- "https://raw.githubusercontent.com/martinju/stromstotte/master"
 } else{
   path <- "../"
 }
@@ -570,9 +581,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
      updated_dt_comp0 <- dt_comp[area == input$prisomraade]
 
-     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     #updated_dt_hourly0 <- dt_hourly[area=="NO1"]
-     #updated_dt_comp0 <- dt_comp[area == "NO1"]
+     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
+     updated_dt_comp0 <- dt_comp[area == "NO1"]
 
      updated_dt_hourly0[,computation_year:=year(date)]
      updated_dt_hourly0[,computation_month:=month(date)]
