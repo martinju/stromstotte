@@ -29,7 +29,6 @@ aa=nettleie_dt[,.SD,.SDcols=c("Nettselskap","Kapasitetsledd fra kW","Kapasitetsl
 nettleie_dt[,keep:=TRUE]
 nettleie_dt[Nettselskap=="TINFOS AS" & Fylke=="Troms og Finnmark",keep:=FALSE] # Finnes ikke i data
 nettleie_dt[Nettselskap=="TENSIO TN AS" & Fylke == "Nordland",keep:=FALSE] # Oppført da de deltar i kraftutredning https://tn.tensio.no/kraftsystemutredning-for-nord-trondelag-og-bindal
-
 nettleie_dt <- nettleie_dt[keep==TRUE]
 nettleie_dt[,keep:=NULL]
 

@@ -130,6 +130,8 @@ source("helper_funcs.R")
 
 dt_nettleie <- fread(file.path(path,"data/database_nettleie_simple.csv"))
 dt_nettleie_kl6 <- fread(file.path(path,"data/database_nettleie_simple_kl_6.csv"))
+dt_nettleie_kapasitetsledd <- fread(file.path(path,"data/database_nettleie_kapasitetsledd.csv"))
+
 dt_hourly <- fread(file.path(path,"data/database_nordpool_hourly.csv"))
 dt_comp <- fread(file.path(path,"data/historic_estimated_compensation.csv"))
 dt_postnr_nettselskap_prisomraader_map <- fread(file.path(path,"data/simple_postnr_nettselskap_prisomraader_dt.csv"))
@@ -145,7 +147,7 @@ dt_postnr_nettselskap_prisomraader_map[,nchar_postnr:=NULL]
 dt_postnr_nettselskap_prisomraader_map[,prisomraade:=gsub(" ","",prisomraade,fixed=T)]
 
 dt_nettleie[,Energiledd:=Energiledd/100]
-
+dt_nettleie_kapasitetsledd[,Kapasitetsledd :=Kapasitetsledd/100]
 
 #####
 
@@ -248,9 +250,12 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                   box(width = 8,
                                       h3("Hva ser du?"),
                                       #                                    p("Dagens strømprissytem med store svininger variabel og effektbasert nettleie")
-                                      p("Statens strømstøtteordning har direkte påvirkning på din timespris på strøm."),
-                                      p("Ved å taste inn ditt postnummer i margen til venstre viser grafen ovenfor din strømpris idag/imorgen for nettopp deg, angitt som:"),
-                                      p(
+#                                      p("Statens strømstøtteordning har direkte påvirkning på din timespris på strøm."),
+                                      p("Ved å taste inn ditt postnummer i margen til venstre viser grafen ovenfor ",
+                                        tags$span(style=paste0("color:",mycols['totalpris']),"din strømpris"),
+                                        " idag/imorgen for nettopp deg."),# angitt som:"),
+                                      p(tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
+                                        "hensyntar både nettleie og strømstøtte, og er definert som:",
                                         strong(
                                           tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
                                           "=",
@@ -262,17 +267,20 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                         )
                                       ),
                                       p("Grunnen til at din strømpris vises som et estimat (m/usikkerhet) er at strømstøtten er basert på gjennomsnittlig spotpris i inneværende måned, og dermed ikke er kjent før månedsslutt.",
-                                        "Strømstøtten vist ovenfor derfor basert på simuleringer av fremtidige spotpriser ",
+                                        "Strømstøtten vist ovenfor er derfor basert på simuleringer av fremtidige spotpriser ",
                                         tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","(fra en statistisk modell)"),"."
-                                      ),
-                                      h4("Merk"),
-                                      p("Faste og effektbasert månedsavgift fra nettleverandør kommer i tillegg på regningen fra nettleverandør."),
-                                      p("Faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kommer i tillegg på regningen fra din strømleverandør.")
+                                      )
+                                      #h4("Merk"),
+#                                      p("Faste og effektbasert månedsavgift fra nettleverandør kommer i tillegg på regningen fra nettleverandør."),
+#                                      p("Faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kommer i tillegg på regningen fra din strømleverandør.")
                                   ),
                                   box(width = 4,
-                                      title = "Oversikt",
+                                      #title = "Din strømpris består av",
+                                      h3("Din strømpris består av"),
                                       uiOutput("nettleie"),
-                                      uiOutput("stromstotte")
+                                      uiOutput("stromstotte"),
+                                      h4("Andre tillegg på strømregningen:"),
+                                      p("[under arbeid]: Sett inn effekttarriff o.l. her.")
                                   )
                                 )
                               )
@@ -586,6 +594,11 @@ server <- function(input, output,session) {
    })
 
 
+   updated_dt_nettleie_kapasitetsledd <- reactive({
+     dt_nettleie_kapasitetsledd[Nettselskap == input$nettselskap]
+   })
+
+
    # TESTING
    output$data_spot <- renderTable(updated_dt_hourly())
    output$data_comp <- renderTable(updated_dt_comp())
@@ -867,6 +880,8 @@ server <- function(input, output,session) {
 
      helper0[,datetime2:=datetime+0.5*60*60]
 
+     x_range <- as.numeric(dat[,diff(range(datetime))])
+
      dt <- data.table(x=rep(Sys.time(),2),y=plotrange2)
 
      p_now <- ggplot(data=dat,mapping=aes(x=datetime,y=pris))+
@@ -875,7 +890,7 @@ server <- function(input, output,session) {
        ggtitle("")+
        scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(8))+
        scale_x_datetime(name = "Tid/dato",
-                        date_breaks="2 hours",
+                        date_breaks=ifelse(x_range>24,"3 hours","2 hours"),
                         minor_breaks = "1 hours",
                         labels = label_date_short(format = c("", "", "%d.%b\n", "%H\n"),sep=""))+
        geom_line(dt,mapping = aes(x=x,y=y),linetype=3,col="grey",size=0.75)+
@@ -1056,6 +1071,8 @@ server <- function(input, output,session) {
 
      helper0[,datetime2:=datetime+0.5*60*60]
 
+     x_range <- as.numeric(dat[,diff(range(datetime))])
+
      dt <- data.table(x=rep(Sys.time(),2),y=plotrange2)
 
      p_now <- ggplot(data=dat,mapping=aes(x=datetime,y=pris,col=type,fill=type))+
@@ -1064,7 +1081,7 @@ server <- function(input, output,session) {
        ggtitle("")+
        scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(8))+
        scale_x_datetime(name = "Tid/dato",
-                        date_breaks="2 hours",
+                        date_breaks=ifelse(x_range>24,"3 hours","2 hours"),
                         minor_breaks = "1 hours",
                         labels = label_date_short(format = c("", "", "%d.%b\n", "%H\n"),sep=""))+
        scale_size_manual(values=c("a" = 1,"b"=0.5))+

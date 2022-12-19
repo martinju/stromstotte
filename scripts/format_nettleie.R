@@ -38,6 +38,20 @@ setkey(nettleie_dt_simple_kl_6,Fylke,Nettselskap,pristype)
 
 ### CHecking if Fylke matters at all
 
+nettleie_dt_simple[,keep:=TRUE]
+nettleie_dt_simple[Nettselskap=="TINFOS AS" & Fylke=="Troms og Finnmark",keep:=FALSE] # Finnes ikke i data
+nettleie_dt_simple[Nettselskap=="TENSIO TN AS" & Fylke == "Nordland",keep:=FALSE] # Oppført da de deltar i kraftutredning https://tn.tensio.no/kraftsystemutredning-for-nord-trondelag-og-bindal
+nettleie_dt_simple <- nettleie_dt_simple[keep==TRUE]
+nettleie_dt_simple[,keep:=NULL]
+
+nettleie_dt_simple_kl_6[,keep:=TRUE]
+nettleie_dt_simple_kl_6[Nettselskap=="TINFOS AS" & Fylke=="Troms og Finnmark",keep:=FALSE] # Finnes ikke i data
+nettleie_dt_simple_kl_6[Nettselskap=="TENSIO TN AS" & Fylke == "Nordland",keep:=FALSE] # Oppført da de deltar i kraftutredning https://tn.tensio.no/kraftsystemutredning-for-nord-trondelag-og-bindal
+nettleie_dt_simple_kl_6 <- nettleie_dt_simple_kl_6[keep==TRUE]
+nettleie_dt_simple_kl_6[,keep:=NULL]
+
+
+
 (fylke_matters1 <- unique(nettleie_dt_simple[,.(Nettselskap,Energiledd,pristype)])[,.N,by=Nettselskap][,any(N!=2)]) # FALSE
 (fylke_matters2 <- unique(nettleie_dt_simple_kl_6[,.(Nettselskap,Energiledd,pristype)])[,.N,by=Nettselskap][,any(N!=1)]) # FALSE
 
