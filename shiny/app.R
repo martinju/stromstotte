@@ -246,37 +246,37 @@ sidebar <- dashboardSidebar(
 
 body_strompris_naa <- tabItem(tabName = "strompris_naa",
                               fluidPage(
-#                                tags$style(".topimg {
-#                            margin-left:-30px;
-##                            margin-right:-30px;
-#                            margin-top:-15px;
-#                          }")
+                                #                                tags$style(".topimg {
+                                #                            margin-left:-30px;
+                                ##                            margin-right:-30px;
+                                #                            margin-top:-15px;
+                                #                          }")
                                 #style='padding:-10px;padding:0 !important',
-#                                tags$head(tags$style(HTML('
-#.box {margin-top: 2px;margin-left: 0px; margin-right: 0px; margin-bottom:2px;padding:-10px}
-#div {padding: 0 !important;}'
-#                                ))),
+                                #                                tags$head(tags$style(HTML('
+                                #.box {margin-top: 2px;margin-left: 0px; margin-right: 0px; margin-bottom:2px;padding:-10px}
+                                #div {padding: 0 !important;}'
+                                #                                ))),
                                 tags$head(includeHTML("google_analytics.html")),
                                 plotlyOutput("now_spotplot3",height ="300px"),
                                 fluidRow(
-                                  box(width = 8,
+                                  box(width = 7,
                                       h3("Hva ser du?"),
                                       #                                    p("Dagens strømprissytem med store svininger variabel og effektbasert nettleie")
-#                                      p("Statens strømstøtteordning har direkte påvirkning på din timespris på strøm."),
+                                      #                                      p("Statens strømstøtteordning har direkte påvirkning på din timespris på strøm."),
                                       p("Ved å taste inn ditt postnummer i margen til venstre viser grafen ovenfor ",
                                         tags$span(style=paste0("color:",mycols['totalpris']),"din strømpris"),
                                         " idag/imorgen for nettopp deg."),# angitt som:"),
                                       p(tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
                                         "hensyntar både nettleie og strømstøtte, og er definert som:"),
-                                        strong(
-                                          tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
-                                          "=",
-                                          tags$span(style=paste0("color:",mycols['spotpris']),"spotpris"),
-                                          "+",
-                                          tags$span(style=paste0("color:",mycols['nettleie']),"nettleie"),
-                                          "-",
-                                          tags$span(style=paste0("color:",mycols['stotte']),"strømstøtte\n")
-                                        ),
+                                      strong(
+                                        tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
+                                        "=",
+                                        tags$span(style=paste0("color:",mycols['spotpris']),"spotpris"),
+                                        "+",
+                                        tags$span(style=paste0("color:",mycols['nettleie']),"nettleie"),
+                                        "-",
+                                        tags$span(style=paste0("color:",mycols['stotte']),"strømstøtte\n")
+                                      ),
                                       p(""),
                                       p(tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
                                         " vises som et estimat med et 95% usikkerhetsintervall. ",
@@ -284,24 +284,30 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                         "Strømstøtten er derfor beregnet basert på simuleringer av fremtidige spotpriser",
                                         tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","(fra en statistisk modell)"),".")
                                       #h4("Merk"),
-#                                      p("Faste og effektbasert månedsavgift fra nettleverandør kommer i tillegg på regningen fra nettleverandør."),
-#                                      p("Faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kommer i tillegg på regningen fra din strømleverandør.")
+                                      #                                      p("Faste og effektbasert månedsavgift fra nettleverandør kommer i tillegg på regningen fra nettleverandør."),
+                                      #                                      p("Faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kommer i tillegg på regningen fra din strømleverandør.")
                                   ),
-                                  box(width = 4,
+                                  box(width = 5,
                                       #title = "Din strømpris består av",
                                       h3("Din strømpris består av"),
                                       uiOutput("strompris_for"),
                                       uiOutput("nettleie"),
-                                      uiOutput("stromstotte"),
-                                      h4(strong("Andre tillegg på strømregningen")),
-                                      uiOutput("nettleie_kapasitetsledd"),
-                                      tableOutput("nettleie_kapasitetsledd_tabell"),
-                                      p(strong("Kostnader til strømselskap")),
-                                      p("Både faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kostnader fra din din strømleverandør kommer også i tillegg.",
-                                        em("(I fremtiden vil det være mulig å inkludere disse kostnadene i grafen ovenfor.)"))
+                                      uiOutput("stromstotte")
                                   )
+                                ),
+                                fluidRow(
+                                  box(width = 7,
+                                    h3("Øvrige tillegg på din strømregning"),
+                                    uiOutput("nettleie_kapasitetsledd"),
+                                    tableOutput("nettleie_kapasitetsledd_tabell"),
+                                    p(strong("Kostnader til strømselskap")),
+                                    p("Både faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kostnader fra din din strømleverandør kommer også i tillegg.",
+                                      br(),
+                                      em("(I fremtiden vil det være mulig å inkludere disse kostnadene i grafen ovenfor.)")
+                                      )
                                 )
                               )
+)
 )
 
 body_strompris_naa_detaljert <- tabItem(tabName = "strompris_naa_detaljert",
