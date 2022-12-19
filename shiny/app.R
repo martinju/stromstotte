@@ -7,8 +7,8 @@
 # oppdater "estimering av strømstøtte"
 # finpuss modellbeskrivelsen ref slider
 # Få interne linker til å fungere
-# Legg til info om effekttariff
-# vurder å bytte rundt på farger
+#DONE # Legg til info om effekttariff
+#DONE # vurder å bytte rundt på farger
 
 
 #TODO før release
@@ -258,7 +258,7 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                 #                                ))),
                                 tags$head(includeHTML("google_analytics.html")),
                                 plotlyOutput("now_spotplot3",height ="300px"),
-                                fluidRow(
+#                                fluidRow(
                                   box(width = 7,
                                       h3("Hva ser du?"),
                                       #                                    p("Dagens strømprissytem med store svininger variabel og effektbasert nettleie")
@@ -291,11 +291,12 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                       #title = "Din strømpris består av",
                                       h3("Din strømpris består av"),
                                       uiOutput("strompris_for"),
+                                      uiOutput("stromstotte"),
                                       uiOutput("nettleie"),
-                                      uiOutput("stromstotte")
-                                  )
-                                ),
-                                fluidRow(
+                                      uiOutput("spotpris"),
+                                      uiOutput("dinstrompris")
+                                  ),
+#                                ),
                                   box(width = 7,
                                     h3("Øvrige tillegg på din strømregning"),
                                     uiOutput("nettleie_kapasitetsledd"),
@@ -306,7 +307,6 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                       em("(I fremtiden vil det være mulig å inkludere disse kostnadene i grafen ovenfor.)")
                                       )
                                 )
-                              )
 )
 )
 
@@ -631,7 +631,7 @@ server <- function(input, output,session) {
 
    output$strompris_for <- renderUI({
      div(
-       em("(Priser for: ",
+       em("(Alle priser inkl. mva for ",
        "postnr: ",strong(paste0(input$postnr)),", ",
          "nettselskap: ",strong(paste0(input$nettselskap)),", ",
          "prisområde: ",strong(paste0(input$prisomraade)),")")
@@ -662,9 +662,43 @@ server <- function(input, output,session) {
        h4(tags$span(style=paste0("color:",mycols['stotte']),"Strømstøtte (per kWh)")),
        p("Estimat: ",twodigits(med)," kr/kWh",
          br(),
-       "95% konfidensintervall: (",twodigits(lower),",",twodigits(upper),") kr/kWh")
+       "95% usikkerhetsintervall: (",twodigits(lower),",",twodigits(upper),") kr/kWh")
      )
    })
+
+   output$spotpris <- renderUI({
+     this_hour <- hour(Sys.time())
+     this_date <- as.IDate(Sys.time())
+
+     spotpris <- updated_dt_hourly()[date==this_date & start_hour==this_hour,price]
+#     spotpris <- updated_dt_hourly0[date==this_date & start_hour==this_hour,price]
+
+     div(
+       h4(tags$span(style=paste0("color:",mycols['spotpris']),"Spotpris (per kWh)")),
+       p("Kl.",paste0(this_hour,"-",this_hour+1),twodigits(spotpris)," kr/kWh")
+     )
+   })
+
+
+   output$dinstrompris <- renderUI({
+
+     this_hour <- hour(Sys.time())
+
+
+     dt_list <- plot_dt_final()
+     dt <- dt_list$plot_dt_final
+
+     now_hms =as.POSIXct(as.IDate(Sys.Date()))+hour(Sys.time())*60*60
+
+     res_vec <- unlist(dt[datetime==now_hms & type=="totalpris",.(pris,lower_CI,upper_CI)])
+
+     div(
+       h4(tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris nå (per kWh)")),
+       p(paste0("Kl. ",this_hour,"-",this_hour+1),": ",
+         strong(twodigits(res_vec[1])," (",twodigits(res_vec[2]),",",twodigits(res_vec[3]),")")," kr/kWh")
+     )
+   })
+
 
    output$nettleie_kapasitetsledd <- renderUI({
      dt <- updated_dt_nettleie_kapasitetsledd()
@@ -785,6 +819,8 @@ server <- function(input, output,session) {
           estimation_date0 = estimation_date0)
 
    })
+
+
 
    output$now_spotplot <- renderPlotly({
 #      req(input$postnr,input$nettselskap, input$prisomraade)
