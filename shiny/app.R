@@ -118,7 +118,7 @@ Sys.setlocale(locale='no_NB.UTF-8')
 
 library(data.table)
 
-deployed <- TRUE
+deployed <- FALSE
 
 if(deployed){
 #  path <- "https://raw.githubusercontent.com/martinju/stromstotte/master"
@@ -131,7 +131,7 @@ source("helper_funcs.R")
 
 dt_nettleie <- fread(file.path(path,"data/database_nettleie_simple.csv"))
 dt_nettleie_kl6 <- fread(file.path(path,"data/database_nettleie_simple_kl_6.csv"))
-dt_nettleie_kapasitetsledd <- fread(file.path(path,"data/database_nettleie_kapasitetsledd.csv"))
+dt_nettleie_kapasitetsledd <- fread(file.path(path,"data/database_nettleie_kapasitetsledd.csv"),encoding = "Latin-1")
 
 dt_hourly <- fread(file.path(path,"data/database_nordpool_hourly.csv"))
 dt_comp <- fread(file.path(path,"data/historic_estimated_compensation.csv"))
@@ -148,7 +148,18 @@ dt_postnr_nettselskap_prisomraader_map[,nchar_postnr:=NULL]
 dt_postnr_nettselskap_prisomraader_map[,prisomraade:=gsub(" ","",prisomraade,fixed=T)]
 
 dt_nettleie[,Energiledd:=Energiledd/100]
+
 dt_nettleie_kapasitetsledd[,Kapasitetsledd :=Kapasitetsledd/100]
+dt_nettleie_kapasitetsledd[,Forbruk:=paste0(`Kapasitetsledd fra kW`,"-",`Kapasitetsledd til kW`," kW")]
+dt_nettleie_kapasitetsledd[,Kostnad:=paste0(twodigits(Kapasitetsledd)," kr/mnd")]
+dt_nettleie_kapasitetsledd[,max:=max(Kapasitetsledd),by=Nettselskap]
+dt_nettleie_kapasitetsledd[Kapasitetsledd==max & `Grunnlag effektrinn`!="Sikringsstørrelse",Forbruk:=paste0(">",`Kapasitetsledd fra kW`," kW")]
+
+dt_nettleie_kapasitetsledd[`Grunnlag effektrinn`=="Topp 3 forbrukstopper innenfor 1 siste måneder", grunnlag_simple:="Gjennomsnitt av 3 høyeste timesforbruk siste måned"]
+dt_nettleie_kapasitetsledd[`Grunnlag effektrinn`=="Sikringsstørrelse", grunnlag_simple:="sikringsstørrelse"]
+dt_nettleie_kapasitetsledd[`Grunnlag effektrinn`=="Topp 1 forbrukstopper", grunnlag_simple:="høyeste timesforbruk siste måned"]
+dt_nettleie_kapasitetsledd[`Grunnlag effektrinn`=="Topp 5 forbrukstopper innenfor 12 siste måneder", grunnlag_simple:="Gjennomsnitt av 5 høyeste timesforbruk siste år"]
+dt_nettleie_kapasitetsledd[`Grunnlag effektrinn`=="Topp 2 forbrukstopper innenfor 1 siste måneder", grunnlag_simple:="Gjennomsnitt av 2 høyeste timesforbruk siste måned"]
 
 #####
 
@@ -256,7 +267,7 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                         tags$span(style=paste0("color:",mycols['totalpris']),"din strømpris"),
                                         " idag/imorgen for nettopp deg."),# angitt som:"),
                                       p(tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
-                                        "hensyntar både nettleie og strømstøtte, og er definert som:",
+                                        "hensyntar både nettleie og strømstøtte, og er definert som:"),
                                         strong(
                                           tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
                                           "=",
@@ -264,13 +275,14 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                           "+",
                                           tags$span(style=paste0("color:",mycols['nettleie']),"nettleie"),
                                           "-",
-                                          tags$span(style=paste0("color:",mycols['stotte']),"strømstøtte")
-                                        )
-                                      ),
-                                      p("Grunnen til at din strømpris vises som et estimat (m/usikkerhet) er at strømstøtten er basert på gjennomsnittlig spotpris i inneværende måned, og dermed ikke er kjent før månedsslutt.",
-                                        "Strømstøtten vist ovenfor er derfor basert på simuleringer av fremtidige spotpriser ",
-                                        tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","(fra en statistisk modell)"),"."
-                                      )
+                                          tags$span(style=paste0("color:",mycols['stotte']),"strømstøtte\n")
+                                        ),
+                                      p(""),
+                                      p(tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
+                                        " vises som et estimat med et 95% usikkerhetsintervall. ",
+                                        "Grunnen til dette er at strømstøtten ikke er kjent før månedsslutt.",
+                                        "Strømstøtten er derfor beregnet basert på simuleringer av fremtidige spotpriser",
+                                        tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","(fra en statistisk modell)"),".")
                                       #h4("Merk"),
 #                                      p("Faste og effektbasert månedsavgift fra nettleverandør kommer i tillegg på regningen fra nettleverandør."),
 #                                      p("Faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kommer i tillegg på regningen fra din strømleverandør.")
@@ -278,10 +290,15 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                   box(width = 4,
                                       #title = "Din strømpris består av",
                                       h3("Din strømpris består av"),
+                                      uiOutput("strompris_for"),
                                       uiOutput("nettleie"),
                                       uiOutput("stromstotte"),
-                                      h4("Andre tillegg på strømregningen:"),
-                                      p("[under arbeid]: Sett inn effekttarriff o.l. her.")
+                                      h4(strong("Andre tillegg på strømregningen")),
+                                      uiOutput("nettleie_kapasitetsledd"),
+                                      tableOutput("nettleie_kapasitetsledd_tabell"),
+                                      p(strong("Kostnader til strømselskap")),
+                                      p("Både faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kostnader fra din din strømleverandør kommer også i tillegg.",
+                                        em("(I fremtiden vil det være mulig å inkludere disse kostnadene i grafen ovenfor.)"))
                                   )
                                 )
                               )
@@ -606,14 +623,27 @@ server <- function(input, output,session) {
    output$data_nettleie <- renderTable(updated_dt_nettleie())
    output$datarange_strompris_naa <- renderPrint(input$daterange_strompris_naa)
 
+   output$strompris_for <- renderUI({
+     div(
+       em("(Priser for: ",
+       "postnr: ",strong(paste0(input$postnr)),", ",
+         "nettselskap: ",strong(paste0(input$nettselskap)),", ",
+         "prisområde: ",strong(paste0(input$prisomraade)),")")
+#       p("Postnummer: ",strong(paste0(input$postnr))),
+#       p("Nettselskap: ",strong(paste0(input$nettselskap))),
+#       p("Prisområde: ",strong(paste0(input$prisomraade)))
+     )
+   })
+
+
    output$nettleie <- renderUI({
      dagpris <- updated_dt_nettleie()[pristype=="Dag",Energiledd]
      nattpris <- updated_dt_nettleie()[pristype=="Natt",Energiledd]
 
      div(
-       p("Nettselskap: ",strong(paste0(input$nettselskap))),
-       p(paste0("Nettleie dag (06-22): ",twodigits(dagpris)," kr/kWh")),
-       p(paste0("Nettleie natt (22-06): ",twodigits(nattpris)," kr/kWh"))
+       h4(tags$span(style=paste0("color:",mycols['nettleie']),"Nettleie (per kWh)")),
+       p(paste0("Dag (06-22): ",twodigits(dagpris)," kr/kWh"),br(),
+       paste0("Natt (22-06): ",twodigits(nattpris)," kr/kWh"))
      )
    })
 
@@ -623,11 +653,41 @@ server <- function(input, output,session) {
      lower <- updated_dt_comp()[type=="quantile_0.025",compensation]
 
      div(
-       p("Strømstøtte for prisområde: ",strong(input$prisomraade)),
-       p("Estimat: ",twodigits(med)," kr/kWh"),
-       p("95% konfidensintervall: (",twodigits(lower),",",twodigits(upper),") kr/kWh")
+       h4(tags$span(style=paste0("color:",mycols['stotte']),"Strømstøtte (per kWh)")),
+       p("Estimat: ",twodigits(med)," kr/kWh",
+         br(),
+       "95% konfidensintervall: (",twodigits(lower),",",twodigits(upper),") kr/kWh")
      )
    })
+
+   output$nettleie_kapasitetsledd <- renderUI({
+     dt <- updated_dt_nettleie_kapasitetsledd()
+     #dt <- dt_nettleie_kapasitetsledd[Nettselskap=="ELVIA AS"]
+
+     grunnlag <- dt[,unique(`grunnlag_simple`)]
+
+     div(
+       p(strong("Nettleie (kapasitetsbasert)"),
+         br(),
+         "Månedsbeløp som er avhengig av hvor mye strøm du bruker samtidig.",
+         br(),
+         paste0("Maksforbruk = ",grunnlag,"."))
+       # Sett inn tableoutput her (fra annen fil)
+       # Til slutt angis grunnlag
+       # Nevn også at tillegg fra strømleverandør kommer i tillegg.
+     )
+   })
+
+   output$nettleie_kapasitetsledd_tabell <- renderTable({
+     dt <- updated_dt_nettleie_kapasitetsledd()
+     #dt <- dt_nettleie_kapasitetsledd[Nettselskap=="ELVIA AS"]
+
+     dt[,.(Maksforbruk=Forbruk,Kostnad)]
+   })
+
+
+
+
 
    plot_dt_final <- reactive({
      estimation_date0= dt_comp[,max(estimation_date)]
