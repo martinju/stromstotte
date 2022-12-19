@@ -121,7 +121,8 @@ library(data.table)
 deployed <- TRUE
 
 if(deployed){
-  path <- "https://raw.githubusercontent.com/martinju/stromstotte/master"
+#  path <- "https://raw.githubusercontent.com/martinju/stromstotte/master"
+  path <- "https://raw.githubusercontent.com/martinju/stromstotte/before_release"
 } else{
   path <- "../"
 }
