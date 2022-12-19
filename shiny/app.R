@@ -1,15 +1,15 @@
 # TODO:
 
 # Nettleiernavn på tvers av datasett
-  # Sjekk bug med postnr 2863 + "SØR AURDAL ENERGI AS"
+# Sjekk bug med postnr 2863 + "SØR AURDAL ENERGI AS"
 #DONE # Vis kun nettleverandør + prisområde som selective hvis ikke unik
 #DONE # vis postnummer i plotly-header
 # oppdater "estimering av strømstøtte"
 # finpuss modellbeskrivelsen ref slider
-# Få interne linker til å fungere
+#DONE# Få interne linker til å fungere
 #DONE # Legg til info om effekttariff
 #DONE # vurder å bytte rundt på farger
-
+# Spør Elin om jeg bør ta bort Spotpris og "din strømpris nå" fra Din strømpris består av.
 
 #TODO før release
 # Sjekk at nettleie-navn er kompatibelt på tvers av datasett
@@ -118,11 +118,11 @@ Sys.setlocale(locale='no_NB.UTF-8')
 
 library(data.table)
 
-deployed <- FALSE
+deployed <- TRUE
 
 if(deployed){
-#  path <- "https://raw.githubusercontent.com/martinju/stromstotte/master"
-  path <- "https://raw.githubusercontent.com/martinju/stromstotte/before_release"
+  path <- "https://raw.githubusercontent.com/martinju/stromstotte/master"
+  #path <- "https://raw.githubusercontent.com/martinju/stromstotte/before_release"
 } else{
   path <- "../"
 }
@@ -149,7 +149,6 @@ dt_postnr_nettselskap_prisomraader_map[,prisomraade:=gsub(" ","",prisomraade,fix
 
 dt_nettleie[,Energiledd:=Energiledd/100]
 
-dt_nettleie_kapasitetsledd[,Kapasitetsledd :=Kapasitetsledd/100]
 dt_nettleie_kapasitetsledd[,Forbruk:=paste0(`Kapasitetsledd fra kW`,"-",`Kapasitetsledd til kW`," kW")]
 dt_nettleie_kapasitetsledd[,Kostnad:=paste0(twodigits(Kapasitetsledd)," kr/mnd")]
 dt_nettleie_kapasitetsledd[,max:=max(Kapasitetsledd),by=Nettselskap]
@@ -170,9 +169,9 @@ mycols <- c(spotpris=cbbPalette[1],
             stotte = cbbPalette[4],
             totalpris = cbbPalette[3])
 mylabels <- c(spotpris= "Spotpris",
-            nettleie = "Nettleie",
-            stotte = "Strømstøtte",
-            totalpris = "Din strømpris")
+              nettleie = "Nettleie",
+              stotte = "Strømstøtte",
+              totalpris = "Din strømpris")
 
 
 ######
@@ -206,13 +205,14 @@ header <- dashboardHeader(title = "Din strømpris",titleWidth = 300)
 sidebar <- dashboardSidebar(
   width = 300,
   sidebarMenu(
+    id = "tabs",
     selectizeInput("postnr","Skriv inn postnummer",choices=NULL),
     tabsetPanel(
       id = "select_nettselskap",
       type = "hidden",
       tabPanel("multiple_nettselskap",
                selectInput("nettselskap","Velg Nettselskap","")
-               ),
+      ),
       tabPanel("single_nettselskap") # empty
     ),
     tabsetPanel(
@@ -227,20 +227,26 @@ sidebar <- dashboardSidebar(
     menuItem("Din strømpris nå (detaljert)", tabName = "strompris_naa_detaljert", icon = icon("dashboard",verify_fa = FALSE)),
     menuItem("Historisk strømpris", tabName = "strompris_history", icon = icon("dashboard",verify_fa = FALSE)),
     menuItem("Estimering av strømstøtte", tabName = "stromstotte", icon = icon("bolt",verify_fa = FALSE)),
-#    menuItem("Fremtidig strømpris", tabName = "strompris", icon = icon("bolt",verify_fa = FALSE)),
-#    menuItem("Historisk estimering", tabName = "historic", icon = icon("bolt",verify_fa = FALSE)),
-#    menuItem("Eksperimentering", tabName = "experimental", icon = icon("gear",verify_fa = FALSE)),
+    #    menuItem("Fremtidig strømpris", tabName = "strompris", icon = icon("bolt",verify_fa = FALSE)),
+    #    menuItem("Historisk estimering", tabName = "historic", icon = icon("bolt",verify_fa = FALSE)),
+    #    menuItem("Eksperimentering", tabName = "experimental", icon = icon("gear",verify_fa = FALSE)),
     menuItem("Om siden", tabName = "about", icon = icon("info",verify_fa = FALSE)),
     #menuItem("Endringslogg", tabName = "changelog", icon = icon("info",verify_fa = FALSE)),
+    tags$html(
+      br(),
+      p("dinstrompris.no v0.1.3",style = "text-align: center")
+    ),
     tags$html(
       tags$h5(
         tags$em("Laget av ",
                 tags$a(href="https://martinjullum.com", "Martin Jullum"),
-                " Norsk Regnesentral"
+                ",",
+                tags$a(href="https://nr.no", "Norsk Regnesentral")
         ),
         style = "text-align: center"
       )
-    )
+    )#,
+#    div(class = "sticky_footer",p(" dinstrompris.no v0.1.3"))
   )
 )
 
@@ -258,9 +264,9 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                 #                                ))),
                                 tags$head(includeHTML("google_analytics.html")),
                                 plotlyOutput("now_spotplot3",height ="300px"),
-#                                fluidRow(
+                                fluidRow(
                                   box(width = 7,
-                                      h3("Hva ser du?"),
+                                      h3("Hva viser grafen?"),
                                       #                                    p("Dagens strømprissytem med store svininger variabel og effektbasert nettleie")
                                       #                                      p("Statens strømstøtteordning har direkte påvirkning på din timespris på strøm."),
                                       p("Ved å taste inn ditt postnummer i margen til venstre viser grafen ovenfor ",
@@ -281,8 +287,15 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                       p(tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
                                         " vises som et estimat med et 95% usikkerhetsintervall. ",
                                         "Grunnen til dette er at strømstøtten ikke er kjent før månedsslutt.",
-                                        "Strømstøtten er derfor beregnet basert på simuleringer av fremtidige spotpriser",
-                                        tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","(fra en statistisk modell)"),".")
+                                        "Strømstøtten er derfor beregnet basert på simuleringer av fremtidige spotpriser fra en statistisk modell,",
+                                        #                                        tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","(fra en statistisk modell)"),
+                                        actionLink("link_to_estimering_av_stromstotte", "klikk her for detaljer"),
+                                        "."),
+                                      p(actionLink("link_to_strompris_naa_detaljert", "Klikk her")," for å se en mer detaljert oppdeling av ",
+                                        tags$span(style=paste0("color:",mycols['totalpris']),"din strømpris"),"."),
+                                      p(actionLink("link_to_strompris_history", "Klikk her")," for å se ",
+                                        tags$span(style=paste0("color:",mycols['totalpris']),"din strømpris"),
+                                        " tilbake i tid.")
                                       #h4("Merk"),
                                       #                                      p("Faste og effektbasert månedsavgift fra nettleverandør kommer i tillegg på regningen fra nettleverandør."),
                                       #                                      p("Faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kommer i tillegg på regningen fra din strømleverandør.")
@@ -306,6 +319,7 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                       br(),
                                       em("(I fremtiden vil det være mulig å inkludere disse kostnadene i grafen ovenfor.)")
                                       )
+                                )
                                 )
 )
 )
@@ -543,6 +557,18 @@ ui <- dashboardPage(header, sidebar, body)
 
 server <- function(input, output,session) {
 
+  observeEvent(input$link_to_estimering_av_stromstotte, {
+    updateTabItems(session, "tabs", "stromstotte")
+  })
+
+  observeEvent(input$link_to_strompris_naa_detaljert, {
+    updateTabItems(session, "tabs", "strompris_naa_detaljert")
+  })
+
+  observeEvent(input$link_to_strompris_history, {
+    updateTabItems(session, "tabs", "strompris_history")
+  })
+
   # Server-side updating as you type with postnr
   updateSelectizeInput(session, 'postnr', choices = unique_postnr, server = TRUE)
 
@@ -736,9 +762,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
      updated_dt_comp0 <- dt_comp[area == input$prisomraade]
 
-     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
-     updated_dt_comp0 <- dt_comp[area == "NO1"]
+     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     #updated_dt_hourly0 <- dt_hourly[area=="NO1"]
+     #updated_dt_comp0 <- dt_comp[area == "NO1"]
 
      updated_dt_hourly0[,computation_year:=year(date)]
      updated_dt_hourly0[,computation_month:=month(date)]
