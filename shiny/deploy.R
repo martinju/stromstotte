@@ -1,2 +1,3 @@
-rsconnect::deployApp("shiny",appName = "minstrompris_stable")
+rsconnect::deployApp("../shiny",appName = "dinstrompris")
+#rsconnect::deployApp("../shiny",appName = "minstrompris_stable")
 

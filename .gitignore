@@ -6,3 +6,5 @@
 *.out
 
 *.Rout
+
+shiny/stromstotte_shiny_description.md

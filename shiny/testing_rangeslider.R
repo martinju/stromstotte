@@ -27,7 +27,7 @@ p_pl2 <- layout(p_pl,xaxis = list(
   ),
   rangeslider = list(type="date"),
 #  range = as.character(c(Sys.Date()-5,Sys.Date()-1))
-range = c( plotly:::to_milliseconds(Sys.Date()-5),plotly:::to_milliseconds(Sys.Date()-1))
+range = c(plotly:::to_milliseconds(Sys.Date()-5),plotly:::to_milliseconds(Sys.Date()-1))
 #    range = c(10^3,10^5)
 )
 )
@@ -46,17 +46,49 @@ library(plotly)
 df <- data.frame(Date = seq(as.Date("2016-01-01"), as.Date("2016-08-31"), by="days"),
                  Value = sample(100:200, size = 244, replace = T))
 
+p <- plot_ly(data = df, x = Date, y = Value, type = "line") %>%
+  layout(xaxis = list(rangeslider = list(type = "date")  ))
+p
+
+layout(xaxis = list(range = c( as.numeric(max(df$Date)-30) *86400000,
+                               as.numeric(max(df$Date)) * 86400000   ),
+                    rangeslider = list(type = "date")  ))
+
+
+
+
+
+#############
+library(plotly)
+
+df <- data.frame(Date = seq(as.Date("2016-01-01"), as.Date("2016-08-31"), by="days"),
+                 Value = sample(100:200, size = 244, replace = T))
+
 p0 <- ggplot(df,aes(x=Date,y=Value))+geom_line()
 
 p <- ggplotly(p0) %>%
-  layout(xaxis = list(range = c( as.numeric(max(df$Date)-30) *86400000,
-                                 as.numeric(max(df$Date)) * 86400000   ),
+  layout(xaxis = list(range = c( as.numeric(max(df$Date)-30),
+                                 as.numeric(max(df$Date))   ),
+                      rangeslider = list(type = "date")  ))
+p
+
+p <- ggplotly(p0) %>%
+  layout(xaxis = list(range = c( as.numeric(as.Date("2016-01-01")),
+                                 as.numeric(as.Date("2016-01-05"))   ),
                       rangeslider = list(type = "date")  ))
 p
 
 
+df <- data.frame(Date = seq(as.POSIXct("2016-08-01"), as.POSIXct("2016-08-31"), by="hours"),
+                 Value = sample(100:200, size = 721, replace = T))
 
+p0 <- ggplot(df,aes(x=Date,y=Value))+geom_line()
 
+p <- ggplotly(p0) %>%
+  layout(xaxis = list(range = c( as.numeric(as.POSIXct("2016-08-01")),
+                                 as.numeric(as.POSIXct("2016-08-10"))   ),
+                      rangeslider = list(type = "date")  ))
+p
 
 
 
@@ -84,5 +116,19 @@ plot_ly(d, x = ~time, y = ~y) %>%
 a <- ggplot(d,aes(x=time,y=y))+geom_line()
 b <- a +rangeslider(a,d$time[5], d$time[50])
 b
+
+
+
+
+dt <- data.table(x=rep(Sys.Date()-(1:5),2),y=1:10,type=as.character(c(rep(1,5),rep(2,5))))
+
+p <- ggplot(dt,aes(x=x,y=y,col=type))+geom_line()
+
+p_pl <- ggplotly(p,dynamicTicks = TRUE)
+
+p_pl <- style(p_pl,visible="legendonly",traces=1) #trace=2 identified through plotly_json(p_pl)
+
+p_pl
+
 
 
