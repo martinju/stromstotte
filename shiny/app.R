@@ -1,15 +1,21 @@
 # TODO:
 
-# Nettleiernavn på tvers av datasett
-# Sjekk bug med postnr 2863 + "SØR AURDAL ENERGI AS"
+# Last opp til server og se at ting funker der
+#
+# Spør Elin om jeg bør ta bort Spotpris og "din strømpris nå" fra Din strømpris består av.
+#DONE # Nettleiernavn på tvers av datasett
+#DONE# Sjekk bug med postnr 2863 + "SØR AURDAL ENERGI AS"
+# SJekk tidspunkt for "NÅ" i grafen på NR-server
+# oppdater "estimering av strømstøtte"/finpuss modellbeskrivelsen ref slider
+# Skriv tekst til linkedin
+
 #DONE # Vis kun nettleverandør + prisområde som selective hvis ikke unik
 #DONE # vis postnummer i plotly-header
-# oppdater "estimering av strømstøtte"
-# finpuss modellbeskrivelsen ref slider
 #DONE# Få interne linker til å fungere
 #DONE # Legg til info om effekttariff
 #DONE # vurder å bytte rundt på farger
-# Spør Elin om jeg bør ta bort Spotpris og "din strømpris nå" fra Din strømpris består av.
+
+
 
 #TODO før release
 # Sjekk at nettleie-navn er kompatibelt på tvers av datasett
@@ -129,7 +135,7 @@ if(deployed){
 
 source("helper_funcs.R")
 
-dt_nettleie <- fread(file.path(path,"data/database_nettleie_simple.csv"))
+dt_nettleie <- fread(file.path(path,"data/database_nettleie_simple.csv"),encoding = "Latin-1")
 dt_nettleie_kl6 <- fread(file.path(path,"data/database_nettleie_simple_kl_6.csv"))
 dt_nettleie_kapasitetsledd <- fread(file.path(path,"data/database_nettleie_kapasitetsledd.csv"),encoding = "Latin-1")
 
@@ -144,6 +150,23 @@ dt_postnr_nettselskap_prisomraader_map[nchar_postnr==1,postnr:=paste0("000",post
 dt_postnr_nettselskap_prisomraader_map[nchar_postnr==2,postnr:=paste0("00",postnr)]
 dt_postnr_nettselskap_prisomraader_map[nchar_postnr==3,postnr:=paste0("0",postnr)]
 dt_postnr_nettselskap_prisomraader_map[,nchar_postnr:=NULL]
+
+dt_postnr_nettselskap_prisomraader_map[nettselskap=="TROLLFJORD KRAFT AS",nettselskap:="TROLLFJORD NETT AS"]
+dt_postnr_nettselskap_prisomraader_map[nettselskap=="HALLINGDAL KRAFTNETT A/S",nettselskap:="HALLINGDAL KRAFTNETT AS"]
+dt_postnr_nettselskap_prisomraader_map[nettselskap=="NORE ENERGI AS",nettselskap:="FØIE AS"]
+
+dt_postnr_nettselskap_prisomraader_map[,keep:=TRUE]
+dt_postnr_nettselskap_prisomraader_map[nettselskap=="FORSVARSBYGG",keep:=FALSE]
+dt_postnr_nettselskap_prisomraader_map[nettselskap=="HERØYA NETT AS",keep:=FALSE]
+dt_postnr_nettselskap_prisomraader_map[nettselskap=="FIVEN NORGE AS",keep:=FALSE]
+dt_postnr_nettselskap_prisomraader_map <- dt_postnr_nettselskap_prisomraader_map[keep==TRUE][,keep:=NULL]
+
+
+dt_nettleie[,keep:=TRUE]
+dt_nettleie[Nettselskap=="TINFOS AS",keep:=FALSE]
+dt_nettleie[Nettselskap=="ARVA AS*",Nettselskap:="ARVA AS"]
+dt_nettleie <- dt_nettleie[keep==TRUE][,keep:=NULL]
+
 
 dt_postnr_nettselskap_prisomraader_map[,prisomraade:=gsub(" ","",prisomraade,fixed=T)]
 
@@ -234,7 +257,7 @@ sidebar <- dashboardSidebar(
     #menuItem("Endringslogg", tabName = "changelog", icon = icon("info",verify_fa = FALSE)),
     tags$html(
       br(),
-      p("dinstrompris.no v0.1.3",style = "text-align: center")
+      p(actionLink("link_to_about", "dinstrompris.no v0.1.3"),style = "text-align: center")
     ),
     tags$html(
       tags$h5(
@@ -338,34 +361,64 @@ body_strompris_naa_detaljert <- tabItem(tabName = "strompris_naa_detaljert",
                                 #                                ))),
                                 plotlyOutput("now_spotplot_detaljert",height ="300px"),
                                 fluidRow(
-                                  box(width = 8,
-                                      h3("Hva ser du?"),
+                                  box(width = 7,
+                                      h3("Hva viser grafen?"),
                                       #                                    p("Dagens strømprissytem med store svininger variabel og effektbasert nettleie")
-                                      p("Statens strømstøtteordning har direkte påvirkning på din timespris på strøm."),
-                                      p("Ved å taste inn ditt postnummer i margen til venstre viser grafen ovenfor din strømpris idag/imorgen for nettopp deg, angitt som:"),
-                                      p(
-                                        strong(
-                                          tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
-                                          "=",
-                                          tags$span(style=paste0("color:",mycols['spotpris']),"spotpris"),
-                                          "+",
-                                          tags$span(style=paste0("color:",mycols['nettleie']),"nettleie"),
-                                          "-",
-                                          tags$span(style=paste0("color:",mycols['stotte']),"strømstøtte")
-                                        )
+                                      #                                      p("Statens strømstøtteordning har direkte påvirkning på din timespris på strøm."),
+                                      p("Ved å taste inn ditt postnummer i margen til venstre viser grafen ovenfor ",
+                                        tags$span(style=paste0("color:",mycols['totalpris']),"din strømpris"),
+                                        " idag/imorgen for nettopp deg, sammen med ",
+                                        tags$span(style=paste0("color:",mycols['spotpris']),"spotpris "),
+                                        tags$span(style=paste0("color:",mycols['nettleie']),"nettleie")," og ",
+                                        tags$span(style=paste0("color:",mycols['stotte']),"strømstøtte"),"(klikk i margen til høyre for figuren)."
+                                        ),# angitt som:"),
+                                      p(tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
+                                        "hensyntar både nettleie og strømstøtte, og er definert som:"),
+                                      strong(
+                                        tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
+                                        "=",
+                                        tags$span(style=paste0("color:",mycols['spotpris']),"spotpris"),
+                                        "+",
+                                        tags$span(style=paste0("color:",mycols['nettleie']),"nettleie"),
+                                        "-",
+                                        tags$span(style=paste0("color:",mycols['stotte']),"strømstøtte\n")
                                       ),
-                                      p("Grunnen til at din strømpris vises som et estimat (m/usikkerhet) er at strømstøtten er basert på gjennomsnittlig spotpris i inneværende måned, og dermed ikke er kjent før månedsslutt.",
-                                        "Strømstøtten vist ovenfor derfor basert på simuleringer av fremtidige spotpriser ",
-                                        tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","(fra en statistisk modell)"),"."
-                                      ),
-                                      h4("Merk"),
-                                      p("Faste og effektbasert månedsavgift fra nettleverandør kommer i tillegg på regningen fra nettleverandør."),
-                                      p("Faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kommer i tillegg på regningen fra din strømleverandør.")
+                                      p(""),
+                                      p(tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
+                                        " vises som et estimat med et 95% usikkerhetsintervall. ",
+                                        "Grunnen til dette er at strømstøtten ikke er kjent før månedsslutt.",
+                                        "Strømstøtten er derfor beregnet basert på simuleringer av fremtidige spotpriser fra en statistisk modell,",
+                                        #                                        tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","(fra en statistisk modell)"),
+                                        actionLink("link_to_estimering_av_stromstotte2", "klikk her for detaljer"),
+                                        "."),
+                                      p(actionLink("link_to_strompris_naa", "Klikk her")," for å se en mer enklere fremstilling av ",
+                                        tags$span(style=paste0("color:",mycols['totalpris']),"din strømpris"),"."),
+                                      p(actionLink("link_to_strompris_history2", "Klikk her")," for å se ",
+                                        tags$span(style=paste0("color:",mycols['totalpris']),"din strømpris"),
+                                        " tilbake i tid.")
+                                      #h4("Merk"),
+                                      #                                      p("Faste og effektbasert månedsavgift fra nettleverandør kommer i tillegg på regningen fra nettleverandør."),
+                                      #                                      p("Faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kommer i tillegg på regningen fra din strømleverandør.")
                                   ),
-                                  box(width = 4,
-                                      title = "Oversikt"#, # Kan ikke ha samme objekt flere steder.
-                                  #    uiOutput("nettleie"),
-                                  #    uiOutput("stromstotte")
+                                  box(width = 5,
+                                      #title = "Din strømpris består av",
+                                      h3("Din strømpris består av"),
+                                      uiOutput("strompris_for2"),
+                                      uiOutput("stromstotte2"),
+                                      uiOutput("nettleie2"),
+                                      uiOutput("spotpris2"),
+                                      uiOutput("dinstrompris2")
+                                  ),
+                                  #                                ),
+                                  box(width = 7,
+                                      h3("Øvrige tillegg på din strømregning"),
+                                      uiOutput("nettleie_kapasitetsledd2"),
+                                      tableOutput("nettleie_kapasitetsledd_tabell2"),
+                                      p(strong("Kostnader til strømselskap")),
+                                      p("Både faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kostnader fra din din strømleverandør kommer også i tillegg.",
+                                        br(),
+                                        em("(I fremtiden vil det være mulig å inkludere disse kostnadene i grafen ovenfor.)")
+                                      )
                                   )
                                 )
                               )
@@ -374,40 +427,58 @@ body_strompris_naa_detaljert <- tabItem(tabName = "strompris_naa_detaljert",
 body_strompris_history <- tabItem(tabName = "strompris_history",
                                   fluidPage(
                                     fluidRow(
-                                    box(width = 12,
-                                        h3("Detaljert/historisk strømpris")
-                                    )
-                                    ),
-#                                    box(
-                                    plotlyOutput("history_spotplot"),
-#                                    )
-                                    fluidRow(
                                       box(width = 12,
-                                          h3("Forklaring"),
+                                          h3("Detaljert/historisk strømpris")
+                                      )
+                                    ),
+                                    #                                    box(
+                                    plotlyOutput("history_spotplot"),
+                                    #                                    )
+                                    fluidRow(
+                                      box(width = 7,
+                                          h3("Hva viser grafen?"),
                                           #                                    p("Dagens strømprissytem med store svininger variabel og effektbasert nettleie")
-                                          p("Grafen ovenfor viser den forbruksbaserte prisen for spotpriskunder:"),
-                                          p(
-                                            strong(
-                                              tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
-                                              "=",
-                                              tags$span(style=paste0("color:",mycols['spotpris']),"spotpris"),
-                                              "+",
-                                              tags$span(style=paste0("color:",mycols['nettleie']),"nettleie"),
-                                              "-",
-                                              tags$span(style=paste0("color:",mycols['stotte']),"strømstøtte")
-                                            )
+                                          #                                      p("Statens strømstøtteordning har direkte påvirkning på din timespris på strøm."),
+                                          p("Ved å taste inn ditt postnummer i margen til venstre viser grafen ovenfor ",
+                                            tags$span(style=paste0("color:",mycols['totalpris']),"din strømpris"),
+                                            " fra i morgen og tilbake til 1.oktober (lengre historikk kommer), sammen med ",
+                                            tags$span(style=paste0("color:",mycols['spotpris']),"spotpris "),
+                                            tags$span(style=paste0("color:",mycols['nettleie']),"nettleie")," og ",
+                                            tags$span(style=paste0("color:",mycols['stotte']),"strømstøtte"),"(klikk i margen til høyre for figuren)."
+                                          ),# angitt som:"),
+                                          p(tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
+                                            "hensyntar både nettleie og strømstøtte, og er definert som:"),
+                                          strong(
+                                            tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
+                                            "=",
+                                            tags$span(style=paste0("color:",mycols['spotpris']),"spotpris"),
+                                            "+",
+                                            tags$span(style=paste0("color:",mycols['nettleie']),"nettleie"),
+                                            "-",
+                                            tags$span(style=paste0("color:",mycols['stotte']),"strømstøtte\n")
                                           ),
-                                          p("Grunnen til at din pris vises som et estimat (m/usikkerhet) er at strømstøtten er ikke er kjent før månedsslutt,",
-                                            "og strømstøtten derfor er estimert basert på en ",
-                                            tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","statistisk modell")
-                                          ),
-                                          h4("Merk"),
-                                          p("Faste og effektbasert månedsavgift fra nettleverandør kommer i tillegg på regningen fra nettleverandør."),
-                                          p("Faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kommer i tillegg på regningen fra din strømleverandør.")
+                                          p(""),
+                                          p(tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris"),
+                                            " vises som et estimat med et 95% usikkerhetsintervall. ",
+                                            "Grunnen til dette er at strømstøtten ikke er kjent før månedsslutt.",
+                                            "Strømstøtten er derfor beregnet basert på simuleringer av fremtidige spotpriser fra en statistisk modell,",
+                                            #                                        tags$a(href="https://martinjullum.com/sideprojects/stromstotte/","(fra en statistisk modell)"),
+                                            actionLink("link_to_estimering_av_stromstotte3", "klikk her for detaljer"),
+                                            "."),
+                                          p("Bruk knappene over plottet, slideren under plotter, eller dra med musepekere for å endre lengde på historikk og zoom.")                                          #h4("Merk"),
+                                          #                                      p("Faste og effektbasert månedsavgift fra nettleverandør kommer i tillegg på regningen fra nettleverandør."),
+                                          #                                      p("Faste (typisk 0-50 kr/mnd) og forbruksbaserte (typisk 0-5 øre/kWh) kommer i tillegg på regningen fra din strømleverandør.")
                                       ),
+                                      box(width = 5,
+                                          #title = "Din strømpris består av",
+                                          h3("Din strømpris består av"),
+                                          uiOutput("strompris_for3"),
+                                          uiOutput("stromstotte3"),
+                                          uiOutput("nettleie3")
+                                      )
                                     )
                                   )
-                                  )
+)
 
 
 body_stromstotte <- tabItem(tabName = "stromstotte",
@@ -476,7 +547,7 @@ body_about <- tabItem(tabName = "about",
                         p("Siden er laget av ",
                           tags$a(href="https://martinjullum.com/","Martin Jullum"),
                           "(",
-                          tags$a(href="mailto:jullum@nr.no?subject=minstrompris.no","epost: jullum@nr.no"),
+                          tags$a(href="mailto:jullum@nr.no?subject=dinstrompris.no","epost: jullum@nr.no"),
                           ") ",
                           "seniorforsker ",
                           tags$a(href="https://nr.no/","Norsk Regnesentral")
@@ -513,7 +584,9 @@ body_about <- tabItem(tabName = "about",
                         h2("Innspill"),
                         p("Har du funnet feil, eller har forslag til forbedringer av tjenesten? Opprett gjerne et ",
                           tags$a(href="https://github.com/martinju/stromstotte/issues","'issue'"), "på sidens ",
-                          tags$a(href="https://github.com/martinju/stromstotte/","GitHub repo"),".")
+                          tags$a(href="https://github.com/martinju/stromstotte/","GitHub repo"),"."),
+                        p("Alternativt, send meg en epost: ",
+                          tags$a(href="mailto:jullum@nr.no?subject=dinstrompris.no","jullum@nr.no"))
                       ),
                       box(width=12,
                       htmltools::includeMarkdown("changelog.md")
@@ -557,7 +630,19 @@ ui <- dashboardPage(header, sidebar, body)
 
 server <- function(input, output,session) {
 
+  observeEvent(input$link_to_about, {
+    updateTabItems(session, "tabs", "about")
+  })
+
   observeEvent(input$link_to_estimering_av_stromstotte, {
+    updateTabItems(session, "tabs", "stromstotte")
+  })
+
+  observeEvent(input$link_to_estimering_av_stromstotte2, {
+    updateTabItems(session, "tabs", "stromstotte")
+  })
+
+  observeEvent(input$link_to_estimering_av_stromstotte3, {
     updateTabItems(session, "tabs", "stromstotte")
   })
 
@@ -565,9 +650,18 @@ server <- function(input, output,session) {
     updateTabItems(session, "tabs", "strompris_naa_detaljert")
   })
 
+  observeEvent(input$link_to_strompris_naa, {
+    updateTabItems(session, "tabs", "strompris_naa")
+  })
+
   observeEvent(input$link_to_strompris_history, {
     updateTabItems(session, "tabs", "strompris_history")
   })
+
+  observeEvent(input$link_to_strompris_history2, {
+    updateTabItems(session, "tabs", "strompris_history")
+  })
+
 
   # Server-side updating as you type with postnr
   updateSelectizeInput(session, 'postnr', choices = unique_postnr, server = TRUE)
@@ -655,7 +749,7 @@ server <- function(input, output,session) {
    output$data_nettleie <- renderTable(updated_dt_nettleie())
    output$datarange_strompris_naa <- renderPrint(input$daterange_strompris_naa)
 
-   output$strompris_for <- renderUI({
+   output$strompris_for <- output$strompris_for2 <- output$strompris_for3 <- renderUI({
      div(
        em("(Alle priser inkl. mva for ",
        "postnr: ",strong(paste0(input$postnr)),", ",
@@ -668,7 +762,7 @@ server <- function(input, output,session) {
    })
 
 
-   output$nettleie <- renderUI({
+   output$nettleie <- output$nettleie2 <- output$nettleie3 <- renderUI({
      dagpris <- updated_dt_nettleie()[pristype=="Dag",Energiledd]
      nattpris <- updated_dt_nettleie()[pristype=="Natt",Energiledd]
 
@@ -679,7 +773,7 @@ server <- function(input, output,session) {
      )
    })
 
-   output$stromstotte <- renderUI({
+   output$stromstotte <- output$stromstotte2 <- output$stromstotte3 <- renderUI({
      med <- updated_dt_comp()[type=="median",compensation]
      upper <- updated_dt_comp()[type=="quantile_0.975",compensation]
      lower <- updated_dt_comp()[type=="quantile_0.025",compensation]
@@ -692,7 +786,7 @@ server <- function(input, output,session) {
      )
    })
 
-   output$spotpris <- renderUI({
+   output$spotpris <- output$spotpris2 <- renderUI({
      this_hour <- hour(Sys.time())
      this_date <- as.IDate(Sys.time())
 
@@ -706,27 +800,9 @@ server <- function(input, output,session) {
    })
 
 
-   output$dinstrompris <- renderUI({
-
-     this_hour <- hour(Sys.time())
 
 
-     dt_list <- plot_dt_final()
-     dt <- dt_list$plot_dt_final
-
-     now_hms =as.POSIXct(as.IDate(Sys.Date()))+hour(Sys.time())*60*60
-
-     res_vec <- unlist(dt[datetime==now_hms & type=="totalpris",.(pris,lower_CI,upper_CI)])
-
-     div(
-       h4(tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris nå (per kWh)")),
-       p(paste0("Kl. ",this_hour,"-",this_hour+1),": ",
-         strong(twodigits(res_vec[1])," (",twodigits(res_vec[2]),",",twodigits(res_vec[3]),")")," kr/kWh")
-     )
-   })
-
-
-   output$nettleie_kapasitetsledd <- renderUI({
+   output$nettleie_kapasitetsledd <- output$nettleie_kapasitetsledd2 <- renderUI({
      dt <- updated_dt_nettleie_kapasitetsledd()
      #dt <- dt_nettleie_kapasitetsledd[Nettselskap=="ELVIA AS"]
 
@@ -744,7 +820,7 @@ server <- function(input, output,session) {
      )
    })
 
-   output$nettleie_kapasitetsledd_tabell <- renderTable({
+   output$nettleie_kapasitetsledd_tabell <- output$nettleie_kapasitetsledd_tabell2 <- renderTable({
      dt <- updated_dt_nettleie_kapasitetsledd()
      #dt <- dt_nettleie_kapasitetsledd[Nettselskap=="ELVIA AS"]
 
@@ -752,6 +828,27 @@ server <- function(input, output,session) {
    })
 
 
+   output$dinstrompris <- output$dinstrompris2 <- renderUI({
+     req(input$postnr,input$nettselskap, input$prisomraade)
+     if (identical(input$prisomraade, "")) return(NULL)
+     if (identical(input$nettselskap, "")) return(NULL)
+
+     this_hour <- hour(Sys.time())
+
+
+     dt_list <- plot_dt_final()
+     dt <- dt_list$plot_dt_final
+
+     now_hms =as.POSIXct(as.IDate(Sys.Date()))+hour(Sys.time())*60*60
+
+     res_vec <- unlist(dt[datetime==now_hms & type=="totalpris",.(pris,lower_CI,upper_CI)])
+
+     div(
+       h4(tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris nå (per kWh)")),
+       p(paste0("Kl. ",this_hour,"-",this_hour+1),": ",
+         strong(twodigits(res_vec[1])," (",twodigits(res_vec[2]),",",twodigits(res_vec[3]),")")," kr/kWh")
+     )
+   })
 
 
 
@@ -845,7 +942,6 @@ server <- function(input, output,session) {
           estimation_date0 = estimation_date0)
 
    })
-
 
 
    output$now_spotplot <- renderPlotly({
