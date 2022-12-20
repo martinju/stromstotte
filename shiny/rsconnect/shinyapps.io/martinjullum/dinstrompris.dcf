@@ -5,7 +5,7 @@ account: martinjullum
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 7890855
-bundleId: 6655592
+bundleId: 6657277
 url: https://martinjullum.shinyapps.io/dinstrompris/
-when: 1671492478.59102
-lastSyncTime: 1671492478.59103
+when: 1671534593.16065
+lastSyncTime: 1671534593.16067
