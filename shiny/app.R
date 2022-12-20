@@ -1107,7 +1107,7 @@ server <- function(input, output,session) {
 
      x_range <- as.numeric(dat[,diff(range(datetime))])
 
-     dt <- data.table(x=rep(Sys.time(),2),y=plotrange2)
+     dt <- data.table(x=rep(Sys.time()+60*60,2),y=plotrange2)
 
      p_now <- ggplot(data=dat,mapping=aes(x=datetime,y=pris))+
        geom_line(col=mycols["totalpris"],size=1)+
@@ -1298,7 +1298,7 @@ server <- function(input, output,session) {
 
      x_range <- as.numeric(dat[,diff(range(datetime))])
 
-     dt <- data.table(x=rep(Sys.time(),2),y=plotrange2)
+     dt <- data.table(x=rep(Sys.time()+60*60,2),y=plotrange2)
 
      p_now <- ggplot(data=dat,mapping=aes(x=datetime,y=pris,col=type,fill=type))+
        geom_line(aes(size=linesize))+
