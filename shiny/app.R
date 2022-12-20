@@ -120,7 +120,7 @@
 #Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
 #Sys.setlocale("LC_ALL", "en_US") # UTF-8 to get latin letters
 #Sys.setlocale("LC_ALL", "en_US.UTF-8") # UTF-8 to get latin letters
-Sys.setlocale(locale='no_NB.UTF-8')
+Sys.setlocale(locale='nb_NO.UTF-8')
 
 library(data.table)
 
