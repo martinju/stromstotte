@@ -124,7 +124,7 @@ Sys.setlocale(locale='nb_NO.utf8')
 
 library(data.table)
 
-deployed <- TRUE
+deployed <- FALSE
 
 if(deployed){
   path <- "https://raw.githubusercontent.com/martinju/stromstotte/master"
@@ -257,7 +257,7 @@ sidebar <- dashboardSidebar(
     #menuItem("Endringslogg", tabName = "changelog", icon = icon("info",verify_fa = FALSE)),
     tags$html(
       br(),
-      p(actionLink("link_to_about", "dinstrompris.no v0.1.3"),style = "text-align: center")
+      p(actionLink("link_to_about", "dinstrompris.no v 0.1.4"),style = "text-align: center")
     ),
     tags$html(
       tags$h5(
@@ -588,7 +588,12 @@ body_about <- tabItem(tabName = "about",
                         p("Alternativt, send meg en epost: ",
                           tags$a(href="mailto:jullum@nr.no?subject=dinstrompris.no","jullum@nr.no"))
                       ),
-                      box(width=12,
+                      box(width=6,
+                        h2("Disclaimer"),
+                        p("Dette er et hobbyprosjekt utført separat fra mitt virke som seniorforsker i Norsk Regnesentral.",
+                        "Det tas intet ansvar for feil i informasjonen vist frem på denne siden, eller for konsekvenser av bruk av denne informasjonen.")
+                      ),
+                      box(width=6,
                       htmltools::includeMarkdown("changelog.md")
                       )
                       #                      verbatimTextOutput("datarange_strompris_naa")
