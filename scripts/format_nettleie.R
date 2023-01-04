@@ -65,6 +65,12 @@ if(!(fylke_matters1 & fylke_matters1)){
 }
 
 
+nettleie_dt_simple[Nettselskap=="AGDER ENERGI NETT AS" & pristype=="Dag",Energiledd:=38.65]
+nettleie_dt_simple[Nettselskap=="AGDER ENERGI NETT AS" & pristype=="Natt",Energiledd:=26.65]
+
+nettleie_dt_simple_kl_6[Nettselskap=="AGDER ENERGI NETT AS" & pristype=="Dag",Energiledd:=38.65]
+
+
 fwrite(nettleie_dt_simple,"data/database_nettleie_simple.csv")
 fwrite(nettleie_dt_simple_kl_6,"data/database_nettleie_simple_kl_6.csv")
 
