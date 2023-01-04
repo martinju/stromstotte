@@ -39,6 +39,9 @@ aa=nettleie_dt[,.SD,.SDcols=c("Nettselskap","Kapasitetsledd fra kW","Kapasitetsl
 nettleie_dt[,Fylke:=NULL]
 nettleie_dt <- unique(nettleie_dt)
 
+nettleie_dt[Nettselskap=="AGDER ENERGI NETT AS",Kapasitetsledd:=c(135,170,290,600,780,980,1520,2400,3200,5200)]
+
+
 fwrite(nettleie_dt,"data/database_nettleie_kapasitetsledd.csv")
 
 
