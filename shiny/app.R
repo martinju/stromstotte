@@ -207,6 +207,9 @@ sapply(rmdfiles, knitr::knit, quiet = T)
 
 today <- Sys.Date()
 
+is_weekend <- (weekdays(today) %in% c("lørdag","søndag"))
+
+dt_nettleie <- dt_nettleie[helg==is_weekend]
 
 input_mapper <- copy(dt_postnr_nettselskap_prisomraader_map)
 
@@ -716,10 +719,10 @@ server <- function(input, output,session) {
     updateSelectInput(session, "prisomraade",choices = these_prisomraade)
     })
 
-   # Filter dt_nettleie based on input
-   updated_dt_nettleie <- reactive({
-     input_mapper[postnr==input$postnr & nettselskap ==input$nettselskap & prisomraade ==input$prisomraade,]
-   })
+   ## Filter dt_nettleie based on input
+   #updated_dt_nettleie <- reactive({
+  #   input_mapper[postnr==input$postnr & nettselskap ==input$nettselskap & prisomraade ==input$prisomraade,]
+  # })
 
    # Filter dt_hourly based on input
    updated_dt_hourly <- reactive({

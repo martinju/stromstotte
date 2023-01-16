@@ -64,10 +64,8 @@ if(!(fylke_matters1 & fylke_matters1)){
 
 }
 
-nettleie_dt_simple[,helgepris:=FALSE]
+nettleie_dt_simple[,helg:=FALSE]
 nettleie_dt_simple[,kontrollert_pris:=FALSE]
-
-nettleie_dt_simple_kl_6[,helgepris:=FALSE]
 
 nettleie_dt_simple[,Energiledd:=round(Energiledd-6.25*1.25,2)] # Endring av energiledd fra oktober 2022 til jan-mars 2023
 
@@ -84,11 +82,8 @@ nettleie_dt_simple[Nettselskap=="LEDE AS",kontrollert_pris:=TRUE]
 
 #https://www.elvia.no/nettleie/alt-om-nettleiepriser/nettleiepriser-for-privatkunder/
 nettleie_dt_simple[Nettselskap=="ELVIA AS"] #OK
-tmp <- nettleie_dt_simple[Nettselskap=="ELVIA AS"] #OK
-tmp[,helgepris:=TRUE]
-tmp[,Energiledd:=min(Energiledd)]
-nettleie_dt_simple <- rbind(nettleie_dt_simple,tmp)
 nettleie_dt_simple[Nettselskap=="ELVIA AS",kontrollert_pris:=TRUE]
+
 
 
 # https://ts.tensio.no/kunde/nettleie-priser-og-avtaler
@@ -126,9 +121,17 @@ nettleie_dt_simple[Nettselskap=="GLITRE ENERGI NETT AS" & pristype=="Dag",Energi
 nettleie_dt_simple[Nettselskap=="GLITRE ENERGI NETT AS" & pristype=="Natt",Energiledd:=26.65]
 nettleie_dt_simple[Nettselskap=="GLITRE ENERGI NETT AS",kontrollert_pris:=TRUE]
 
-nettleie_dt_simple[Nettselskap=="FAGNE AS"] OK
+nettleie_dt_simple[Nettselskap=="FAGNE AS"] #OK
 nettleie_dt_simple[Nettselskap=="FAGNE AS",kontrollert_pris:=TRUE]
 
+
+
+nettleie_dt_simple_helg <- copy(nettleie_dt_simple)
+nettleie_dt_simple_helg[,helg:=TRUE]
+nettleie_dt_simple_helg[Nettselskap=="ELVIA AS"& pristype=="Dag",Energiledd :=29.04] # Same as natt
+
+nettleie_dt_simple <- rbind(nettleie_dt_simple,
+                            nettleie_dt_simple_helg)
 
 
 fwrite(nettleie_dt_simple,"data/database_nettleie_simple.csv")
