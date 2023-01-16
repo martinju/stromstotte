@@ -570,7 +570,8 @@ body_about <- tabItem(tabName = "about",
 
                         h4("Nettleie"),
                         p("Data med nettleie for nettselskapene i Norge er mottatt på epost 25.10.22 fra Roald Lien Glad, NVE. Samme informasjon er tilgjengelig gjennom NVEs ",
-                          tags$a(href="https://biapi.nve.no/nettleietariffer/swagger/index.html", "API")),
+                          tags$a(href="https://biapi.nve.no/nettleietariffer/swagger/index.html", "API"),
+                          "Data er justert for redusert elavgift 01.01.23, og data for de største nettleverandørene er samtidig justert/kontrollert."),
 
                         h4("Postnummerområde"),
                         p("Data med geografisk område for postnumre er hentet i GeoJson format fra Kartverket via",
