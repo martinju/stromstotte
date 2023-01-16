@@ -41,6 +41,26 @@ nettleie_dt <- unique(nettleie_dt)
 
 nettleie_dt[Nettselskap=="AGDER ENERGI NETT AS",Kapasitetsledd:=c(135,170,290,600,780,980,1520,2400,3200,5200)]
 
+nettleie_dt[Nettselskap=="LEDE AS"] #OK
+
+nettleie_dt[Nettselskap=="ELVIA AS"] #OK
+
+nettleie_dt[Nettselskap=="TENSIO TS AS", Kapasitetsledd:=c(83,147,252,371,490,610,1048,1645,2243,3239,4433,6424,8815,11204,13594)]
+nettleie_dt[Nettselskap=="TENSIO TS AS", `Grunnlag effektrinn`:="Topp 3 forbrukstopper innenfor 1 siste måneder"]
+
+
+nettleie_dt[Nettselskap=="TENSIO TN AS", Kapasitetsledd:=c(104,207,375,569,764,957,1668,2638,3608,5224,7165,10396,14276,18156,22034)]
+
+nettleie_dt[Nettselskap=="BKK NETT AS"] #OK
+
+nettleie_dt[Nettselskap=="LNETT AS"] #OK
+
+nettleie_dt[Nettselskap=="ARVA AS",Kapasitetsledd:=c(73,173,342,511,680,850,1696,2542,3388,5112)]
+
+nettleie_dt[Nettselskap=="NORGESNETT AS", Kapasitetsledd:=c(129.94,216.56,356.13,633.33,841.23,1043.35,1617,2531.38,3445.75)]
+
+nettleie_dt[Nettselskap=="FAGNE AS"] OK
+
 
 fwrite(nettleie_dt,"data/database_nettleie_kapasitetsledd.csv")
 
