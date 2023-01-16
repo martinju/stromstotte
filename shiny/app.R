@@ -207,6 +207,7 @@ sapply(rmdfiles, knitr::knit, quiet = T)
 
 today <- Sys.Date()
 
+is_weekend <- (weekdays(today) %in% c("lørdag","søndag"))
 
 input_mapper <- copy(dt_postnr_nettselskap_prisomraader_map)
 
@@ -257,7 +258,7 @@ sidebar <- dashboardSidebar(
     #menuItem("Endringslogg", tabName = "changelog", icon = icon("info",verify_fa = FALSE)),
     tags$html(
       br(),
-      p(actionLink("link_to_about", "dinstrompris.no v 0.1.4"),style = "text-align: center")
+      p(actionLink("link_to_about", "dinstrompris.no v 0.1.5"),style = "text-align: center")
     ),
     tags$html(
       tags$h5(
@@ -330,7 +331,8 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                       uiOutput("stromstotte"),
                                       uiOutput("nettleie"),
                                       uiOutput("spotpris"),
-                                      uiOutput("dinstrompris")
+                                      uiOutput("dinstrompris"),
+                                      uiOutput("kontrollert_nettleie")
                                   ),
 #                                ),
                                   box(width = 7,
@@ -407,7 +409,8 @@ body_strompris_naa_detaljert <- tabItem(tabName = "strompris_naa_detaljert",
                                       uiOutput("stromstotte2"),
                                       uiOutput("nettleie2"),
                                       uiOutput("spotpris2"),
-                                      uiOutput("dinstrompris2")
+                                      uiOutput("dinstrompris2"),
+                                      uiOutput("kontrollert_nettleie2")
                                   ),
                                   #                                ),
                                   box(width = 7,
@@ -474,7 +477,8 @@ body_strompris_history <- tabItem(tabName = "strompris_history",
                                           h3("Din strømpris består av"),
                                           uiOutput("strompris_for3"),
                                           uiOutput("stromstotte3"),
-                                          uiOutput("nettleie3")
+                                          uiOutput("nettleie3"),
+                                          uiOutput("kontrollert_nettleie3")
                                       )
                                     )
                                   )
@@ -566,7 +570,8 @@ body_about <- tabItem(tabName = "about",
 
                         h4("Nettleie"),
                         p("Data med nettleie for nettselskapene i Norge er mottatt på epost 25.10.22 fra Roald Lien Glad, NVE. Samme informasjon er tilgjengelig gjennom NVEs ",
-                          tags$a(href="https://biapi.nve.no/nettleietariffer/swagger/index.html", "API")),
+                          tags$a(href="https://biapi.nve.no/nettleietariffer/swagger/index.html", "API"),
+                          "Data er justert for redusert elavgift 01.01.23, og data for de største nettleverandørene er samtidig justert/kontrollert."),
 
                         h4("Postnummerområde"),
                         p("Data med geografisk område for postnumre er hentet i GeoJson format fra Kartverket via",
@@ -716,10 +721,10 @@ server <- function(input, output,session) {
     updateSelectInput(session, "prisomraade",choices = these_prisomraade)
     })
 
-   # Filter dt_nettleie based on input
-   updated_dt_nettleie <- reactive({
-     input_mapper[postnr==input$postnr & nettselskap ==input$nettselskap & prisomraade ==input$prisomraade,]
-   })
+   ## Filter dt_nettleie based on input
+   #updated_dt_nettleie <- reactive({
+  #   input_mapper[postnr==input$postnr & nettselskap ==input$nettselskap & prisomraade ==input$prisomraade,]
+  # })
 
    # Filter dt_hourly based on input
    updated_dt_hourly <- reactive({
@@ -770,11 +775,19 @@ server <- function(input, output,session) {
    output$nettleie <- output$nettleie2 <- output$nettleie3 <- renderUI({
      dagpris <- updated_dt_nettleie()[pristype=="Dag",Energiledd]
      nattpris <- updated_dt_nettleie()[pristype=="Natt",Energiledd]
+     helgepris <- updated_dt_nettleie()[pristype=="Helg",Energiledd]
 
      div(
        h4(tags$span(style=paste0("color:",mycols['nettleie']),"Nettleie (per kWh)")),
-       p(paste0("Dag (06-22): ",twodigits(dagpris)," kr/kWh"),br(),
-       paste0("Natt (22-06): ",twodigits(nattpris)," kr/kWh"))
+       p(
+         paste0(ifelse(length(helgepris)>0,"Hverdag: ",""),"Dag (06-22): ",twodigits(dagpris)," kr/kWh"),
+         br(),
+       paste0(ifelse(length(helgepris)>0,"Hverdag: ",""),"Natt (22-06): ",twodigits(nattpris)," kr/kWh"),
+         br(),
+         ifelse(length(helgepris)>0,
+                paste0("Helg (hele døgnet): ",twodigits(helgepris)," kr/kWh"),
+                "")
+       )
      )
    })
 
@@ -832,6 +845,20 @@ server <- function(input, output,session) {
      dt[,.(Maksforbruk=Forbruk,Kostnad)]
    })
 
+   output$kontrollert_nettleie <- output$kontrollert_nettleie2 <- output$kontrollert_nettleie3 <- renderUI({
+     pris_kontrollert <- updated_dt_nettleie()[,unique(kontrollert_pris)]
+
+     div(
+       tags$span(style=paste0("color:red"),ifelse(pris_kontrollert,
+                "",
+                "Merk: Det er oppdaget enkelte feil i nettleiedataene som hentes fra NVE.
+                Data fra din nettleverandør er ikke manuelt kontrollert, og kan derfor inneholde feil (typisk < 10øre/kWh)."
+                )
+       )
+     )
+   })
+
+
 
    output$dinstrompris <- output$dinstrompris2 <- renderUI({
      req(input$postnr,input$nettselskap, input$prisomraade)
@@ -864,9 +891,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
      updated_dt_comp0 <- dt_comp[area == input$prisomraade]
 
-     #updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     #updated_dt_hourly0 <- dt_hourly[area=="NO1"]
-     #updated_dt_comp0 <- dt_comp[area == "NO1"]
+     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
+     updated_dt_comp0 <- dt_comp[area == "NO1"]
 
      updated_dt_hourly0[,computation_year:=year(date)]
      updated_dt_hourly0[,computation_month:=month(date)]
@@ -1115,7 +1142,7 @@ server <- function(input, output,session) {
      dt <- data.table(x=rep(Sys.time()+60*60,2),y=plotrange2)
 
      p_now <- ggplot(data=dat,mapping=aes(x=datetime,y=pris))+
-       geom_line(col=mycols["totalpris"],size=1)+
+       geom_line(col=mycols["totalpris"],linewidth=1)+
        geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI),fill=mycols["totalpris"], alpha = 0.3)+
        ggtitle("")+
        scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(8))+
@@ -1123,10 +1150,10 @@ server <- function(input, output,session) {
                         date_breaks=ifelse(x_range>24,"3 hours","2 hours"),
                         minor_breaks = "1 hours",
                         labels = label_date_short(format = c("", "", "%d.%b\n", "%H\n"),sep=""))+
-       geom_line(dt,mapping = aes(x=x,y=y),linetype=3,col="grey",size=0.75)+
+       geom_line(dt,mapping = aes(x=x,y=y),linetype=3,col="grey",linewidth=0.75)+
        #annotate("text", x = dt[1,x]+20*60, y =  plotrange2[1], label = "NÅ")+
 #       geom_vline(xintercept=Sys.time(),linetype=2,col="grey",inherit.aes=F)+
-       geom_line(data=helper0,aes(x=datetime2,y=plotval,text=text),inherit.aes = F,size=0.00001)+
+       geom_line(data=helper0,aes(x=datetime2,y=plotval,text=text),inherit.aes = F,linewidth=0.00001)+
       theme_minimal()
 
 

@@ -121,8 +121,6 @@ All modellering [Martin Jullum](https://martinjullum.com) ([jullum@nr.no](mailto
 
 [Kode](https://github.com/martinju/stromstotte)
 
-[Daglige oppdaterte prognoser](https://martinjullum.com/sideprojects/stromstotte/)
-
 
 
 

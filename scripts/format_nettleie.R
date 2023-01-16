@@ -64,11 +64,71 @@ if(!(fylke_matters1 & fylke_matters1)){
 
 }
 
+nettleie_dt_simple[,helg:=FALSE]
+nettleie_dt_simple[,kontrollert_pris:=FALSE]
 
+nettleie_dt_simple[,Energiledd:=round(Energiledd-6.25*1.25,2)] # Endring av energiledd fra oktober 2022 til jan-mars 2023
+
+
+# https://www.aenett.no/nettleie/tariffer/
 nettleie_dt_simple[Nettselskap=="AGDER ENERGI NETT AS" & pristype=="Dag",Energiledd:=38.65]
 nettleie_dt_simple[Nettselskap=="AGDER ENERGI NETT AS" & pristype=="Natt",Energiledd:=26.65]
+nettleie_dt_simple[Nettselskap=="AGDER ENERGI NETT AS",kontrollert_pris:=TRUE]
 
-nettleie_dt_simple_kl_6[Nettselskap=="AGDER ENERGI NETT AS" & pristype=="Dag",Energiledd:=38.65]
+#https://lede.no/priser/
+nettleie_dt_simple[Nettselskap=="LEDE AS" , Energiledd:=33.95]
+nettleie_dt_simple[Nettselskap=="LEDE AS",kontrollert_pris:=TRUE]
+
+
+#https://www.elvia.no/nettleie/alt-om-nettleiepriser/nettleiepriser-for-privatkunder/
+nettleie_dt_simple[Nettselskap=="ELVIA AS"] #OK
+nettleie_dt_simple[Nettselskap=="ELVIA AS",kontrollert_pris:=TRUE]
+
+
+
+# https://ts.tensio.no/kunde/nettleie-priser-og-avtaler
+nettleie_dt_simple[Nettselskap=="TENSIO TS AS" & pristype=="Natt",Energiledd:=21.45]
+nettleie_dt_simple[Nettselskap=="TENSIO TS AS" & pristype=="Dag",Energiledd:=30.20]
+nettleie_dt_simple[Nettselskap=="TENSIO TS AS",kontrollert_pris:=TRUE]
+
+# https://tn.tensio.no/nettleie-og-tilknytningsavtaler
+nettleie_dt_simple[Nettselskap=="TENSIO TN AS" & pristype=="Natt",Energiledd:=25.20]
+nettleie_dt_simple[Nettselskap=="TENSIO TN AS" & pristype=="Dag",Energiledd:=37.70]
+nettleie_dt_simple[Nettselskap=="TENSIO TN AS",kontrollert_pris:=TRUE]
+
+#https://nett.bkk.no/produktdetaljer?productId=49cedfc9-82b1-4d3b-be45-904704e3b9c7&divisionName=Nett
+nettleie_dt_simple[Nettselskap=="BKK NETT AS"] # OK
+nettleie_dt_simple[Nettselskap=="BKK NETT AS",kontrollert_pris:=TRUE]
+
+
+#https://www.l-nett.no/nettleie/priser-og-vilkar-privat/
+nettleie_dt_simple[Nettselskap=="LNETT AS"] # OK
+nettleie_dt_simple[Nettselskap=="LNETT AS",kontrollert_pris:=TRUE]
+
+
+#https://arva.no/ny-nettleie/Priser
+nettleie_dt_simple[Nettselskap=="ARVA AS" & pristype=="Natt",Energiledd:=25.08]
+nettleie_dt_simple[Nettselskap=="ARVA AS" & pristype=="Dag",Energiledd:=37.58]
+nettleie_dt_simple[Nettselskap=="ARVA AS",kontrollert_pris:=TRUE]
+
+#https://norgesnett.no/nettleie-privat/
+nettleie_dt_simple[Nettselskap=="NORGESNETT AS" & pristype=="Natt",Energiledd:=30.99]
+nettleie_dt_simple[Nettselskap=="NORGESNETT AS" & pristype=="Dag",Energiledd:=40.61]
+nettleie_dt_simple[Nettselskap=="NORGESNETT AS", kontrollert_pris:=TRUE]
+
+# https://www.aenett.no/nettleie/tariffer/
+nettleie_dt_simple[Nettselskap=="GLITRE ENERGI NETT AS" & pristype=="Dag",Energiledd:=38.65]
+nettleie_dt_simple[Nettselskap=="GLITRE ENERGI NETT AS" & pristype=="Natt",Energiledd:=26.65]
+nettleie_dt_simple[Nettselskap=="GLITRE ENERGI NETT AS",kontrollert_pris:=TRUE]
+
+nettleie_dt_simple[Nettselskap=="FAGNE AS"] #OK
+nettleie_dt_simple[Nettselskap=="FAGNE AS",kontrollert_pris:=TRUE]
+
+
+
+tmp <- nettleie_dt_simple[Nettselskap=="ELVIA AS"& pristype=="Natt"] # Same as natt
+tmp[,pristype:="Helg"]
+nettleie_dt_simple <- rbind(nettleie_dt_simple,tmp)
 
 
 fwrite(nettleie_dt_simple,"data/database_nettleie_simple.csv")
