@@ -126,12 +126,9 @@ nettleie_dt_simple[Nettselskap=="FAGNE AS",kontrollert_pris:=TRUE]
 
 
 
-nettleie_dt_simple_helg <- copy(nettleie_dt_simple)
-nettleie_dt_simple_helg[,helg:=TRUE]
-nettleie_dt_simple_helg[Nettselskap=="ELVIA AS"& pristype=="Dag",Energiledd :=29.04] # Same as natt
-
-nettleie_dt_simple <- rbind(nettleie_dt_simple,
-                            nettleie_dt_simple_helg)
+tmp <- nettleie_dt_simple[Nettselskap=="ELVIA AS"& pristype=="Natt"] # Same as natt
+tmp[,pristype:="Helg"]
+nettleie_dt_simple <- rbind(nettleie_dt_simple,tmp)
 
 
 fwrite(nettleie_dt_simple,"data/database_nettleie_simple.csv")

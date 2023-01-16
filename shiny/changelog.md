@@ -23,3 +23,7 @@
 ### v 0.1.4 [21.12.22]
 - La til disclaimer om intet ansvar om feil
 - Henter data lokaltr istedet for direkte fra github ved hver sesjon
+
+### v 0.1.5 [16.01.23]
+- Justert nettleie for redusert elavgift
+- Manuelt kontrollert/justert de 10 største nettselskapene i Norge og lagt inn kommentar om mulig feil for øvrige.
