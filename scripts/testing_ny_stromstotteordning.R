@@ -41,12 +41,12 @@ dt_hourly[,new_comp1:=compfunc(price,new_comp_thres1,new_comp_prop1)]
 dt_hourly[,new_real_price1:=price-new_comp1]
 
 new_comp_thres2 <- 0.70*1.25
-new_comp_prop2 <- 0.90*0.894451 # kompensasjonsgrad 0.80 istedet for 0.90
+new_comp_prop2 <- 0.90*0.8935035 # kompensasjonsgrad 0.80 istedet for 0.90
 
 dt_hourly[,new_comp2:=compfunc(price,new_comp_thres2,new_comp_prop2)]
 dt_hourly[,new_real_price2:=price-new_comp2]
 
-new_comp_thres3 <- 0.70*1.2424317*1.25 # Innslag på 87 ør før moms (109 øre etter moms)
+new_comp_thres3 <- 0.70*1.2432324*1.25 # Innslag på 87 ør før moms (109 øre etter moms)
 new_comp_prop3 <- 0.90
 
 dt_hourly[,new_comp3:=compfunc(price,new_comp_thres3,new_comp_prop3)]
@@ -82,6 +82,22 @@ ggplot(dt_plot,aes(x=tp,y=value,col=variable))+geom_line()+
 
 ggplot(dt_plot[area=="NO1"],aes(x=tp,y=value,col=variable))+geom_line()+
 facet_wrap(vars(month),scales = "free_x",ncol = 1)
+
+ggplot(dt_plot[area=="NO1"& variable %in% c("price","org_real_price","new_real_price2","new_real_price3")],aes(x=tp,y=value,col=variable))+geom_line()+
+  facet_wrap(vars(month),scales = "free",ncol = 1)
+
+ggplot(dt_plot[area=="NO1"& variable %in% c("new_real_price2","new_real_price3")],aes(x=tp,y=value,col=variable))+geom_line()+
+  facet_wrap(vars(month),scales = "free",ncol = 1)
+
+ggplot(dt_plot[area=="NO1"& variable %in% c("org_real_price","new_real_price3")],aes(x=tp,y=value,col=variable))+geom_line()+
+  facet_wrap(vars(month),scales = "free",ncol = 1)
+
+ggplot(dt_plot[tp >= "2022-11-27" & tp < "2022-12-01" & area=="NO1"& variable %in% c("price","org_real_price","new_real_price3")],aes(x=tp,y=value,col=variable))+
+  geom_line()
+
+ggplot(dt_plot[tp >= "2022-12-24" & area=="NO1"& variable %in% c("price","org_real_price","new_real_price3")],aes(x=tp,y=value,col=variable))+
+  geom_line()
+
 
 
 
@@ -156,7 +172,7 @@ dt_cost[area=="NO1",lapply(.SD,sum),.SDcols=c("consumer_cost_org","consumer_cost
                                               "tot_comp_org","tot_comp_new1","tot_comp_new2","tot_comp_new3")]
 
 (compensation_reduction_factor_org_new1 <- dt_cost[area=="NO1",sum(tot_comp_org)]/dt_cost[area=="NO1",sum(tot_comp_new1)])
-# 0.894451
+# 0.8935035
 
 
 dt_cost_melt <-  melt(dt_cost[,.(area,
