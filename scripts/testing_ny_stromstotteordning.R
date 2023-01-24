@@ -1,6 +1,7 @@
 
 library(data.table)
 library(ggplot2)
+Sys.setlocale(locale='nb_NO.utf8')
 
 
 area <- "NO1"
@@ -55,14 +56,33 @@ dt_hourly[,new_real_price3:=price-new_comp3]
 
 
 
-dt_hourly[area=="NO1",.(tot_org_comp=sum(org_comp),
+dt_hourly[,.(tot_org_comp=sum(org_comp),
              sd_org_comp=sd(org_real_price),
+             range_org_comp=range(org_real_price),
              tot_new_comp1=sum(new_comp1),
              sd_new_comp1=sd(new_real_price1),
+             range_new_comp1=range(new_real_price1),
              tot_new_comp2=sum(new_comp2),
              sd_new_comp2=sd(new_real_price2),
+             range_new_comp2=range(new_real_price2),
              tot_new_comp3=sum(new_comp3),
-             sd_new_comp3=sd(new_real_price3))]
+             sd_new_comp3=sd(new_real_price3),
+             range_new_comp3=range(new_real_price3)),by=.(area,month)]
+
+dt_hourly[area=="NO1",.(tot_org_comp=sum(org_comp),
+             sd_org_comp=sd(org_real_price),
+             range_org_comp=range(org_real_price),
+             tot_new_comp1=sum(new_comp1),
+             sd_new_comp1=sd(new_real_price1),
+             range_new_comp1=range(new_real_price1),
+             tot_new_comp2=sum(new_comp2),
+             sd_new_comp2=sd(new_real_price2),
+             range_new_comp2=range(new_real_price2),
+             tot_new_comp3=sum(new_comp3),
+             sd_new_comp3=sd(new_real_price3),
+             range_new_comp3=range(new_real_price3))]
+
+
 
 dt_hourly[,tp:=as.POSIXct(date)+start_hour*60*60]
 
@@ -97,6 +117,7 @@ ggplot(dt_plot[tp >= "2022-11-27" & tp < "2022-12-01" & area=="NO1"& variable %i
 
 ggplot(dt_plot[tp >= "2022-12-24" & area=="NO1"& variable %in% c("price","org_real_price","new_real_price3")],aes(x=tp,y=value,col=variable))+
   geom_line()
+
 
 
 
@@ -147,6 +168,28 @@ ggplot(dt_avg_time_egen2,aes(x=time,y=V1))+geom_line()+ylim(c(0,4.2))
 ggplot(dt_time_egen[tp>"2022-12-10"],aes(x=tp,y=forbruk))+geom_line()
 
 
+
+dt_cost_egen <- merge(dt_hourly[area=="NO2",.(tp,price,
+                                              org_comp,org_real_price,
+                              new_comp1,new_real_price1,
+                              new_comp2,new_real_price2,
+                              new_comp3,new_real_price3)],
+                      dt_time_egen[,.(tp,forbruk)],
+                 by=c("tp"))
+dt_cost_egen[,variabel_nettleie:=0.4176]
+dt_cost_egen[tp > "2022-12-25",]
+dt_cost_egen[tp > "2022-12-25",sum((org_real_price+variabel_nettleie)*forbruk)]
+dt_cost_egen[tp > "2022-12-25",sum((org_comp)*forbruk)]
+dt_cost_egen[tp > "2022-12-25",sum(price*forbruk)]
+dt_cost_egen[tp > "2022-12-25",sum(variabel_nettleie*forbruk)]
+dt_cost_egen[tp > "2022-12-25",sum(forbruk)]
+
+
+dt_cost_egen[tp > "2022-11-29" & tp <= "2022-12-01",sum((org_real_price +variabel_nettleie)*forbruk)]
+dt_cost_egen[tp > "2022-11-29" & tp <= "2022-12-01",sum(forbruk)]
+dt_cost_egen[tp > "2022-11-29" & tp <= "2022-12-01",sum(org_comp*forbruk)]
+
+
 #### Computing cost with different compensation methods:
 
 dt_cost <- merge(dt_hourly[,.(area,tp,org_comp,org_real_price,
@@ -191,5 +234,143 @@ ggplot(dt_cost_melt[area=="NO1"],aes(x=tp,y=value,col=variable))+geom_line()+
   facet_wrap(vars(month(tp)),scales = "free_x",ncol = 1)
 
 
+dt_cost[area=="NO1" & tp >="2022-12-25", sum((org_real_price+0.40)*forbruk_per_time)]
 
+
+#### Plott til innlegg:
+
+dt_plot_innlegg <- dt_plot[area=="NO1" & variable %in% c("price","new_real_price3","org_real_price")]
+dt_plot_innlegg[month==10,month2:="Oktober"]
+dt_plot_innlegg[month==11,month2:="November"]
+dt_plot_innlegg[month==12,month2:="Desember"]
+dt_plot_innlegg[,month2:=factor(month2,levels=c("Oktober","November","Desember"))]
+
+
+dt_plot_innlegg[variable=="price",variable:="spotpris"]
+dt_plot_innlegg[variable=="org_real_price",variable:="din strømpris (dagens støtteordning)"]
+dt_plot_innlegg[variable=="new_real_price3",variable:="din strømpris (foreslått støtteordning)"]
+dt_plot_innlegg[,variable:=factor(variable,levels=c("spotpris",
+                                                    "din strømpris (dagens støtteordning)",
+                                                    "din strømpris (foreslått støtteordning)"))]
+library(gtable)
+library(cowplot)
+library(grid)
+
+shift_legend <- function(p){
+
+  # check if p is a valid object
+  if(!"gtable" %in% class(p)){
+    if("ggplot" %in% class(p)){
+      gp <- ggplotGrob(p) # convert to grob
+    } else {
+      message("This is neither a ggplot object nor a grob generated from ggplotGrob. Returning original plot.")
+      return(p)
+    }
+  } else {
+    gp <- p
+  }
+
+  # check for unfilled facet panels
+  facet.panels <- grep("^panel", gp[["layout"]][["name"]])
+  empty.facet.panels <- sapply(facet.panels, function(i) "zeroGrob" %in% class(gp[["grobs"]][[i]]))
+  empty.facet.panels <- facet.panels[empty.facet.panels]
+  if(length(empty.facet.panels) == 0){
+    message("There are no unfilled facet panels to shift legend into. Returning original plot.")
+    return(p)
+  }
+
+  # establish extent of unfilled facet panels (including any axis cells in between)
+  empty.facet.panels <- gp[["layout"]][empty.facet.panels, ]
+  empty.facet.panels <- list(min(empty.facet.panels[["t"]]), min(empty.facet.panels[["l"]]),
+                             max(empty.facet.panels[["b"]]), max(empty.facet.panels[["r"]]))
+  names(empty.facet.panels) <- c("t", "l", "b", "r")
+
+  # extract legend & copy over to location of unfilled facet panels
+  guide.grob <- which(gp[["layout"]][["name"]] == "guide-box")
+  if(length(guide.grob) == 0){
+    message("There is no legend present. Returning original plot.")
+    return(p)
+  }
+  gp <- gtable_add_grob(x = gp,
+                        grobs = gp[["grobs"]][[guide.grob]],
+                        t = empty.facet.panels[["t"]],
+                        l = empty.facet.panels[["l"]],
+                        b = empty.facet.panels[["b"]],
+                        r = empty.facet.panels[["r"]],
+                        name = "new-guide-box")
+
+  # squash the original guide box's row / column (whichever applicable)
+  # & empty its cell
+  guide.grob <- gp[["layout"]][guide.grob, ]
+  if(guide.grob[["l"]] == guide.grob[["r"]]){
+    gp <- gtable_squash_cols(gp, cols = guide.grob[["l"]])
+  }
+  if(guide.grob[["t"]] == guide.grob[["b"]]){
+    gp <- gtable_squash_rows(gp, rows = guide.grob[["t"]])
+  }
+  gp <- gtable_remove_grobs(gp, "guide-box")
+
+  return(gp)
+}
+
+scaleFUN <- function(x) sprintf("%.2f", x)
+
+rects <- data.frame(start=as.POSIXct(c("2022-11-29","2022-12-24"),tz="UTC"),
+                    end=as.POSIXct(c("2022-12-01","2023-01-01"),tz="UTC"),
+                    group=1:2,
+                    month2 = as.factor(c("November","Desember")))
+
+p <- ggplot(dt_plot_innlegg,aes(x=tp,y=value,col=variable))+
+  geom_hline(yintercept=0,linetype=2)+
+  geom_line(linewidth=1)+
+  facet_wrap(vars(month2),scales = "free_x",ncol = 2)+
+  scale_color_manual(values=c(spotpris="gray50",
+                              `din strømpris (foreslått støtteordning)`="red",
+                              `din strømpris (dagens støtteordning)`="blue"))+
+
+  theme_bw(base_size=14)+
+  theme(legend.text=element_text(size=16),
+        legend.title = element_text(size=18))+
+  labs(x="dag",y="NOK/kWh (inkl. mva.)",color="Strømpriser NO1 (Oslo) okt-des 2022\n")+
+  geom_rect(data=rects, inherit.aes=FALSE, aes(xmin=start, xmax=end, ymin=min(dt_plot_innlegg$value),
+                                               ymax=max(dt_plot_innlegg$value), group=group), color="transparent", fill="orange", alpha=0.2)+
+  scale_y_continuous(labels=scaleFUN,n.breaks = 8)+
+#  scale_x_datetime(timezone="Europe/London",
+#                   breaks=seq(as.POSIXct("2022-10-01"), as.POSIXct("2022-12-31"), by="2 days"))
+#  scale_x_datetime(timezone = "Europe/London",
+#                   date_labels="%d",
+#                   date_breaks = "4 days",
+#                   minor_breaks = "1 day",
+#                   expand = expansion(mult=0.02))
+scale_x_datetime(timezone = "UTC",
+                 date_labels="%d",
+                 breaks = c(seq(as.POSIXct("2022-10-01",tz="UTC"), as.POSIXct("2022-10-31",tz = "UTC"), by="2 days"),
+                            seq(as.POSIXct("2022-11-02",tz="UTC"), as.POSIXct("2022-11-30",tz = "UTC"), by="2 days"),
+                            seq(as.POSIXct("2022-12-02",tz="UTC"), as.POSIXct("2022-12-31",tz = "UTC"), by="2 days")),
+#                 minor_breaks = "1 day",
+                 expand = expansion(mult=0.02))
+
+
+dev.off()
+pdf("blottplot.pdf",width = 12,height=8)
+grid.draw(shift_legend(p))
+dev.off()
+
+ggplot(dt_plot[tp >= "2022-11-29" & tp < "2022-12-01" & area=="NO1"& variable %in% c("price","org_real_price","new_real_price3")],aes(x=tp,y=value,col=variable))+
+  geom_line()+
+  scale_y_continuous(n.breaks=40)
+
+ggplot(dt_plot[tp >= "2022-12-24" & area=="NO1"& variable %in% c("price","org_real_price","new_real_price3")],aes(x=tp,y=value,col=variable))+
+  geom_line()
+
+
+
+
+
+
+
+
+
+
+dt_dagsforbruk
 
