@@ -891,9 +891,9 @@ server <- function(input, output,session) {
      updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
      updated_dt_comp0 <- dt_comp[area == input$prisomraade]
 
-     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
-     updated_dt_comp0 <- dt_comp[area == "NO1"]
+#     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+#     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
+#     updated_dt_comp0 <- dt_comp[area == "NO1"]
 
      updated_dt_hourly0[,computation_year:=year(date)]
      updated_dt_hourly0[,computation_month:=month(date)]
