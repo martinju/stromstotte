@@ -317,8 +317,10 @@ scaleFUN <- function(x) sprintf("%.2f", x)
 
 rects <- data.frame(start=as.POSIXct(c("2022-11-29","2022-12-24"),tz="UTC"),
                     end=as.POSIXct(c("2022-12-01","2023-01-01"),tz="UTC"),
-                    group=1:2,
+                    group=factor(c("29.-30. november","Romjula"),levels=c("29.-30. november","Romjula")),
                     month2 = as.factor(c("November","Desember")))
+rects1 <- rects[1,]
+rects2 <- rects[2,]
 
 p <- ggplot(dt_plot_innlegg,aes(x=tp,y=value,col=variable))+
   geom_hline(yintercept=0,linetype=2)+
@@ -327,13 +329,19 @@ p <- ggplot(dt_plot_innlegg,aes(x=tp,y=value,col=variable))+
   scale_color_manual(values=c(spotpris="gray50",
                               `din strømpris (foreslått støtteordning)`="red",
                               `din strømpris (dagens støtteordning)`="blue"))+
-
+  scale_fill_manual(values=c(`29.-30. november`="orange",
+                             `Romjula`="green"))+
   theme_bw(base_size=14)+
   theme(legend.text=element_text(size=16),
-        legend.title = element_text(size=18))+
-  labs(x="dag",y="NOK/kWh (inkl. mva.)",color="Strømpriser NO1 (Oslo) okt-des 2022\n")+
-  geom_rect(data=rects, inherit.aes=FALSE, aes(xmin=start, xmax=end, ymin=min(dt_plot_innlegg$value),
-                                               ymax=max(dt_plot_innlegg$value), group=group), color="transparent", fill="orange", alpha=0.2)+
+        legend.title = element_text(size=18),
+        legend.spacing.y = unit(-0.3, "cm"))+
+  labs(x="dag",y="NOK/kWh (inkl. mva.)",fill="",color="Strømpriser NO1 (Oslo) okt-des 2022\n")+
+  guides(color = guide_legend(order = 1),
+         fill = guide_legend(order = 2))+
+  geom_rect(data=rects1, inherit.aes=FALSE, aes(xmin=start, xmax=end, ymin=min(dt_plot_innlegg$value),
+                                               ymax=max(dt_plot_innlegg$value), fill=group), color="transparent", alpha=0.2)+
+  geom_rect(data=rects2, inherit.aes=FALSE, aes(xmin=start, xmax=end, ymin=min(dt_plot_innlegg$value),
+                                                ymax=max(dt_plot_innlegg$value), fill=group), color="transparent", alpha=0.2)+
   scale_y_continuous(labels=scaleFUN,n.breaks = 8)+
 #  scale_x_datetime(timezone="Europe/London",
 #                   breaks=seq(as.POSIXct("2022-10-01"), as.POSIXct("2022-12-31"), by="2 days"))
@@ -352,7 +360,7 @@ scale_x_datetime(timezone = "UTC",
 
 
 dev.off()
-pdf("blottplot.pdf",width = 12,height=8)
+pdf("blottplot2.pdf",width = 12,height=8)
 grid.draw(shift_legend(p))
 dev.off()
 
