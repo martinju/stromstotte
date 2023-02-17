@@ -5,8 +5,12 @@ Sys.setlocale(locale='nb_NO.utf8')
 
 # Doing everything before mva, and adding that in the end.
 
-org_comp_thres= 0.7
-org_comp_prop = 0.90
+current_comp_thres= 0.7
+current_comp_prop = 0.90
+
+actual_comp_thres = 0.7
+actual_comp_prop_per_month = c(rep(0.8,8),rep(0.9,4))
+
 
 dt_hourly <- fread("data/database_nordpool_hourly_2022_no_mva.csv")
 
@@ -24,8 +28,8 @@ dt_hourly[,month:=month(date)]
 dt_hourly[,mean_price:=mean(price),by=.(area,month)]
 
 
-dt_hourly[,org_comp:=compfunc(mean_price,org_comp_thres,org_comp_prop)]
-dt_hourly[,org_real_price:=price-org_comp]
+dt_hourly[,current_comp:=compfunc(mean_price,current_comp_thres,current_comp_prop)]
+dt_hourly[,current_real_price:=price-current_comp]
 
 new_comp_thres1 <- 0.70
 new_comp_prop1 <- 0.90
@@ -45,11 +49,65 @@ new_comp_prop3 <- 0.90
 dt_hourly[,new_comp3:=compfunc(price,new_comp_thres3,new_comp_prop3)]
 dt_hourly[,new_real_price3:=price-new_comp3]
 
+for(i in 1:12){
+  dt_hourly[month==i,actual_comp:=compfunc(mean_price,actual_comp_thres,actual_comp_prop_per_month[i])]
+  dt_hourly[,actual_price:=price-actual_comp]
+}
+
+cols <- names(dt_hourly)[-c(1:3,5:6)]
+dt_hourly[area!="NO4",(cols):=lapply(.SD,function(x) x*1.25),.SDcols=cols]
+
 dt_hourly[,tp:=as.POSIXct(date)+start_hour*60*60]
 
+dt_actual_comp_prop_per_month <- data.table(month=1:12,actual_comp2=actual_comp_prop_per_month)
+
+#dt_hourly <- merge(dt_hourly,dt_actual_comp_prop_per_month,by="month")
+
+dt_plotprice <- dt_hourly[,.(tp,area,date,start_hour,year,month,
+                            price,mean_price,current_real_price,new_real_price1,actual_price)]
+setnames(dt_plotprice,
+         c("price","mean_price","current_real_price","new_real_price1","actual_price"),
+         c("spotpris",
+           "månedlig_gjennomsnittlig_spotpris",
+           "pris_nåværende_ordning",
+           "pris_ny_ordning",
+           "pris_daværende_ordning"))
 
 
+melt_dt_plotprice <- melt(dt_plotprice,
+                          id.vars = c("tp","area","date","start_hour","year","month"))
+melt_dt_plotprice[,variable:=factor(variable,levels=c("månedlig_gjennomsnittlig_spotpris",
+                                                      "spotpris",
+                                                      "pris_daværende_ordning",
+                                                      "pris_nåværende_ordning",
+                                                      "pris_ny_ordning"))]
 
+
+ggplot(melt_dt_plotprice[month%in%1:12],aes(x=tp,y=value,col=variable))+
+  geom_line()+
+  facet_wrap(vars(area),scales="free",ncol=1)+
+  theme(legend.position = "bottom")+
+  ylab("NOK/kWh")+
+  xlab("Tidspunkt")
+
+gg_pris_list <- list()
+for(i in 1:5){
+  this <- paste0("NO",i)
+  gg_pris_list[[i]] <- ggplot(melt_dt_plotprice[area==this],aes(x=tp,y=value,col=variable))+
+    geom_line()+
+    facet_wrap(vars(month),scales="free",labeller = label_both)+
+    theme(legend.position = "bottom")+
+    ylab("NOK/kWh")+
+    xlab("Tidspunkt")+
+    ggtitle(paste0("Priser per måned prisområde ",this))
+
+}
+
+pdf("DN/timespris_ulike_ordninger.pdf",width = 12,height = 8)
+for(i in 1:5){
+  print(gg_pris_list[[i]])
+}
+dev.off()
 
 dt_timesforbruk <- fread("../../Div/Debattinnlegg/timesforbruksdata_csv.csv",dec = ",")
 dt_dagsforbruk <- fread("../../Div/Debattinnlegg/Daglig-forbruk-husholdning.csv")
@@ -72,308 +130,141 @@ dt_forbruk[,tp:=as.POSIXct(dato)+(Time-1)*60*60]
 
 #### Computing cost with different compensation methods:
 
-dt_cost <- merge(dt_hourly[,.(area,tp,org_comp,org_real_price,
+dt_cost <- merge(dt_hourly[,.(area,tp,
+                              current_comp,current_real_price,
                               new_comp1,new_real_price1,
                               new_comp2,new_real_price2,
-                              new_comp3,new_real_price3)],
+                              new_comp3,new_real_price3,
+                              actual_comp,actual_price)],
                  dt_forbruk[,.(area=Prisomraade,tp,forbruk_per_time)],
                  by=c("area","tp"))
-cols <- names(dt_cost)[-c(1,2,11)]
-dt_cost[area!="NO4",(cols):=lapply(.SD,function(x) x*1.25),.SDcols=cols]
 
-dt_cost[,consumer_cost_org := org_real_price*forbruk_per_time]
+dt_cost[,consumer_cost_current := current_real_price*forbruk_per_time]
 dt_cost[,consumer_cost_new1 := new_real_price1*forbruk_per_time]
 dt_cost[,consumer_cost_new2 := new_real_price2*forbruk_per_time]
 dt_cost[,consumer_cost_new3 := new_real_price3*forbruk_per_time]
+dt_cost[,consumer_cost_actual := actual_price*forbruk_per_time]
 
-dt_cost[,tot_comp_org := org_comp*forbruk_per_time]
+dt_cost[,tot_comp_current := current_comp*forbruk_per_time]
 dt_cost[,tot_comp_new1 := new_comp1*forbruk_per_time]
 dt_cost[,tot_comp_new2 := new_comp2*forbruk_per_time]
 dt_cost[,tot_comp_new3 := new_comp3*forbruk_per_time]
+dt_cost[,tot_comp_actual := actual_comp*forbruk_per_time]
+dt_cost[,month:=month(tp)]
 
-plot_dt <- dt_cost[,lapply(.SD,sum),.SDcols=c("consumer_cost_org","consumer_cost_new1",
-                                   "tot_comp_org","tot_comp_new1"),by=.(month(tp),area)]
-plot_dt[,diff_consumer_cost:=consumer_cost_org-consumer_cost_new1]
-plot_dt[,diff_tot_comp:=-(tot_comp_org-tot_comp_new1)]
+dt_cost_month <- dt_cost[,lapply(.SD,sum),.SDcols=c("consumer_cost_current","consumer_cost_new1","consumer_cost_new2","consumer_cost_new3","consumer_cost_actual",
+                                                    "tot_comp_current","tot_comp_new1","tot_comp_new2","tot_comp_new3","tot_comp_actual"),
+                         by=.(month,area)]
 
-plot_dt_melt <- melt(plot_dt,id.vars = 1:2)
+dt_plotcost <- dt_cost_month[,.(area,month,
+                                consumer_cost_current,consumer_cost_new1,consumer_cost_actual)]
 
+setnames(dt_plotcost,
+         c("consumer_cost_current","consumer_cost_new1","consumer_cost_actual"),
+         c("nåværende_ordning",
+           "ny_ordning",
+           "daværende_ordning"))
 
-ggplot(plot_dt_melt[variable%in%c("consumer_cost_org","consumer_cost_new1")],
-       aes(x=month,y=value,color=area,linetype=variable))+geom_line()
 
-ggplot(plot_dt_melt[variable%in%c("tot_comp_org","tot_comp_new1")],
-       aes(x=month,y=value,color=variable))+geom_line()+facet_wrap(vars(area),scales = "free")
+melt_dt_plotcost <- melt(dt_plotcost,
+                          id.vars = c("area","month"))
+melt_dt_plotcost[,variable:=factor(variable,levels=c("daværende_ordning",
+                                                      "nåværende_ordning",
+                                                      "ny_ordning"))]
 
-ggplot(plot_dt_melt[variable%in%c("tot_comp_new1")],
-       aes(x=month,y=value,color=area))+geom_line()
-
-ggplot(plot_dt_melt[variable%in%c("diff_tot_comp")],
-       aes(x=month,y=value,color=area))+geom_line()
-
-# prissvningner
-
-
-dt_plot2 <- dt_hourly[,.(area,date,start_hour,month,price,mean_price)]
-
-melt_dt_plot2 <- melt(dt_plot2,id.vars=1:4)
-
-ggplot(melt_dt_plot2,
-       aes(x=date,y=value,color=variable))+geom_line()+facet_wrap(vars(area),scales = "free")
-ggplot(melt_dt_plot2[area=="NO1"],
-       aes(x=date,y=value,color=variable))+geom_line()+facet_wrap(vars(area),scales = "free")
-
-### PS: HUSK Å KORRIGER ORG ORDNING DA DEN IKKE DEKKET SÅ MYE SOMD EN GJØR NÅ (90%)
-
-
-##### OLD ####
-
-
-dt_cost[,lapply(.SD,sum),.SDcols=c("consumer_cost_org","consumer_cost_new1","consumer_cost_new2","consumer_cost_new3",
-                                   "tot_comp_org","tot_comp_new1","tot_comp_new2","tot_comp_new3"),by=.(month(tp),area)]
-
-
-dt_cost[,lapply(.SD,sum),.SDcols=c("tot_comp_org","tot_comp_new1"),by=.(month(tp),area)]
-
-
-
-dt_cost[area=="NO1",lapply(.SD,sum),.SDcols=c("consumer_cost_org","consumer_cost_new1","consumer_cost_new2","consumer_cost_new3",
-                                              "tot_comp_org","tot_comp_new1","tot_comp_new2","tot_comp_new3")]
-
-(compensation_reduction_factor_org_new1 <- dt_cost[area=="NO1",sum(tot_comp_org)]/dt_cost[area=="NO1",sum(tot_comp_new1)])
-# 0.8935035
-
-
-dt_cost_melt <-  melt(dt_cost[,.(area,
-                                 tp,
-                                 consumer_cost_org,
-                                 consumer_cost_new1,
-                                 consumer_cost_new2,
-                                 consumer_cost_new3)], id.vars = c("area","tp"))
-
-
-ggplot(dt_cost_melt,aes(x=tp,y=value,col=variable))+geom_line()+
-  facet_wrap(vars(area))
-
-
-ggplot(dt_cost_melt[area=="NO1"],aes(x=tp,y=value,col=variable))+geom_line()+
-  facet_wrap(vars(month(tp)),scales = "free_x",ncol = 1)
-
-
-dt_cost[area=="NO1" & tp >="2022-12-25", sum((org_real_price+0.40)*forbruk_per_time)]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-##### #OLD ############
-
-
-
-
-
-ggplot(dt_forbruk[tp>"2022-12-10"],aes(x=tp,y=forbruk_per_time))+geom_line()+facet_wrap(vars(Prisomraade))
-
-
-dt_time_egen1 <- fread("../../Div/Debattinnlegg/meteringvalues-mp-707057500039947698-consumption-20230118T1015.csv",dec=",")
-dt_time_egen2 <- fread("../../Div/Debattinnlegg/meteringvalues-mp-707057500039947698-consumption-20230118T1016(1).csv",dec=",")
-dt_time_egen3 <- fread("../../Div/Debattinnlegg/meteringvalues-mp-707057500039947698-consumption-20230118T1016.csv",dec=",")
-
-dt_time_egen <- rbind(dt_time_egen1,
-                      dt_time_egen2,
-                      dt_time_egen3)
-dt_time_egen[,dato:=as.IDate(Fra,format="%d.%m.%Y")]
-dt_time_egen[,time:=hour(as.ITime(Fra,format="%d.%m.%Y %H:%M"))]
-dt_time_egen[,forbruk := as.numeric(sub(",", ".",x = `KWH 60 Forbruk`, fixed=TRUE))]
-
-dt_time_egen[,tp:=as.POSIXct(dato) + time*60*60]
-
-dt_avg_time_egen <- dt_time_egen[,sum(forbruk)/dt_time_egen[,sum(forbruk)],by=time]
-dt_avg_time_egen2 <- dt_time_egen[,mean(forbruk),by=time]
-
-
-ggplot(dt_avg_time_egen,aes(x=time,y=V1))+geom_line()
-ggplot(dt_avg_time_egen2,aes(x=time,y=V1))+geom_line()+ylim(c(0,4.2))
-
-
-ggplot(dt_time_egen[tp>"2022-12-10"],aes(x=tp,y=forbruk))+geom_line()
-
-
-
-dt_cost_egen <- merge(dt_hourly[area=="NO2",.(tp,price,
-                                              org_comp,org_real_price,
-                              new_comp1,new_real_price1,
-                              new_comp2,new_real_price2,
-                              new_comp3,new_real_price3)],
-                      dt_time_egen[,.(tp,forbruk)],
-                 by=c("tp"))
-dt_cost_egen[,variabel_nettleie:=0.4176]
-dt_cost_egen[tp > "2022-12-25",]
-dt_cost_egen[tp > "2022-12-25",sum((org_real_price+variabel_nettleie)*forbruk)]
-dt_cost_egen[tp > "2022-12-25",sum((org_comp)*forbruk)]
-dt_cost_egen[tp > "2022-12-25",sum(price*forbruk)]
-dt_cost_egen[tp > "2022-12-25",sum(variabel_nettleie*forbruk)]
-dt_cost_egen[tp > "2022-12-25",sum(forbruk)]
-
-
-dt_cost_egen[tp > "2022-11-29" & tp <= "2022-12-01",sum((org_real_price +variabel_nettleie)*forbruk)]
-dt_cost_egen[tp > "2022-11-29" & tp <= "2022-12-01",sum(forbruk)]
-dt_cost_egen[tp > "2022-11-29" & tp <= "2022-12-01",sum(org_comp*forbruk)]
-
-
-
-
-#### Plott til innlegg:
-
-dt_plot_innlegg <- dt_plot[area=="NO1" & variable %in% c("price","new_real_price3","org_real_price")]
-dt_plot_innlegg[month==10,month2:="Oktober"]
-dt_plot_innlegg[month==11,month2:="November"]
-dt_plot_innlegg[month==12,month2:="Desember"]
-dt_plot_innlegg[,month2:=factor(month2,levels=c("Oktober","November","Desember"))]
-
-
-dt_plot_innlegg[variable=="price",variable:="spotpris"]
-dt_plot_innlegg[variable=="org_real_price",variable:="din strømpris (dagens støtteordning)"]
-dt_plot_innlegg[variable=="new_real_price3",variable:="din strømpris (foreslått støtteordning)"]
-dt_plot_innlegg[,variable:=factor(variable,levels=c("spotpris",
-                                                    "din strømpris (dagens støtteordning)",
-                                                    "din strømpris (foreslått støtteordning)"))]
-library(gtable)
-library(cowplot)
-library(grid)
-
-shift_legend <- function(p){
-
-  # check if p is a valid object
-  if(!"gtable" %in% class(p)){
-    if("ggplot" %in% class(p)){
-      gp <- ggplotGrob(p) # convert to grob
-    } else {
-      message("This is neither a ggplot object nor a grob generated from ggplotGrob. Returning original plot.")
-      return(p)
-    }
-  } else {
-    gp <- p
-  }
-
-  # check for unfilled facet panels
-  facet.panels <- grep("^panel", gp[["layout"]][["name"]])
-  empty.facet.panels <- sapply(facet.panels, function(i) "zeroGrob" %in% class(gp[["grobs"]][[i]]))
-  empty.facet.panels <- facet.panels[empty.facet.panels]
-  if(length(empty.facet.panels) == 0){
-    message("There are no unfilled facet panels to shift legend into. Returning original plot.")
-    return(p)
-  }
-
-  # establish extent of unfilled facet panels (including any axis cells in between)
-  empty.facet.panels <- gp[["layout"]][empty.facet.panels, ]
-  empty.facet.panels <- list(min(empty.facet.panels[["t"]]), min(empty.facet.panels[["l"]]),
-                             max(empty.facet.panels[["b"]]), max(empty.facet.panels[["r"]]))
-  names(empty.facet.panels) <- c("t", "l", "b", "r")
-
-  # extract legend & copy over to location of unfilled facet panels
-  guide.grob <- which(gp[["layout"]][["name"]] == "guide-box")
-  if(length(guide.grob) == 0){
-    message("There is no legend present. Returning original plot.")
-    return(p)
-  }
-  gp <- gtable_add_grob(x = gp,
-                        grobs = gp[["grobs"]][[guide.grob]],
-                        t = empty.facet.panels[["t"]],
-                        l = empty.facet.panels[["l"]],
-                        b = empty.facet.panels[["b"]],
-                        r = empty.facet.panels[["r"]],
-                        name = "new-guide-box")
-
-  # squash the original guide box's row / column (whichever applicable)
-  # & empty its cell
-  guide.grob <- gp[["layout"]][guide.grob, ]
-  if(guide.grob[["l"]] == guide.grob[["r"]]){
-    gp <- gtable_squash_cols(gp, cols = guide.grob[["l"]])
-  }
-  if(guide.grob[["t"]] == guide.grob[["b"]]){
-    gp <- gtable_squash_rows(gp, rows = guide.grob[["t"]])
-  }
-  gp <- gtable_remove_grobs(gp, "guide-box")
-
-  return(gp)
-}
-
-scaleFUN <- function(x) sprintf("%.2f", x)
-
-rects <- data.frame(start=as.POSIXct(c("2022-11-29","2022-12-24"),tz="UTC"),
-                    end=as.POSIXct(c("2022-12-01","2023-01-01"),tz="UTC"),
-                    group=factor(c("29.-30. november","Romjula"),levels=c("29.-30. november","Romjula")),
-                    month2 = as.factor(c("November","Desember")))
-rects1 <- rects[1,]
-rects2 <- rects[2,]
-
-p <- ggplot(dt_plot_innlegg,aes(x=tp,y=value,col=variable))+
-  geom_hline(yintercept=0,linetype=2)+
-  geom_line(linewidth=1)+
-  facet_wrap(vars(month2),scales = "free_x",ncol = 2)+
-  scale_color_manual(values=c(spotpris="gray50",
-                              `din strømpris (foreslått støtteordning)`="red",
-                              `din strømpris (dagens støtteordning)`="blue"))+
-  scale_fill_manual(values=c(`29.-30. november`="orange",
-                             `Romjula`="green"))+
-  theme_bw(base_size=14)+
-  theme(legend.text=element_text(size=16),
-        legend.title = element_text(size=18),
-        legend.spacing.y = unit(-0.3, "cm"))+
-  labs(x="dag",y="NOK/kWh (inkl. mva.)",fill="",color="Strømpriser NO1 (Oslo) okt-des 2022\n")+
-  guides(color = guide_legend(order = 1),
-         fill = guide_legend(order = 2))+
-  geom_rect(data=rects1, inherit.aes=FALSE, aes(xmin=start, xmax=end, ymin=min(dt_plot_innlegg$value),
-                                               ymax=max(dt_plot_innlegg$value), fill=group), color="transparent", alpha=0.2)+
-  geom_rect(data=rects2, inherit.aes=FALSE, aes(xmin=start, xmax=end, ymin=min(dt_plot_innlegg$value),
-                                                ymax=max(dt_plot_innlegg$value), fill=group), color="transparent", alpha=0.2)+
-  scale_y_continuous(labels=scaleFUN,n.breaks = 8)+
-#  scale_x_datetime(timezone="Europe/London",
-#                   breaks=seq(as.POSIXct("2022-10-01"), as.POSIXct("2022-12-31"), by="2 days"))
-#  scale_x_datetime(timezone = "Europe/London",
-#                   date_labels="%d",
-#                   date_breaks = "4 days",
-#                   minor_breaks = "1 day",
-#                   expand = expansion(mult=0.02))
-scale_x_datetime(timezone = "UTC",
-                 date_labels="%d",
-                 breaks = c(seq(as.POSIXct("2022-10-01",tz="UTC"), as.POSIXct("2022-10-31",tz = "UTC"), by="2 days"),
-                            seq(as.POSIXct("2022-11-02",tz="UTC"), as.POSIXct("2022-11-30",tz = "UTC"), by="2 days"),
-                            seq(as.POSIXct("2022-12-02",tz="UTC"), as.POSIXct("2022-12-31",tz = "UTC"), by="2 days")),
-#                 minor_breaks = "1 day",
-                 expand = expansion(mult=0.02))
-
-
-dev.off()
-pdf("blottplot2.pdf",width = 12,height=8)
-grid.draw(shift_legend(p))
-dev.off()
-
-ggplot(dt_plot[tp >= "2022-11-29" & tp < "2022-12-01" & area=="NO1"& variable %in% c("price","org_real_price","new_real_price3")],aes(x=tp,y=value,col=variable))+
+ggplot(melt_dt_plotcost,aes(x=month,y=value,col=variable))+
   geom_line()+
-  scale_y_continuous(n.breaks=40)
+  geom_point()+
+  facet_wrap(vars(area),scales="free")+
+  theme(legend.position = "bottom")+
+  ylab("NOK")+
+  xlab("Måned")+
+  ggtitle("Husholdningskostnad per måned for gjennomsnittshusholdning")
 
-ggplot(dt_plot[tp >= "2022-12-24" & area=="NO1"& variable %in% c("price","org_real_price","new_real_price3")],aes(x=tp,y=value,col=variable))+
-  geom_line()
-
-
-
-
-
-
+ggsave("DN/Husholdningskostnad_per_måned.pdf",width = 12,height=8)
 
 
+##### KOMPENSASJON ####
+
+dt_plotcost2 <- dt_cost_month[,.(area,month,
+                                tot_comp_current,tot_comp_new1,tot_comp_actual)]
+
+setnames(dt_plotcost2,
+         c("tot_comp_current","tot_comp_new1","tot_comp_actual"),
+         c("nåværende_ordning",
+           "ny_ordning",
+           "daværende_ordning"))
 
 
-dt_dagsforbruk
+melt_dt_plotcost2 <- melt(dt_plotcost2,
+                         id.vars = c("area","month"))
+melt_dt_plotcost2[,variable:=factor(variable,levels=c("daværende_ordning",
+                                                     "nåværende_ordning",
+                                                     "ny_ordning"))]
+
+ggplot(melt_dt_plotcost2,aes(x=month,y=value,col=variable))+
+  geom_line()+
+  geom_point()+
+  facet_wrap(vars(area),scales="free")+
+  theme(legend.position = "bottom")+
+  ylab("NOK")+
+  xlab("Måned")+
+  ggtitle("Kompensasjon per måned for gjennomsnittshusholdning")
+
+ggsave("DN/Kompensasjon_per_måned.pdf",width = 12,height=8)
+
+#### Besparelse med ny ordning (kontra daværende og nåværende)
+
+dt_cost_month[,besparelse_ny_vs_daværende := tot_comp_new1-tot_comp_actual]
+dt_cost_month[,besparelse_ny_vs_nåværende := tot_comp_new1-tot_comp_current]
+
+dt_plotcost3 <- dt_cost_month[,.(area,month,
+                                 besparelse_ny_vs_daværende,besparelse_ny_vs_nåværende)]
+
+setnames(dt_plotcost3,
+         c("besparelse_ny_vs_daværende","besparelse_ny_vs_nåværende"),
+         c("ny_vs_daværende",
+           "ny_vs_nåværende"))
+
+
+melt_dt_plotcost3 <- melt(dt_plotcost3,
+                          id.vars = c("area","month"))
+melt_dt_plotcost3[,variable:=factor(variable,levels=c("ny_vs_daværende",
+                                                      "ny_vs_nåværende"))]
+
+ggplot(melt_dt_plotcost3,aes(x=month,y=value,col=variable))+
+  geom_line()+
+  geom_point()+
+  facet_wrap(vars(area),scales="free")+
+  theme(legend.position = "bottom")+
+  ylab("NOK")+
+  xlab("Måned")+
+  ggtitle("Besparelse per måned for gjennomsnittshusholdning")
+
+ggsave("DN/Besparelse_per_måned.pdf",width = 12,height=8)
+
+### Legg også inn tabell med summen over året for kostand, kompensasjon og besparelse per område
+
+dt_cost_year <- dt_cost_month[,lapply(.SD,sum),.SDcols=c("tot_comp_current","tot_comp_new1","tot_comp_actual",
+                                                         "consumer_cost_current","consumer_cost_new1","consumer_cost_actual",
+                                                         "besparelse_ny_vs_daværende","besparelse_ny_vs_nåværende"),
+                              by=.(area)]
+setnames(dt_cost_year,
+         c("tot_comp_current","tot_comp_new1","tot_comp_actual"),
+         c("kompensasjon_nåværende_ordning",
+           "kompensasjon_ny_ordning",
+           "kompensasjon_daværende_ordning"))
+
+setnames(dt_cost_year,
+         c("consumer_cost_current","consumer_cost_new1","consumer_cost_actual"),
+         c("husholdningskostnad_nåværende_ordning",
+           "husholdningskostnad_ny_ordning",
+           "husholdningskostnad_daværende_ordning"))
+
+fwrite(dt_cost_year,file = "DN/årsoversikt_per_prisomårde.csv")
+
+
+
+
+
 
