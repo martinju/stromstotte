@@ -130,6 +130,8 @@ dt_forbruk[,tp:=as.POSIXct(dato)+(Time-1)*60*60]
 
 #### Computing cost with different compensation methods:
 
+
+
 dt_cost <- merge(dt_hourly[,.(area,tp,
                               current_comp,current_real_price,
                               new_comp1,new_real_price1,
@@ -261,10 +263,35 @@ setnames(dt_cost_year,
            "husholdningskostnad_ny_ordning",
            "husholdningskostnad_daværende_ordning"))
 
-fwrite(dt_cost_year,file = "DN/årsoversikt_per_prisomårde.csv")
+library(gridExtra)
+pdf("DN/årstotal_kompensasjon.pdf", width=10,height=4)
+grid.table(dt_cost_year[,.(area,kompensasjon_nåværende_ordning, kompensasjon_ny_ordning, kompensasjon_daværende_ordning)])
+dev.off()
+
+library(gridExtra)
+pdf("DN/årstotal_husholdningskostnad.pdf", width=12,height=4)
+grid.table(dt_cost_year[,.(area,husholdningskostnad_nåværende_ordning, husholdningskostnad_ny_ordning, husholdningskostnad_daværende_ordning )])
+dev.off()
+
+library(gridExtra)
+pdf("DN/årstotal_besparelse.pdf", width=10,height=4)
+grid.table(dt_cost_year[,.(area,besparelse_ny_vs_daværende, besparelse_ny_vs_nåværende )])
+dev.off()
 
 
 
+#fwrite(dt_cost_year,file = "DN/årsoversikt_per_prisomårde.csv",)
 
 
+#### besparelse vs svingning i spotpris per måned per omr
 
+dt_vol <- dt_hourly[,list(volatilitet=sd(price)),by=.(area,month)]
+
+dt_plot_vol_besparelse <- merge(dt_cost_month[,.(area,month,besparelse_ny_vs_daværende, besparelse_ny_vs_nåværende)],dt_vol,by=c("area","month"))
+
+ggplot(dt_plot_vol_besparelse,aes(x=volatilitet,y=besparelse_ny_vs_daværende))+
+  geom_point()+
+  geom_smooth()+
+  ggtitle("Månedlig besparelse (kontra daværende ordning) vs volatilitet i spotpris")
+
+ggsave("DN/besparelse_vs_volatilitet.pdf",width=12,height=8)
