@@ -103,11 +103,11 @@ for(i in 1:5){
 
 }
 
-pdf("DN/timespris_ulike_ordninger.pdf",width = 12,height = 8)
-for(i in 1:5){
-  print(gg_pris_list[[i]])
-}
-dev.off()
+#pdf("DN/timespris_ulike_ordninger.pdf",width = 12,height = 8)
+#for(i in 1:5){
+#  print(gg_pris_list[[i]])
+#}
+#dev.off()
 
 dt_timesforbruk <- fread("../../Div/Debattinnlegg/timesforbruksdata_csv.csv",dec = ",")
 dt_dagsforbruk <- fread("../../Div/Debattinnlegg/Daglig-forbruk-husholdning.csv")
@@ -158,6 +158,8 @@ dt_cost_month <- dt_cost[,lapply(.SD,sum),.SDcols=c("consumer_cost_current","con
                                                     "tot_comp_current","tot_comp_new1","tot_comp_new2","tot_comp_new3","tot_comp_actual"),
                          by=.(month,area)]
 
+
+
 dt_plotcost <- dt_cost_month[,.(area,month,
                                 consumer_cost_current,consumer_cost_new1,consumer_cost_actual)]
 
@@ -183,7 +185,7 @@ ggplot(melt_dt_plotcost,aes(x=month,y=value,col=variable))+
   xlab("Måned")+
   ggtitle("Husholdningskostnad per måned for gjennomsnittshusholdning")
 
-ggsave("DN/Husholdningskostnad_per_måned.pdf",width = 12,height=8)
+#ggsave("DN/Husholdningskostnad_per_måned.pdf",width = 12,height=8)
 
 
 ##### KOMPENSASJON ####
@@ -213,7 +215,7 @@ ggplot(melt_dt_plotcost2,aes(x=month,y=value,col=variable))+
   xlab("Måned")+
   ggtitle("Kompensasjon per måned for gjennomsnittshusholdning")
 
-ggsave("DN/Kompensasjon_per_måned.pdf",width = 12,height=8)
+#ggsave("DN/Kompensasjon_per_måned.pdf",width = 12,height=8)
 
 #### Besparelse med ny ordning (kontra daværende og nåværende)
 
@@ -243,7 +245,7 @@ ggplot(melt_dt_plotcost3,aes(x=month,y=value,col=variable))+
   xlab("Måned")+
   ggtitle("Besparelse per måned for gjennomsnittshusholdning")
 
-ggsave("DN/Besparelse_per_måned.pdf",width = 12,height=8)
+#ggsave("DN/Besparelse_per_måned.pdf",width = 12,height=8)
 
 ### Legg også inn tabell med summen over året for kostand, kompensasjon og besparelse per område
 
@@ -264,19 +266,17 @@ setnames(dt_cost_year,
            "husholdningskostnad_daværende_ordning"))
 
 library(gridExtra)
-pdf("DN/årstotal_kompensasjon.pdf", width=10,height=4)
-grid.table(dt_cost_year[,.(area,kompensasjon_nåværende_ordning, kompensasjon_ny_ordning, kompensasjon_daværende_ordning)])
-dev.off()
+#pdf("DN/årstotal_kompensasjon.pdf", width=10,height=4)
+#grid.table(dt_cost_year[,.(area,kompensasjon_nåværende_ordning, kompensasjon_ny_ordning, kompensasjon_daværende_ordning)])
+#dev.off()
 
-library(gridExtra)
-pdf("DN/årstotal_husholdningskostnad.pdf", width=12,height=4)
-grid.table(dt_cost_year[,.(area,husholdningskostnad_nåværende_ordning, husholdningskostnad_ny_ordning, husholdningskostnad_daværende_ordning )])
-dev.off()
+#pdf("DN/årstotal_husholdningskostnad.pdf", width=12,height=4)
+#grid.table(dt_cost_year[,.(area,husholdningskostnad_nåværende_ordning, husholdningskostnad_ny_ordning, husholdningskostnad_daværende_ordning )])
+#dev.off()
 
-library(gridExtra)
-pdf("DN/årstotal_besparelse.pdf", width=10,height=4)
-grid.table(dt_cost_year[,.(area,besparelse_ny_vs_daværende, besparelse_ny_vs_nåværende )])
-dev.off()
+#pdf("DN/årstotal_besparelse.pdf", width=10,height=4)
+#grid.table(dt_cost_year[,.(area,besparelse_ny_vs_daværende, besparelse_ny_vs_nåværende )])
+#dev.off()
 
 
 
@@ -294,4 +294,98 @@ ggplot(dt_plot_vol_besparelse,aes(x=volatilitet,y=besparelse_ny_vs_daværende))+
   geom_smooth()+
   ggtitle("Månedlig besparelse (kontra daværende ordning) vs volatilitet i spotpris")
 
-ggsave("DN/besparelse_vs_volatilitet.pdf",width=12,height=8)
+#ggsave("DN/besparelse_vs_volatilitet.pdf",width=12,height=8)
+
+
+#### Ekstraplott og analyser til Huseierne ####
+
+
+#### Plotting forbruk
+
+ggplot(dt_dagsforbruk[year(dato)==2022],aes(x=dato,y=avg_forbruk_kWh,col=Prisomraade))+
+  geom_line()+
+  geom_smooth()
+
+
+dt_manedsforbruk <- dt_dagsforbruk[year(dato)==2022,sum(avg_forbruk_kWh),by=.(month(dato),Prisomraade)]
+setkey(dt_manedsforbruk,month)
+
+dt_aarsforbruk <- dt_dagsforbruk[year(dato)==2022,sum(avg_forbruk_kWh),by=.(Prisomraade)]
+
+
+dt_dagsforbruk_tot <- dt_dagsforbruk[,.(volum=sum(`Volum (MWh)`),
+                                        maalepunkter=sum(Antall_maalepunkter)),by=dato]
+
+dt_dagsforbruk_tot[,avg_forbruk_kWh:=volum/maalepunkter*1000]
+dt_dagsforbruk_tot_maaned <- dt_dagsforbruk_tot[year(dato)==2020,sum(avg_forbruk_kWh),by=month(dato)]
+setkey(dt_dagsforbruk_tot_maaned,month)
+
+# dt_dagsforbruk_tot_maaned[,sum(V1)]
+# > dt_dagsforbruk_tot_maaned[,sum(V1)]
+# [1] 13811.14
+# > dt_dagsforbruk_tot_maaned <- dt_dagsforbruk_tot[year(dato)==2021,sum(avg_forbruk_kWh),by=month(dato)]
+# > setkey(dt_dagsforbruk_tot_maaned,month)
+# > dt_dagsforbruk_tot_maaned[,sum(V1)]
+# [1] 16000.03
+# > dt_dagsforbruk_tot_maaned <- dt_dagsforbruk_tot[year(dato)==2020,sum(avg_forbruk_kWh),by=month(dato)]
+# > setkey(dt_dagsforbruk_tot_maaned,month)
+# > dt_dagsforbruk_tot_maaned[,sum(V1)]
+# [1] 15470.2
+
+
+
+dt_cost_month[tot_comp_actual!=0,prosentbesparelse_ny_vs_daværende:=100*(tot_comp_new1-tot_comp_actual)/tot_comp_actual]
+dt_cost_month[tot_comp_current!=0,prosentbesparelse_ny_vs_nåværende:=100*(tot_comp_new1-tot_comp_current)/tot_comp_current]
+dt_cost_month[tot_comp_actual==0,prosentbesparelse_ny_vs_daværende:=0]
+dt_cost_month[tot_comp_current==0,prosentbesparelse_ny_vs_nåværende:=0]
+
+dt_cost_month[area=="NO1",.(month,prosentbesparelse_ny_vs_nåværende)] # F.eks. 62% i november, mens Aasland sa 52 i pressemelding (men ikke hvilket prisområde det gjalt.)
+
+
+dt_cost_month[,besparelse_ny_vs_daværende := tot_comp_new1-tot_comp_actual]
+dt_cost_month[,besparelse_ny_vs_nåværende := tot_comp_new1-tot_comp_current]
+
+dt_timesforbruk
+
+
+dt_eget_forbruk_list <- list()
+dt_eget_forbruk_list[[1]] <- fread("../../Div/Debattinnlegg/meteringvalues-mp-707057500039947698-consumption-20230118T1015.csv")
+dt_eget_forbruk_list[[2]] <- fread("../../Div/Debattinnlegg/meteringvalues-mp-707057500039947698-consumption-20230118T1016.csv")
+dt_eget_forbruk_list[[3]] <- fread("../../Div/Debattinnlegg/meteringvalues-mp-707057500039947698-consumption-20230118T1016(1).csv")
+
+
+dt_eget_forbruk <- rbindlist(dt_eget_forbruk_list)
+setnames(dt_eget_forbruk,"KWH 60 Forbruk","forbruk")
+dt_eget_forbruk[,forbruk:=as.numeric(gsub(",", ".", gsub("\\.", "", forbruk)))]
+
+dt_eget_forbruk[,dato :=as.IDate(Fra,format="%d.%m.%Y")]
+dt_eget_forbruk[dato=="2022-10-30",forbruk:=sum(forbruk),by=Til]
+dt_eget_forbruk[,keep:=TRUE]
+dt_eget_forbruk[Fra=="30.10.2022 01:00",keep:=FALSE]
+dt_eget_forbruk <- dt_eget_forbruk[keep!=FALSE]
+
+dt_eget_forbruk[,time := 0:23,by=dato]
+
+dt_eget_forbruk[,tp:=as.POSIXct(dato)+(time)*60*60]
+
+
+dt_eget_forbruk_mean <- dt_eget_forbruk[,mean(forbruk),by=time]
+dt_eget_forbruk_mean[,prosentforbruk:=V1/sum(V1)*100]
+dt_eget_forbruk_mean[,plot(time,prosentforbruk,type="l")]
+dt_timesforbruk[,lines(Time,100*Prosentfordeling_ukedag,col=2)]
+
+dt_eget_forbruk[,mean(forbruk),by=time]
+
+
+
+
+#### forenklet tabell år:
+
+#pdf("DN/årstotal_husholdningskostnad.pdf", width=12,height=4)
+#grid.table(dt_cost_year[,.(area,husholdningskostnad_nåværende_ordning, husholdningskostnad_ny_ordning, husholdningskostnad_daværende_ordning )])
+#dev.off()
+
+
+
+
+
