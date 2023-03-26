@@ -21,6 +21,11 @@ tomorrow <- today+1
 
 
 tomorrow_dt <- basic_nordpoolAPI_to_dt(areas=areas) # always day-ahead!
+# Handling clock adjustments
+for(i in seq_along(areas)){
+  meanprice <- tomorrow_dt[area==areas[i],mean(price,na.rm=T)]
+  tomorrow_dt[area==areas[i] & is.na(price),price:=meanprice]
+}
 
 daily_tomorrow_dt <- tomorrow_dt[,list(price=mean(price)),by=.(area,date)]
 
