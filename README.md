@@ -21,8 +21,8 @@ daglig oppdaterte json-fil:
 Historiske prognoser kan hentes her:
 <https://raw.githubusercontent.com/martinju/stromstotte/master/data/historic_estimated_compensation.json>
 
-Data/prognoser er sist oppdatert 30.06.2023, kl. 12.25 med spotpriser
-for 01.07.2023.
+Data/prognoser er sist oppdatert 01.07.2023, kl. 12.55 med spotpriser
+for 02.07.2023.
 
 Litt bakgrunn om strømstøtteestimering (som etter hvert ledet frem til
 [dinstrompris.no](https://dinstrompris.no)) finnes
