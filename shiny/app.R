@@ -287,6 +287,11 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                 #div {padding: 0 !important;}'
                                 #                                ))),
                                 tags$head(includeHTML("google_analytics.html")),
+                                h3("OBS!"),
+                                p("Fra 1.september 2023 endres regjeringens strømstøtteordning til å kompensere den til enhver tid ",
+                                  "spotprisen istedet for gjennomsnittlig månedelig spotpris. Estimering som danner grunnlaget for denne siden",
+                                  "faller dermed bort. Siden vil fortsette å tilby totaloversikt over spotpris, strømstøtte og nettleie." ,
+                                  "Tallene/grafen nedenfor er ikke oppdatert til ny ordning. Dette vil bli ordnet i løpet av et par dager."),
                                 plotlyOutput("now_spotplot3",height ="300px"),
                                 fluidRow(
                                   box(width = 7,
