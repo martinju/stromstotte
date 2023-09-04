@@ -40,20 +40,24 @@ jobs:
       run: Rscript scripts/get_hourly_data_nordpool.R
 
     # Run R script
-    - name: Estimate compensation
-      run: Rscript scripts/forecast.R
+    - name: Filter prices with sept_2023 system
+      run: Rscript scripts/filter.R
 
-    # Run R script
-    - name: Compensation table
-      run: Rscript scripts/viz_compensation.R
+#    # Run R script
+#    - name: Estimate compensation
+#      run: Rscript scripts/forecast.R
 
-    # Run R script
-    - name: Plot compensation and mean price
-      run: Rscript scripts/viz_compensation_month.R
+#    # Run R script
+#    - name: Compensation table
+#      run: Rscript scripts/viz_compensation.R
 
-    # Run R script
-    - name: Render README
-      run: Rscript -e 'rmarkdown::render("README.Rmd",output_format="all")'
+#    # Run R script
+#    - name: Plot compensation and mean price
+#      run: Rscript scripts/viz_compensation_month.R
+
+#    # Run R script
+#    - name: Render README
+#      run: Rscript -e 'rmarkdown::render("README.Rmd",output_format="all")'
 
 
  # Add new files in data folder, commit along with other modified files, push
