@@ -140,6 +140,8 @@ dt_nettleie_kl6 <- fread(file.path(path,"data/database_nettleie_simple_kl_6.csv"
 dt_nettleie_kapasitetsledd <- fread(file.path(path,"data/database_nettleie_kapasitetsledd.csv"),encoding = "Latin-1")
 
 dt_hourly <- fread(file.path(path,"data/database_nordpool_hourly.csv"))
+dt_filtered_prices <- fread(file.path(path,"data/historic_filtered_prices_sept23_system.csv"))
+
 dt_comp <- fread(file.path(path,"data/historic_estimated_compensation.csv"))
 dt_postnr_nettselskap_prisomraader_map <- fread(file.path(path,"data/simple_postnr_nettselskap_prisomraader_dt.csv"))
 
@@ -888,17 +890,16 @@ server <- function(input, output,session) {
    })
 
 
-
-   plot_dt_final <- reactive({
+   plot_dt_final_old <- reactive({
      estimation_date0= dt_comp[,max(estimation_date)]
 
      updated_dt_nettleie0 <- dt_nettleie[Nettselskap == input$nettselskap]
      updated_dt_hourly0 <- dt_hourly[area ==input$prisomraade]
      updated_dt_comp0 <- dt_comp[area == input$prisomraade]
 
-#     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
-#     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
-#     updated_dt_comp0 <- dt_comp[area == "NO1"]
+     #     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+     #     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
+     #     updated_dt_comp0 <- dt_comp[area == "NO1"]
 
      updated_dt_hourly0[,computation_year:=year(date)]
      updated_dt_hourly0[,computation_month:=month(date)]
@@ -971,143 +972,85 @@ server <- function(input, output,session) {
      setkey(plot_dt_final,datetime)
 
      dt_list <-
+       list(plot_dt_final=plot_dt_final,
+            texthelper_dt=texthelper_dt,
+            texthelper2_dt = texthelper2_dt,
+            texthelper_simple_dt=texthelper_simple_dt,
+            texthelper_simple2_dt=texthelper_simple2_dt,
+            estimation_date0 = estimation_date0)
+
+   })
+
+   plot_dt_final <- reactive({
+     estimation_date0= dt_filtered_prices[,max(date)]
+
+     updated_dt_nettleie0 <- dt_nettleie[Nettselskap == input$nettselskap]
+     updated_dt_filtered_prices0 <- dt_filtered_prices[area ==input$prisomraade]
+
+#     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+#     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
+#     updated_dt_comp0 <- dt_comp[area == "NO1"]
+
+     plot_strompris_naa_dt <- copy(updated_dt_filtered_prices0)
+
+     plot_strompris_naa_dt[,filtered_price:=NULL]
+     setnames(plot_strompris_naa_dt,"price","spotpris")
+     setnames(plot_strompris_naa_dt,"compensation","stotte")
+
+     plot_strompris_naa_dt[start_hour %in% seq(6,21),nettleie:=updated_dt_nettleie0[pristype=="Dag",Energiledd]]
+     plot_strompris_naa_dt[is.na(nettleie),nettleie:=updated_dt_nettleie0[pristype=="Natt",Energiledd]]
+
+     plot_strompris_naa_dt[,totalpris:=spotpris+nettleie-stotte]
+     plot_strompris_naa_dt[,datetime:=as.POSIXct(date)+start_hour*60*60]
+
+
+     plot_strompris_naa_dt0 <- plot_strompris_naa_dt[,.(datetime,spotpris,nettleie,totalpris,stotte)]
+
+#     texthelper_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols))]
+#     texthelper2_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc2(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols))]
+#     texthelper_simple_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc_simple(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols))]
+#     texthelper_simple2_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc_simple3(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols,fontsize=9))]
+
+     plot_strompris_naa_dt0_dup <- copy(plot_strompris_naa_dt0)
+     plot_strompris_naa_dt0_dup[,datetime:=datetime+1*60*60-1]
+
+     plot_strompris_naa_dt00 <- rbind(plot_strompris_naa_dt0,plot_strompris_naa_dt0_dup)
+     setkey(plot_strompris_naa_dt00,datetime)
+
+
+#     plot_strompris_naa_dt_ints_totalpris <- plot_strompris_naa_dt00[,.(datetime,lower_CI=totalpris_lower_CI,upper_CI=totalpris_upper_CI)]
+#     plot_strompris_naa_dt_ints_totalpris[,type:="totalpris"]
+
+#     plot_strompris_naa_dt_ints_stotte <- plot_strompris_naa_dt00[,.(datetime,lower_CI=stotte_lower_CI,upper_CI=stotte_upper_CI)]
+#     plot_strompris_naa_dt_ints_stotte[,type:="stotte"]
+
+#     plot_strompris_naa_dt_ints <- rbind(plot_strompris_naa_dt_ints_totalpris,plot_strompris_naa_dt_ints_stotte)
+
+     plot_strompris_naa_dt_melted <- melt(plot_strompris_naa_dt00[,.(datetime,spotpris,nettleie,totalpris,stotte)],
+                                          id.vars = c("datetime"),variable.name = "type",value.name = "pris")
+
+     plot_dt_final <- plot_strompris_naa_dt_melted
+
+     plot_dt_final[,linesize := "b"]
+     plot_dt_final[type%in% c("totalpris","stotte"),linesize := "a"]
+
+     setcolorder(plot_dt_final,c("datetime","type","pris","linesize"))
+     plot_dt_final[,type:=factor(type,levels=c("spotpris","nettleie","stotte","totalpris"))]
+
+
+     setkey(plot_dt_final,datetime)
+
+     dt_list <-
      list(plot_dt_final=plot_dt_final,
-          texthelper_dt=texthelper_dt,
-          texthelper2_dt = texthelper2_dt,
-          texthelper_simple_dt=texthelper_simple_dt,
-          texthelper_simple2_dt=texthelper_simple2_dt,
+          #texthelper_dt=texthelper_dt,
+          #texthelper2_dt = texthelper2_dt,
+          #texthelper_simple_dt=texthelper_simple_dt,
+          #texthelper_simple2_dt=texthelper_simple2_dt,
           estimation_date0 = estimation_date0)
 
    })
 
 
-   output$now_spotplot <- renderPlotly({
-#      req(input$postnr,input$nettselskap, input$prisomraade)
-#      if (identical(input$prisomraade, "")) return(NULL)
-#      if (identical(input$nettselskap, "")) return(NULL)
-#
-#      dt_list <- plot_dt_final()
-#
-#      max_dinstrompris <- dt_list$plot_dt_final[datetime>=dt_list$estimation_date0,max(upper_CI,na.rm = T)]
-#      now_hms =as.POSIXct(as.IDate(Sys.Date()))+hour(Sys.time())*60*60+minute(Sys.time())*60+second(Sys.time())
-#
-#
-#      p_now <- ggplot(data=dt_list$plot_dt_final[datetime>=(now_hms-3*60*60)],mapping=aes(x=datetime,y=pris,col=type,fill=type))+
-#        geom_line(aes(size=linesize))+
-#        geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.3)+
-#        ggtitle("Din strømpris")+
-#        scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(8))+
-#        scale_x_datetime(name = "Tid/dato",
-#                         breaks=breaks_pretty(12),
-#                         minor_breaks = breaks_pretty(24))+
-#        #                 labels = label_date_short(format = c("%Y", "", "%d.%b\n", "%H\n"),sep=""))+
-#        scale_size_manual(values=c("a" = 1,"b"=0.5))+
-#        guides(size="none")+
-#        scale_color_manual(name="",values = mycols,labels = mylabels)+
-#        scale_fill_manual(name="",values = mycols,labels = mylabels)+
-#        #geom_vline(xintercept=Sys.time(),linetype=2,col="grey",inherit.aes=F)+
-#        geom_line(data=dt_list$texthelper_simple_dt[datetime>=(now_hms-3*60*60)],aes(x=datetime,y=max_dinstrompris,text=text),inherit.aes = F,size=0.00001)
-#
-#      ggp_now <- ggplotly(p_now,dynamicTicks = TRUE,tooltip = "text")
-#      ggp_now <- layout(
-#        ggp_now,
-#        hovermode = "x unified",
-#        xaxis = list(fixedrange = TRUE),#,tickformat="%b<br>%Y"),
-#        yaxis = list(fixedrange = TRUE, tickformat = ".2f",nticks=20),
-#        legend = list(font = list(size=10))#,
-# #       legend = list(orientation = 'h')
-#      )
-#      ggp_now <- style(ggp_now,visible="legendonly",traces=c(1,2,3,7)) #trace=2 identified through plotly_json(ggp_now)
-#      ggp_now <- style(ggp_now,hoverinfo="none",traces=1:(length(ggp_now$x$data)-1))
-#      ggp_now <- style(ggp_now,name="strømstøtte",traces=3)
-#      ggp_now <- style(ggp_now,name="Din strømpris",traces=4)
-#
-#      ggp_now <- config(ggp_now,locale="no")
-#
-#      ggp_now
-
-   })
-
-   output$now_spotplot2 <- renderPlotly({
-#      req(input$postnr,input$nettselskap, input$prisomraade)
-#      if (identical(input$prisomraade, "")) return(NULL)
-#      if (identical(input$nettselskap, "")) return(NULL)
-#
-#      dt_list <- plot_dt_final()
-#
-#      max_dinstrompris <- dt_list$plot_dt_final[datetime>=dt_list$estimation_date0,max(upper_CI,na.rm = T)]
-#      now_hms =as.POSIXct(as.IDate(Sys.Date()))+hour(Sys.time())*60*60+minute(Sys.time())*60+second(Sys.time())
-#
-#      today_daterange <- as.POSIXct(range(dt_list$plot_dt_final[datetime>=dt_list$estimation_date & datetime<dt_list$estimation_date+1,datetime]))
-#
-# #     p_now <- ggplot(data=dt_list$plot_dt_final[datetime>=(now_hms-3*60*60)],mapping=aes(x=datetime,y=pris,col=type,fill=type))+
-#      p_now <- ggplot(data=dt_list$plot_dt_final[datetime>=dt_list$estimation_date0],mapping=aes(x=datetime,y=pris,col=type,fill=type))+
-#        geom_line(aes(size=linesize))+
-#        geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.3)+
-#        ggtitle("Din strømpris")+
-#        scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(15))+
-#        scale_x_datetime(name = "Tid/dato",
-#                         breaks=breaks_pretty(12),
-#                         minor_breaks = breaks_pretty(24),
-#                         labels = label_date_short(format = c("%Y", "", "%d.%b\n", "%H:%M\n"),sep=""))+
-#        scale_size_manual(values=c("a" = 1,"b"=0.5))+
-#        guides(size="none")+
-#        scale_color_manual(name="",values = mycols,labels = mylabels)+
-#        scale_fill_manual(name="",values = mycols,labels = mylabels)+
-#        #geom_vline(xintercept=Sys.time(),linetype=2,col="grey",inherit.aes=F)+
-#      #  geom_line(data=dt_list$texthelper_simple_dt[datetime>=(now_hms-3*60*60)],aes(x=datetime,y=max_dinstrompris,text=text),inherit.aes = F,size=0.00001)
-#      geom_line(data=dt_list$texthelper_simple_dt[datetime>=dt_list$estimation_date0],aes(x=datetime,y=max_dinstrompris,text=text),inherit.aes = F,size=0.00001)
-#
-#      ggp_now <- ggplotly(p_now,tooltip = "text",
-#                          dynamicTicks = "x")
-#                          #dynamicTicks = "y")
-# #                         dynamicTicks = TRUE)
-#      ggp_now <- layout(
-#        ggp_now,
-#        hovermode = "x unified",
-#        xaxis = list(ticks=12,
-#                     range = as.numeric(today_daterange),
-#                     rangeselector = list(
-#                       buttons = list(
-#                         list(
-#                           count = 1,
-#                           label = "idag",
-#                           step = "day",
-#                           stepmode = "todate"),
-#                         list(
-#                           count = 2,
-#                           label = "2 siste dager",
-#                           step = "day",
-#                           stepmode = "todate")
-#                       ))#,
-# #                    rangeslider = list(type = "date")
-#        ),
-#        yaxis = list(fixedrange = TRUE, tickformat = ".2f",nticks=20)
-#        )
-#
-#
-#      ggp_now <- style(ggp_now,visible="legendonly",traces=c(1,2,3,7)) #trace=2 identified through plotly_json(ggp_now)
-#      ggp_now <- style(ggp_now,hoverinfo="none",traces=1:(length(ggp_now$x$data)-1))
-#      ggp_now <- style(ggp_now,name="strømstøtte",traces=3)
-#      ggp_now <- style(ggp_now,name="Din strømpris",traces=4)
-#
-#      ggp_now <- config(ggp_now,locale="no")
-#
-#      ggp_now_true <- ggp_now
-#      ggp_now_y <- ggp_now
-#
-#      all.equal(ggp_now_y,ggp_now_true)
-#      all.equal(ggp_now_true,ggp_now_y)
-#
-#      ggp_now_y$x$layout$xaxis$type <- ggp_now_true$x$layout$xaxis$type
-#      ggp_now_y$x$layout$xaxis$autorange <- ggp_now_true$x$layout$xaxis$autorange
-#      ggp_now_y$x$layout$xaxis$autorange <- ggp_now_true$x$layout$xaxis$autorange
-#
-#      # OK, looks like scaling and getting the axis right is conflicting. A workaround might be to work with
-#      # as.numeric(datetime) all the way from the start. However, not sure if I can add buttons to non-date data.
-#
-#      ggp_now_y
-   })
 
    output$now_spotplot3 <- renderPlotly({
      req(input$postnr,input$nettselskap, input$prisomraade)
@@ -1116,7 +1059,7 @@ server <- function(input, output,session) {
 
      dt_list <- plot_dt_final()
 
-     max_dinstrompris <- dt_list$plot_dt_final[datetime>=dt_list$estimation_date0,max(upper_CI,na.rm = T)]
+     max_dinstrompris <- dt_list$plot_dt_final[datetime>=dt_list$estimation_date0,max(pris,na.rm = T)]
      now_hms =as.POSIXct(as.IDate(Sys.Date()))+hour(Sys.time())*60*60+minute(Sys.time())*60+second(Sys.time())
 
      dat <- dt_list$plot_dt_final[datetime>=(now_hms-3*60*60) & type=="totalpris"]
