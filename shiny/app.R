@@ -486,7 +486,7 @@ body_strompris_history <- tabItem(tabName = "strompris_history",
                                           #title = "Din strømpris består av",
                                           h3("Din strømpris består av"),
                                           uiOutput("strompris_for3"),
-                                          uiOutput("stromstotte3"),
+                                          h4(tags$span(style=paste0("color:",mycols['stotte']),"Strømstøtte (per kWh)")),
                                           uiOutput("nettleie3"),
                                           uiOutput("kontrollert_nettleie3")
                                       )
@@ -747,6 +747,12 @@ server <- function(input, output,session) {
      ret
    })
 
+   # Filter dt_hourly based on input
+   updated_dt_filtered_prices <- reactive({
+     dt_filtered_prices[area ==input$prisomraade & date%in%seq(today-1, today+1,by="day"),]
+   })
+
+
    # Filter dt_comp based on input
    updated_dt_comp <- reactive({
      dt_comp[area == input$prisomraade & estimation_date==input$date_estimation,]
@@ -802,15 +808,41 @@ server <- function(input, output,session) {
    })
 
    output$stromstotte <- output$stromstotte2 <- output$stromstotte3 <- renderUI({
-     med <- updated_dt_comp()[type=="median",compensation]
-     upper <- updated_dt_comp()[type=="quantile_0.975",compensation]
-     lower <- updated_dt_comp()[type=="quantile_0.025",compensation]
+     mean_comp <- updated_dt_filtered_prices()[,list(meancomp=mean(compensation)),by=date]
+
+     meancomp_yesterday <- mean_comp[date==today-1,meancomp]
+     meancomp_today <- mean_comp[date==today,meancomp]
+     meancomp_tomorrow <- mean_comp[date==today+1,meancomp]
+
+     this_hour <- hour(Sys.time())
+     this_date <- as.IDate(Sys.time())
+
+     comp_now <- updated_dt_filtered_prices()[date==this_date & start_hour==this_hour,compensation]
+
 
      div(
        h4(tags$span(style=paste0("color:",mycols['stotte']),"Strømstøtte (per kWh)")),
-       p("Estimat: ",twodigits(med)," kr/kWh",
+
+       p("Nå: (Kl.",paste0(this_hour,"-",this_hour+1),") ",twodigits(comp_now)," kr/kWh"),
+       p(
+         ifelse(
+           length(meancomp_yesterday)==1,
+           paste0("I går: ",twodigits(meancomp_yesterday)," kr/kWh"),
+           ""
+         ),
          br(),
-       "95% usikkerhetsintervall: (",twodigits(lower),",",twodigits(upper),") kr/kWh")
+         ifelse(
+           length(meancomp_today)==1,
+           paste0("I dag: ",twodigits(meancomp_today)," kr/kWh"),
+           ""
+         ),
+         br(),
+         ifelse(
+           length(meancomp_tomorrow)==1,
+           paste0("I morgen: ",twodigits(meancomp_tomorrow)," kr/kWh\n"),
+           ""
+         )
+       )
      )
    })
 
@@ -883,12 +915,11 @@ server <- function(input, output,session) {
 
      now_hms =as.POSIXct(as.IDate(Sys.Date()))+hour(Sys.time())*60*60
 
-     res_vec <- unlist(dt[datetime==now_hms & type=="totalpris",.(pris,lower_CI,upper_CI)])
+     res_vec <- unlist(dt[datetime==now_hms & type=="totalpris",.(pris)])
 
      div(
        h4(tags$span(style=paste0("color:",mycols['totalpris']),"Din strømpris nå (per kWh)")),
-       p(paste0("Kl. ",this_hour,"-",this_hour+1),": ",
-         strong(twodigits(res_vec[1])," (",twodigits(res_vec[2]),",",twodigits(res_vec[3]),")")," kr/kWh")
+       p(paste0("Kl. ",this_hour,"-",this_hour+1),": ",twodigits(res_vec[1])," kr/kWh")
      )
    })
 
