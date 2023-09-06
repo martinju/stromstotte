@@ -1007,9 +1007,9 @@ server <- function(input, output,session) {
      plot_strompris_naa_dt0 <- plot_strompris_naa_dt[,.(datetime,spotpris,nettleie,totalpris,stotte)]
 
 #     texthelper_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols))]
-#     texthelper2_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc2(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols))]
+     texthelper2_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc2_new(datetime,spotpris,nettleie,totalpris,stotte,mycols))]
 #     texthelper_simple_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc_simple(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols))]
-#     texthelper_simple2_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc_simple3(datetime,spotpris,nettleie,totalpris,totalpris_lower_CI,totalpris_upper_CI,stotte,stotte_lower_CI,stotte_upper_CI,mycols,fontsize=9))]
+     texthelper_simple2_dt <- plot_strompris_naa_dt0[,.(datetime,text=textfunc_simple3_new(datetime,spotpris,nettleie,totalpris,mycols,fontsize=9))]
 
      plot_strompris_naa_dt0_dup <- copy(plot_strompris_naa_dt0)
      plot_strompris_naa_dt0_dup[,datetime:=datetime+1*60*60-1]
@@ -1043,9 +1043,9 @@ server <- function(input, output,session) {
      dt_list <-
      list(plot_dt_final=plot_dt_final,
           #texthelper_dt=texthelper_dt,
-          #texthelper2_dt = texthelper2_dt,
+          texthelper2_dt = texthelper2_dt,
           #texthelper_simple_dt=texthelper_simple_dt,
-          #texthelper_simple2_dt=texthelper_simple2_dt,
+          texthelper_simple2_dt=texthelper_simple2_dt,
           estimation_date0 = estimation_date0)
 
    })
@@ -1064,13 +1064,16 @@ server <- function(input, output,session) {
 
      dat <- dt_list$plot_dt_final[datetime>=(now_hms-3*60*60) & type=="totalpris"]
      dat <- dat[-1]
+
+     dat_all <- dt_list$plot_dt_final[datetime>=(now_hms-3*60*60)]
+     dat_all <- dat_all[-(1:4)]
      #helper0 <- dt_list$texthelper_simple_dt[datetime>=(now_hms-3*60*60)]
      #setnames(helper0,"text","text0")
      #dat <-merge(dat,helper0,by="datetime",all=T)
      #dat[, text := text0[nafill(replace(.I, is.na(text0), NA), "locf")]]
      #dat[,text0:=NULL]
 
-     plotrange <- c(min(dat$lower_CI),max(dat$upper_CI))
+     plotrange <- c(min(c(0,dat$pris),na.rm = T),max(c(0,dat$pris),na.rm=T))
      plotrange2 <- plotrange
      plotrange2[2] <- plotrange2[2] + diff(plotrange)*0.05
      plotrange3 <- plotrange2
@@ -1079,9 +1082,9 @@ server <- function(input, output,session) {
      plotrange4[1] <- plotrange2[1] - diff(plotrange)*0.005
 
      helper0 <- dt_list$texthelper_simple2_dt[datetime>=(now_hms-3*60*60)]
-     helper0 <- merge(helper0,dat[,.(datetime,upper_CI)],by="datetime")
+     helper0 <- merge(helper0,dat[,.(datetime)],by="datetime")
 #     helper0[,plotval:=upper_CI+diff(plotrange)*0.1]
-     helper0[,plotval:=max(upper_CI)+diff(plotrange)*0.05]
+     helper0[,plotval:=max(plotrange)+diff(plotrange)*0.05]
 
      helper0[,datetime2:=datetime+0.5*60*60]
 
@@ -1091,7 +1094,7 @@ server <- function(input, output,session) {
 
      p_now <- ggplot(data=dat,mapping=aes(x=datetime,y=pris))+
        geom_line(col=mycols["totalpris"],linewidth=1)+
-       geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI),fill=mycols["totalpris"], alpha = 0.3)+
+#       geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI),fill=mycols["totalpris"], alpha = 0.3)+
        ggtitle("")+
        scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(8))+
        scale_x_datetime(name = "Tid/dato",
@@ -1253,7 +1256,7 @@ server <- function(input, output,session) {
 
      dt_list <- plot_dt_final()
 
-     max_dinstrompris <- dt_list$plot_dt_final[datetime>=dt_list$estimation_date0,max(upper_CI,na.rm = T)]
+     max_dinstrompris <- dt_list$plot_dt_final[datetime>=dt_list$estimation_date0,max(pris,na.rm = T)]
      now_hms =as.POSIXct(as.IDate(Sys.Date()))+hour(Sys.time())*60*60+minute(Sys.time())*60+second(Sys.time())
 
      dat <- dt_list$plot_dt_final[datetime>=(now_hms-3*60*60)]# & type=="totalpris"]
@@ -1264,7 +1267,7 @@ server <- function(input, output,session) {
      #dat[, text := text0[nafill(replace(.I, is.na(text0), NA), "locf")]]
      #dat[,text0:=NULL]
 
-     plotrange <- c(min(c(dat$lower_CI,dat$pris),na.rm = T),max(c(dat$upper_CI,dat$pris),na.rm=T))
+     plotrange <- c(min(c(0,dat$pris),na.rm = T),max(c(0,dat$pris),na.rm=T))
      plotrange2 <- plotrange
      plotrange2[2] <- plotrange2[2] + diff(plotrange)*0.08
      plotrange3 <- plotrange2
@@ -1282,7 +1285,7 @@ server <- function(input, output,session) {
 
      p_now <- ggplot(data=dat,mapping=aes(x=datetime,y=pris,col=type,fill=type))+
        geom_line(aes(size=linesize))+
-       geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.3)+
+       #geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.3)+
        ggtitle("")+
        scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(8))+
        scale_x_datetime(name = "Tid/dato",
@@ -1340,7 +1343,7 @@ server <- function(input, output,session) {
        #       legend = list(orientation = 'h')
      )
 #     ggp_now <- style(ggp_now,visible="legendonly",traces=c(1,2,3,7)) #trace=2 identified through plotly_json(ggp_now)
-     ggp_now <- style(ggp_now,visible="legendonly",traces=c(3,7)) #trace=2 identified through plotly_json(ggp_now)
+     ggp_now <- style(ggp_now,visible="legendonly",traces=c(3)) #trace=2 identified through plotly_json(ggp_now)
      ggp_now <- style(ggp_now,hoverinfo="none",traces=1:(length(ggp_now$x$data)-1))
      ggp_now <- style(ggp_now,name="strømstøtte",traces=3)
      ggp_now <- style(ggp_now,name="Din strømpris",traces=4)
