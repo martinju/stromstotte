@@ -13,8 +13,9 @@
 
 *Av [Martin Jullum, Norsk Regnesentral](https://nr.no/ansatte/martin-jullum/).*
 
-Estimater sist oppdatert `r readLines("https://raw.githubusercontent.com/martinju/stromstotte/master/output/update_time.txt")`.
+Estimater sist oppdatert  30.08.2023 med spotprisen for 31.08.2023.
 
+**MERK: Etter at regjeringen endret strømstøtteordningen til timesbasert avregning fra 1.september 2023, er den faktiske strømstøtten kjent umiddelbart. Det er dermed ikke lenger behov for å estimere strømstøtten som beskrevet nedenfor. Predikeringen er derfor stoppet 30.08.2023, mens dokumentasjonen er beholdt i sin helhet da den kan være av metodisk interesse.**
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
