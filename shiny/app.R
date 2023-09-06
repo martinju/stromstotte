@@ -141,6 +141,9 @@ dt_nettleie_kapasitetsledd <- fread(file.path(path,"data/database_nettleie_kapas
 
 dt_hourly <- fread(file.path(path,"data/database_nordpool_hourly.csv"))
 dt_filtered_prices <- fread(file.path(path,"data/historic_filtered_prices_sept23_system.csv"))
+dt_filtered_prices_org_comp_system <- fread(file.path(path,"data/historic_filtered_prices_original_system.csv"))
+
+
 
 dt_comp <- fread(file.path(path,"data/historic_estimated_compensation.csv"))
 dt_postnr_nettselskap_prisomraader_map <- fread(file.path(path,"data/simple_postnr_nettselskap_prisomraader_dt.csv"))
@@ -986,12 +989,13 @@ server <- function(input, output,session) {
 
      updated_dt_nettleie0 <- dt_nettleie[Nettselskap == input$nettselskap]
      updated_dt_filtered_prices0 <- dt_filtered_prices[area ==input$prisomraade]
+     updated_dt_filtered_prices_org_comp_system0 <- dt_filtered_prices_org_comp_system[area ==input$prisomraade]
 
 #     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
 #     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
 #     updated_dt_comp0 <- dt_comp[area == "NO1"]
 
-     plot_strompris_naa_dt <- copy(updated_dt_filtered_prices0)
+     plot_strompris_naa_dt <- rbind(updated_dt_filtered_prices_org_comp_system0,updated_dt_filtered_prices0)
 
      plot_strompris_naa_dt[,filtered_price:=NULL]
      setnames(plot_strompris_naa_dt,"price","spotpris")
@@ -1365,7 +1369,7 @@ server <- function(input, output,session) {
 
      p_history <- ggplot(data=dt_list$plot_dt_final,mapping=aes(x=datetime,y=pris,col=type,fill=type))+
        geom_line(aes(size=linesize))+
-       geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.3)+
+       #geom_ribbon(aes(ymin = lower_CI, ymax = upper_CI), alpha = 0.3)+
        ggtitle("")+
        scale_y_continuous(name = "NOK/kWh inkl. mva",labels=scaleFUN,breaks = breaks_extended(8))+
        scale_x_datetime(name = "Tid/dato",
