@@ -1,5 +1,10 @@
 ## Endringslogg dinstrompris.no
 
+### v 0.2.0 [07.09.23]
+- Oppdatert systemet til ny strømstøtteordning (underliggende system, visualiseringer og forklaringstekst)
+- Stoppet prognosemodeller og automatisk generering av relaterte figurer da de ikke lenger er i bruk med ny strømstøtteordning
+- Transformert historiske strømstøtte data til nytt dataformat
+
 ### v 0.1.5 [16.01.23]
 - Justert nettleie for redusert elavgift
 - Manuelt kontrollert/justert de 10 største nettselskapene i Norge og lagt inn kommentar om mulig feil for øvrige.
