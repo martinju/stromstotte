@@ -205,8 +205,8 @@ mylabels <- c(spotpris= "Spotpris",
 ######
 
 # No longer need to compile this one
-#rmdfiles <- c("stromstotte_shiny_description.Rmd") # Vurdere å ikke hente tidspunkt for kompilering fra nettet inn i denne rmd-fila.
-#sapply(rmdfiles, knitr::knit, quiet = T)
+rmdfiles <- c("stromstotte_shiny_description.Rmd") # Vurdere å ikke hente tidspunkt for kompilering fra nettet inn i denne rmd-fila.
+sapply(rmdfiles, knitr::knit, quiet = T)
 
 
 #######

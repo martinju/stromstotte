@@ -55,7 +55,7 @@ if(tomorrow>=as.Date("23-09-01")){
     fwrite(filtered_dt,historic_filtered_prices_filename,append=T)
   }
 
-  new_filtered_dt <- fread(historic_filtered_prices_filename_json)
+  new_filtered_dt <- fread(historic_filtered_prices_filename)
 
   jsonlite::write_json(new_filtered_dt,historic_filtered_prices_filename_json)
 
