@@ -11,6 +11,8 @@ today <- as.IDate(Sys.time())
 
 database_filename <- "data/database_nordpool_hourly.csv"
 historic_filtered_prices_filename <- "data/historic_filtered_prices_sept23_system.csv"
+historic_filtered_prices_filename_json <- "data/historic_filtered_prices_sept23_system.json"
+
 ### Input
 
 source("source/funcs.R")
@@ -52,6 +54,11 @@ if(tomorrow>=as.Date("23-09-01")){
   } else {
     fwrite(filtered_dt,historic_filtered_prices_filename,append=T)
   }
+
+  new_filtered_dt <- fread(historic_filtered_prices_filename_json)
+
+  jsonlite::write_json(new_filtered_dt,historic_filtered_prices_filename_json)
+
 
 } else {
   stop("The direct spot price compensation system is not in force for this date")
