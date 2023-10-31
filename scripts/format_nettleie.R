@@ -124,6 +124,11 @@ nettleie_dt_simple[Nettselskap=="GLITRE ENERGI NETT AS",kontrollert_pris:=TRUE]
 nettleie_dt_simple[Nettselskap=="FAGNE AS"] #OK
 nettleie_dt_simple[Nettselskap=="FAGNE AS",kontrollert_pris:=TRUE]
 
+# https://jev.no/nettleie-for-kunder-med-forbruk-under-100-000-kwh-2-2-2
+nettleie_dt_simple[Nettselskap=="JÆREN EVERK AS"] #OK
+nettleie_dt_simple[Nettselskap=="JÆREN EVERK AS" & pristype=="Dag",Energiledd:=23.75+19.80+1.25]
+nettleie_dt_simple[Nettselskap=="GLITRE ENERGI NETT AS",kontrollert_pris:=TRUE]
+
 
 
 tmp <- nettleie_dt_simple[Nettselskap=="ELVIA AS"& pristype=="Natt"] # Same as natt
