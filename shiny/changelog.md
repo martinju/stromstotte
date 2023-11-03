@@ -1,5 +1,9 @@
 ## Endringslogg dinstrompris.no
 
+### v 0.2.1 [03.11.23]
+- Oppdatert variabel nettleie for største nettselskap (ikke effekttariff).
+- Fikset korrekt håndtering av egen helgesats
+
 ### v 0.2.0 [07.09.23]
 - Oppdatert systemet til ny strømstøtteordning (underliggende system, visualiseringer og forklaringstekst)
 - Stoppet prognosemodeller og automatisk generering av relaterte figurer da de ikke lenger er i bruk med ny strømstøtteordning

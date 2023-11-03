@@ -342,6 +342,7 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
 #                                ),
                                   box(width = 7,
                                     h3("Øvrige tillegg på din strømregning"),
+                                    p("OBS: IKke oppdatert. Oppdatering kommer ila få uker."),
                                     uiOutput("nettleie_kapasitetsledd"),
                                     tableOutput("nettleie_kapasitetsledd_tabell"),
                                     p(strong("Kostnader til strømselskap")),
@@ -1018,6 +1019,9 @@ server <- function(input, output,session) {
      updated_dt_filtered_prices_org_comp_system0 <- dt_filtered_prices_org_comp_system[area ==input$prisomraade]
 
 #     updated_dt_nettleie0 <- dt_nettleie[Nettselskap=="ELVIA AS"]
+#     updated_dt_filtered_prices0 <- dt_filtered_prices[area =="NO1"]
+#     updated_dt_filtered_prices_org_comp_system0 <- dt_filtered_prices_org_comp_system[area =="NO1"]
+
 #     updated_dt_hourly0 <- dt_hourly[area=="NO1"]
 #     updated_dt_comp0 <- dt_comp[area == "NO1"]
 
@@ -1027,8 +1031,16 @@ server <- function(input, output,session) {
      setnames(plot_strompris_naa_dt,"price","spotpris")
      setnames(plot_strompris_naa_dt,"compensation","stotte")
 
+     plot_strompris_naa_dt[,is_weekend:=FALSE]
+     plot_strompris_naa_dt[weekdays(date)%in% c("lørdag","søndag"),is_weekend:=TRUE]
+
      plot_strompris_naa_dt[start_hour %in% seq(6,21),nettleie:=updated_dt_nettleie0[pristype=="Dag",Energiledd]]
      plot_strompris_naa_dt[is.na(nettleie),nettleie:=updated_dt_nettleie0[pristype=="Natt",Energiledd]]
+
+     if(updated_dt_nettleie0[,any(pristype=="Helg")]){ # Override if separate weekend price exists
+       plot_strompris_naa_dt[is_weekend==TRUE,nettleie:=updated_dt_nettleie0[pristype=="Helg",Energiledd]]
+     }
+
 
      plot_strompris_naa_dt[,totalpris:=spotpris+nettleie-stotte]
      plot_strompris_naa_dt[,datetime:=as.POSIXct(date)+start_hour*60*60]
