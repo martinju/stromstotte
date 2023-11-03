@@ -44,6 +44,8 @@ for(i in seq_len(nrow(orgnr_dt))){
 }
 
 nettleie_api_dt <- rbindlist(nettleie_api_dt_list)
+fwrite(nettleie_api_dt,"raw-data/raw_database_nettleie_nve_api.csv")
+
 nettleie_api_dt[,time:=as.numeric(time)]
 nettleie_api_dt[,energileddInk:=as.numeric(energileddInk)]
 
