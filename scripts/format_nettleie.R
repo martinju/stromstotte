@@ -161,9 +161,6 @@ nettleie_dt_simple[Nettselskap=="JÆREN EVERK AS",kontrollert_pris:=TRUE]
 
 
 
-#nettleie_dt_simple <- rbind(nettleie_dt_simple,tmp)
-
-
 fwrite(nettleie_dt_simple,"data/database_nettleie_simple.csv")
 fwrite(nettleie_dt_simple_kl_6,"data/database_nettleie_simple_kl_6.csv")
 

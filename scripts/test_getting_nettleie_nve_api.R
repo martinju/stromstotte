@@ -5,7 +5,9 @@ library(rjson)
 
 orgnr_dt <- fread("data/orgnr_dt.csv")
 orgnr_dt[,datoId:=NULL] # Ignore date
+orgnr_dt[,konsesjonar:=NULL] # ignore navn, as might be duplicates, and does not extract it from there
 orgnr_dt <- unique(orgnr_dt)
+
 
 today <- Sys.Date()
 
@@ -38,25 +40,37 @@ for(i in seq_len(nrow(orgnr_dt))){
 }
 
 nettleie_api_dt <- rbindlist(nettleie_api_dt_list)
-#fwrite(nettleie_api_dt,"raw-data/raw_database_nettleie_nve_api.csv")
+fwrite(nettleie_api_dt,"raw-data/raw_database_nettleie_nve_api.csv")
 
 nettleie_api_dt[,time:=as.numeric(time)]
 nettleie_api_dt[,energileddInk:=as.numeric(energileddInk)]
+nettleie_api_dt[,effekttrinnFraKw:=as.numeric(effekttrinnFraKw)]
 
-setkey(nettleie_api_dt,konsesjonar,effekttrinnFraKw,time)
+
 
 setnames(nettleie_api_dt,"konsesjonar","Nettselskap")
 
+
+setkey(nettleie_api_dt,Nettselskap,effekttrinnFraKw,time)
+
+
 nettselskap_fylke_dt <- unique(nettleie_api_dt[,.(Nettselskap,fylkeNr)])
 
-#### Now, formatting nettleie dt
+nettleie_kapasitetsledd_api_dt_simple_list <- list()
 
-### TODO:
-# 1. Convert to correct format
-# 2. Check the values
-# 3. Check for helg
-# 4. Check for helligdag
-# 5. Check for new nettselskap
+
+for (i in seq_len(nrow(nettselskap_fylke_dt))){
+  tmp <- nettleie_api_dt[time==0][Nettselskap==nettselskap_fylke_dt[i,Nettselskap] & fylkeNr==nettselskap_fylke_dt[i,fylkeNr]]
+  nettleie_kapasitetsledd_api_dt_simple_list[[i]] <- unique(tmp[,.(Nettselskap,fylkeNr,fastleddEks,fastleddInk,effekttrinnFraKw,effekttrinnTilKw)])
+}
+nettleie_kapasitetsledd_api_dt_simple <- data.table(date=as.IDate(today),rbindlist(nettleie_kapasitetsledd_api_dt_simple_list))
+setkey(nettleie_kapasitetsledd_api_dt_simple,Nettselskap,fylkeNr,effekttrinnFraKw)
+
+
+
+####
+
+#### Now, formatting nettleie dt
 
 nettleie_api_dt[fylke=="Troms og Finnmark Romsa ja Finnmárku",fylke:="Troms og Finnmark"]
 
@@ -100,30 +114,86 @@ for (i in seq_len(nrow(nettselskap_fylke_dt))){
 }
 nettleie_api_dt_simple <- data.table(date=as.IDate(today),rbindlist(nettleie_api_dt_simple_list))
 
-fwrite(nettleie_api_dt_simple,"data/datebase_nettleie_api_simple.csv")
+fwrite(nettleie_api_dt_simple,"data/database_nettleie_api_simple.csv")
+nettleie_api_dt_simple <- fread("data/database_nettleie_api_simple.csv")
 
 #### CONTINUE THE CHECK HERE, TO THEN EMAIL NVE ####
 
-nettleie_dt_simple <- fread("data/database_nettleie_simple.csv")
+nettleie_dt_simple <- fread("data/database_nettleie_simple.csv",encoding = "Latin-1")
 
 # Alle mangler Avgift Energifondet 1.25
 
 nettleie_dt_simple[Nettselskap=="LEDE AS"]
-nettleie_api_dt_simple[Nettselskap=="LEDE AS"] # mangler Avgift Energifondet 1.25
+nettleie_api_dt_simple[Nettselskap=="LEDE AS"] # mangler 1.25 (Avgift Energifondet)
 
 nettleie_dt_simple[Nettselskap=="ELVIA AS"]
-nettleie_api_dt_simple[Nettselskap=="ELVIA AS"]  # Mangler 10 øre på natta og 73 øre på dagen
+nettleie_api_dt_simple[Nettselskap=="ELVIA AS"]  # Mangler 1.35 øre på natta og 1.98 øre på dagen
 
 nettleie_dt_simple[Nettselskap=="TENSIO TS AS"]
-nettleie_api_dt_simple[Nettselskap=="TENSIO TS AS"]  # mangler ingenting (altså har energifondavgift inkludert)
+nettleie_api_dt_simple[Nettselskap=="TENSIO TS AS"]  # Korrekt
 
 nettleie_dt_simple[Nettselskap=="TENSIO TN AS"]
-nettleie_api_dt_simple[Nettselskap=="TENSIO TN AS"]  # mangler ingenting for fylke 50 (altså har energifondavgift inkludert)
+nettleie_api_dt_simple[Nettselskap=="TENSIO TN AS"]  # Korrekt (fylke 50)
 
 nettleie_dt_simple[Nettselskap=="BKK NETT AS"]
-nettleie_api_dt_simple[Nettselskap=="BKK NETT AS"]  # mangler ingenting for fylke 50 (altså har energifondavgift inkludert)
+nettleie_api_dt_simple[Nettselskap=="BKK AS"]  # Korrekt
+
+nettleie_dt_simple[Nettselskap=="LNETT AS"]
+nettleie_api_dt_simple[Nettselskap=="LNETT AS"]  # Korrekt
+
+
+nettleie_dt_simple[Nettselskap=="ARVA AS"]
+nettleie_api_dt_simple[Nettselskap=="ARVA AS"]  # Korrekt
+
+nettleie_dt_simple[Nettselskap=="NORGESNETT AS"]
+nettleie_api_dt_simple[Nettselskap=="NORGESNETT AS"]  # Korrekt
+
+nettleie_dt_simple[Nettselskap=="GLITRE ENERGI NETT AS"]
+nettleie_api_dt_simple[Nettselskap=="GLITRE NETT AS"]  # Korrekt
+
+nettleie_dt_simple[Nettselskap=="FAGNE AS"]
+nettleie_api_dt_simple[Nettselskap=="FAGNE AS"]  # Korrekt
+
+nettleie_dt_simple[Nettselskap=="JÆREN EVERK AS"]
+nettleie_api_dt_simple[Nettselskap=="JÆREN EVERK AS"]  # Korrekt
+
+
+nettleie_kapasitetsledd <- fread("data/database_nettleie_kapasitetsledd.csv",encoding = "Latin-1")
 
 
 
-#nettleie_kapasitetsledd <- fread("data/database_nettleie_kapasitetsledd.csv")
+nettleie_kapasitetsledd[Nettselskap=="LEDE AS"]
+nettleie_kapasitetsledd_api_dt_simple[Nettselskap=="LEDE AS"] # KORREKT
+
+nettleie_kapasitetsledd[Nettselskap=="ELVIA AS"]
+nettleie_kapasitetsledd_api_dt_simple[Nettselskap=="ELVIA AS"]  # Mangler 5 kr for trinn 1, 10 kr for trinn 2, 17.5 kr for trinn 3
+
+nettleie_kapasitetsledd[Nettselskap=="TENSIO TS AS"]
+nettleie_kapasitetsledd_api_dt_simple[Nettselskap=="TENSIO TS AS"]  # Korrekt
+
+nettleie_kapasitetsledd[Nettselskap=="TENSIO TN AS"]
+nettleie_kapasitetsledd_api_dt_simple[Nettselskap=="TENSIO TN AS"]  # Korrekt (fylke 50)
+
+nettleie_kapasitetsledd[Nettselskap=="BKK NETT AS"]
+nettleie_kapasitetsledd_api_dt_simple[Nettselskap=="BKK AS"]  # Korrekt
+
+nettleie_kapasitetsledd[Nettselskap=="LNETT AS"]
+nettleie_kapasitetsledd_api_dt_simple[Nettselskap=="LNETT AS"]  # Korrekt
+
+
+nettleie_kapasitetsledd[Nettselskap=="ARVA AS"]
+nettleie_kapasitetsledd_api_dt_simple[Nettselskap=="ARVA AS"]  # Korrekt
+
+nettleie_kapasitetsledd[Nettselskap=="NORGESNETT AS"]
+nettleie_kapasitetsledd_api_dt_simple[Nettselskap=="NORGESNETT AS"]  # Korrekt
+
+nettleie_kapasitetsledd[Nettselskap=="GLITRE ENERGI NETT AS"]
+nettleie_kapasitetsledd_api_dt_simple[Nettselskap=="GLITRE NETT AS"]  # Korrekt
+
+nettleie_kapasitetsledd[Nettselskap=="FAGNE AS"]
+nettleie_kapasitetsledd_api_dt_simple[Nettselskap=="FAGNE AS"]  # Korrekt
+
+nettleie_kapasitetsledd[Nettselskap=="JÆREN EVERK AS"]
+nettleie_kapasitetsledd_api_dt_simple[Nettselskap=="JÆREN EVERK AS"]  # Korrekt
+
 
