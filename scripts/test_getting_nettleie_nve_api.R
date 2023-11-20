@@ -40,7 +40,7 @@ for(i in seq_len(nrow(orgnr_dt))){
 }
 
 nettleie_api_dt <- rbindlist(nettleie_api_dt_list)
-fwrite(nettleie_api_dt,"raw-data/raw_database_nettleie_nve_api.csv")
+fwrite(nettleie_api_dt,"raw-data/raw_database_nettleie_nve_api.csv",append=TRUE)
 
 nettleie_api_dt[,time:=as.numeric(time)]
 nettleie_api_dt[,energileddInk:=as.numeric(energileddInk)]
@@ -65,6 +65,8 @@ for (i in seq_len(nrow(nettselskap_fylke_dt))){
 }
 nettleie_kapasitetsledd_api_dt_simple <- data.table(date=as.IDate(today),rbindlist(nettleie_kapasitetsledd_api_dt_simple_list))
 setkey(nettleie_kapasitetsledd_api_dt_simple,Nettselskap,fylkeNr,effekttrinnFraKw)
+
+fwrite(nettleie_kapasitetsledd_api_dt_simple,"data/nettleie_kapasitetsledd_api_dt_simple.csv",append=T)
 
 
 
@@ -114,14 +116,13 @@ for (i in seq_len(nrow(nettselskap_fylke_dt))){
 }
 nettleie_api_dt_simple <- data.table(date=as.IDate(today),rbindlist(nettleie_api_dt_simple_list))
 
-fwrite(nettleie_api_dt_simple,"data/database_nettleie_api_simple.csv")
-nettleie_api_dt_simple <- fread("data/database_nettleie_api_simple.csv")
+fwrite(nettleie_api_dt_simple,"data/database_nettleie_api_simple.csv",append=T)
+#nettleie_api_dt_simple <- fread("data/database_nettleie_api_simple.csv")
 
 #### CONTINUE THE CHECK HERE, TO THEN EMAIL NVE ####
 
 nettleie_dt_simple <- fread("data/database_nettleie_simple.csv",encoding = "Latin-1")
 
-# Alle mangler Avgift Energifondet 1.25
 
 nettleie_dt_simple[Nettselskap=="LEDE AS"]
 nettleie_api_dt_simple[Nettselskap=="LEDE AS"] # mangler 1.25 (Avgift Energifondet)
