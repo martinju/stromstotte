@@ -4,8 +4,6 @@ library(data.table)
 library(forecast)
 
 
-compensation_prop <- 0.90
-compensation_threshold <- 0.70*1.25
 
 today <- as.IDate(Sys.time())
 
@@ -29,7 +27,15 @@ if(database_hourly[date==tomorrow,.N]==0){
 
 
 
-if(tomorrow>=as.Date("23-09-01")){
+if(tomorrow>=as.Date("2023-09-01")){
+  if(tomorrow>=as.Date("2024-01-01")){
+    # New compensation threshold, ref https://www.regjeringen.no/no/tema/energi/regjeringens-stromtiltak/id2900232/?expand=factbox2900261
+    compensation_prop <- 0.90
+    compensation_threshold <- 0.73*1.25
+  } else {
+    compensation_prop <- 0.90
+    compensation_threshold <- 0.70*1.25
+  }
   filtered_dt <- database_hourly[date==tomorrow]
 
   filtered_dt[,compensation:=compensation_func(avgprice = price,

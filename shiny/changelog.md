@@ -1,5 +1,8 @@
 ## Endringslogg dinstrompris.no
 
+### v 0.2.2 [05.01.24]
+- Oppdatert terskel for når strømstøtten slår inn fra 0.70 NOK/kWh til 0.73 NOK/kWh fra 01.01.24, ref [regjeringen.no](https://www.regjeringen.no/no/aktuelt/str%C3%B8mst%C3%B8tten-oker-til-73-ore-kwh/id2898439/)
+
 ### v 0.2.1 [03.11.23]
 - Oppdatert variabel nettleie for største nettselskap (ikke effekttariff).
 - Fikset korrekt håndtering av egen helgesats
