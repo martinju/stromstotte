@@ -33,9 +33,6 @@ strømstøtte før 1.september 2023 kan hentes her:
 <https://raw.githubusercontent.com/martinju/stromstotte/master/data/historic_filtered_prices_original_system.json>
 <https://raw.githubusercontent.com/martinju/stromstotte/master/data/historic_filtered_prices_original_system.csv>
 
-Data/prognoser er sist oppdatert 07.09.2023, kl. 12.22 med spotpriser
-for 08.09.2023.
-
 Litt bakgrunn om strømstøtteestimering som ble benyttet for
 strømstrøtteordningn som lå til grunn før 1.september 2023, og etter
 hvert ledet frem til [dinstrompris.no](https://dinstrompris.no), finnes
