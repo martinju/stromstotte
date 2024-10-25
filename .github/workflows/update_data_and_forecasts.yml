@@ -1,8 +1,9 @@
 # Get hourly data
 name: Update data, forecasts, plots and render doc
 
-# Controls when the action will run.
+# Configure Manual Trigger
 on:
+  workflow_dispatch:
   schedule:
     - cron:  '15 12 * * *'
 #  push:
