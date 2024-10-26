@@ -46,9 +46,9 @@ jobs:
 #    - name: Get hourly data nordpool
 #      run: Rscript scripts/get_hourly_data_nordpool.R
 
-#    # Run R script
-#    - name: Filter prices with sept_2023 system
-#      run: Rscript scripts/filter.R
+    # Run R script
+    - name: Filter prices with sept_2023 system
+      run: Rscript scripts/filter.R
 
 #    # Run R script
 #    - name: Estimate compensation

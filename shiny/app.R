@@ -294,8 +294,6 @@ body_strompris_naa <- tabItem(tabName = "strompris_naa",
                                 #                                ))),
                                 tags$head(includeHTML("google_analytics.html")),
                                 plotlyOutput("now_spotplot3",height ="300px"),
-                                h3("OBS: Nordpool har endret sitt API for strømpriser, som denne siden henter data fra."),
-                                h3("     Det jobbes med alternative løsninger. Siden er forhåpentligvis oppe igjen snart."),
                                 fluidRow(
                                   box(width = 7,
                                       h3("Hva viser grafen?"),
