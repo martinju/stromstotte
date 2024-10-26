@@ -7,7 +7,7 @@ library(forecast)
 
 today <- as.IDate(Sys.time())
 
-database_filename <- "data/database_nordpool_hourly.csv"
+database_filename <- "data/database_ffail_hourly.csv"
 historic_filtered_prices_filename <- "data/historic_filtered_prices_sept23_system.csv"
 historic_filtered_prices_filename_json <- "data/historic_filtered_prices_sept23_system.json"
 
@@ -46,6 +46,8 @@ if(tomorrow>=as.Date("2023-09-01")){
   ####
   prev_historic_filtered_prices <- fread(historic_filtered_prices_filename)
   prev_dates <- prev_historic_filtered_prices[,unique(date)]
+
+  setcolorder(filtered_dt,names(prev_historic_filtered_prices))
   if(tomorrow%in%prev_dates){
     warning("Computation already done for current date! Updating rather than appending historic data.")
 

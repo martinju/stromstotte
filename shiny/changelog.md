@@ -1,5 +1,8 @@
 ## Endringslogg dinstrompris.no
 
+### v 0.2.3 [26.10.24]
+- Nordpool endret sitt API fra 15.oktober, slik at denne siden gikk ned. Har nå gått over til å hente fra en annen kilde. Data 15.10-25.10 ikke tilgjengelig ennå.
+
 ### v 0.2.2 [05.01.24]
 - Oppdatert terskel for når strømstøtten slår inn fra 0.70 NOK/kWh til 0.73 NOK/kWh fra 01.01.24, ref [regjeringen.no](https://www.regjeringen.no/no/aktuelt/str%C3%B8mst%C3%B8tten-oker-til-73-ore-kwh/id2898439/)
 

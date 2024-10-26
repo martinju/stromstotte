@@ -264,7 +264,7 @@ sidebar <- dashboardSidebar(
     #menuItem("Endringslogg", tabName = "changelog", icon = icon("info",verify_fa = FALSE)),
     tags$html(
       br(),
-      p(actionLink("link_to_about", "dinstrompris.no v 0.2.2"),style = "text-align: center")
+      p(actionLink("link_to_about", "dinstrompris.no v 0.2.3"),style = "text-align: center")
     ),
     tags$html(
       tags$h5(
