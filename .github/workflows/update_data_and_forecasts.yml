@@ -75,14 +75,14 @@ jobs:
     # Add new files in data folder, commit along with other modified files, push
     - name: Commit files
       run: |
-      git config --local user.name actions-user
-      git config --local user.email "actions@github.com"
+        git config --local user.name actions-user
+        git config --local user.email "actions@github.com"
 
-      # Check if there are any changes
-      if [ -n "$(git status --porcelain)" ]; then
-        git add *
-        git commit -am "GHA update data, forecasts, plots and render doc $(date)"
-        git push
-      else
-        echo "No changes to commit"
-      fi
+        # Check if there are any changes
+        if [ -n "$(git status --porcelain)" ]; then
+          git add *
+          git commit -am "GHA update data, forecasts, plots and render doc $(date)"
+          git push
+        else
+          echo "No changes to commit"
+        fi
