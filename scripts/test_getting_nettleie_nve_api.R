@@ -68,6 +68,7 @@ setkey(nettleie_kapasitetsledd_api_dt_simple,Nettselskap,fylkeNr,effekttrinnFraK
 
 fwrite(nettleie_kapasitetsledd_api_dt_simple,"data/nettleie_kapasitetsledd_api_dt_simple.csv",append=T)
 
+#fwrite(nettleie_kapasitetsledd_api_dt_simple,"data/nettleie_kapasitetsledd_api_dt_simple_2024_11_04.csv")
 
 
 ####
@@ -117,6 +118,8 @@ for (i in seq_len(nrow(nettselskap_fylke_dt))){
 nettleie_api_dt_simple <- data.table(date=as.IDate(today),rbindlist(nettleie_api_dt_simple_list))
 
 fwrite(nettleie_api_dt_simple,"data/database_nettleie_api_simple.csv",append=T)
+#fwrite(nettleie_api_dt_simple,"data/database_nettleie_api_simple_2024-11-04.csv",append=T)
+
 #nettleie_api_dt_simple <- fread("data/database_nettleie_api_simple.csv")
 
 #### CONTINUE THE CHECK HERE, TO THEN EMAIL NVE ####
