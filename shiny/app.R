@@ -264,7 +264,7 @@ sidebar <- dashboardSidebar(
     #menuItem("Endringslogg", tabName = "changelog", icon = icon("info",verify_fa = FALSE)),
     tags$html(
       br(),
-      p(actionLink("link_to_about", "dinstrompris.no v 0.2.3"),style = "text-align: center")
+      p(actionLink("link_to_about", "dinstrompris.no v 0.2.4"),style = "text-align: center")
     ),
     tags$html(
       tags$h5(
@@ -492,9 +492,9 @@ body_strompris_history <- tabItem(tabName = "strompris_history",
 
 
 body_stromstotte <- tabItem(tabName = "stromstotte",
-                            fluidPage(
-                              withMathJax(includeMarkdown("stromstotte_shiny_description.md"))
-                            )
+                            #fluidPage(
+                            #  withMathJax(includeMarkdown("stromstotte_shiny_description.md"))
+                            #)
 )
 
 body_strompris <- tabItem(tabName = "strompris",
@@ -1544,7 +1544,7 @@ server <- function(input, output,session) {
        geom_step(data=plot_strompris_naa_dt_melted[type=="totalpris_median"],direction = "hv",col=scales::hue_pal()(3)[1],size=1)
 
      if(now_h<=plot_strompris_naa_dt[,max(datetime)]){
-       p <- p + geom_vline(xintercept=Sys.time(),type=2,col="grey") # TODO: Fix such that this is not displayed in the hoover
+       p <- p + geom_vline(xintercept=now_hms,type=2,col="grey") # TODO: Fix such that this is not displayed in the hoover
        }
 #     for(i in seq_len(nrow(plot_strompris_naa_dt_ints))){
 #       p <- p + geom_ribbon(data=rbind(plot_strompris_naa_dt_ints[i],

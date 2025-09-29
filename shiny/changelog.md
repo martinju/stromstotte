@@ -1,5 +1,8 @@
 ## Endringslogg dinstrompris.no
 
+### v 0.2.4 [29.09.25]
+- Fikset en bug relatert til tidssonehåndtering som gjorde at plottet for "nå (detaljert)" viste feil tid på døgnet.
+
 ### v 0.2.3 [26.10.24]
 - Nordpool endret sitt API fra 15.oktober, slik at denne siden gikk ned. Har nå gått over til å hente fra en annen kilde. Data 15.10-25.10 ikke tilgjengelig ennå.
 
