@@ -5,84 +5,117 @@ name: Update data, forecasts, plots and render doc
 on:
   workflow_dispatch:
   schedule:
-    - cron: '00 12 * * *'  # 14:00 CET = 12:00 UTC
-    - cron: '15 13 * * *'  # 15:15 CET = 13:15 UTC
-    - cron: '30 14 * * *'  # 16:30 CET = 14:30 UTC
-#  push:
-# Controls when the action will run.
-#on: [push, pull_request]
-
+    - cron: '0 12 * * *'   # 12:00 UTC, hits 14:00 local in CEST, 13:00 in CET (skipped)
+    - cron: '0 13 * * *'   # 13:00 UTC, hits 15:00 local in CEST, 14:00 in CET
+    - cron: '0 14 * * *'   # 14:00 UTC, hits 16:00 local in CEST, 15:00 in CET
 
 jobs:
   run_rscripts:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TZ: Europe/Oslo  # ensure local-time checks/logs use Oslo time
 
-    # Load repo and install R
     steps:
-    - name: Print the time
-      run: echo "The time is $(date)"
+      - name: Gate by local time (skip if before 12:00 Oslo time)
+        id: gate
+        shell: bash
+        run: |
+          hour=$(date +%H)
+          if [ "$hour" -lt 12 ]; then
+            echo "Current time $(date) is before 12:00 — skipping run."
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Current time $(date) — proceeding."
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          fi
 
-    - uses: actions/checkout@v2
-    - uses: r-lib/actions/setup-r@v2
-    - uses: r-lib/actions/setup-pandoc@v2
-    - uses: r-lib/actions/setup-r-dependencies@v2
-      with:
-        packages: |
-          any::data.table
-          any::lubridate
-          any::rjson
-          any::flextable
-          any::forecast
-          any::ggplot2
-          any::webshot
-          any::rmarkdown
-          any::patchwork
-          any::jsonlite
+      # Your real steps go below (guarded by the gate)
+      - name: Print the time
+        if: steps.gate.outputs.should_run == 'true'
+        run: echo "The time is $(date) (Europe/Oslo)"
 
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.should_run == 'true'
+        with:
+          fetch-depth: 0
 
-# Run R script
-    - name: Get hourly data ffail
-      env:
-        KEY_FFAIL_DATA: ${{ secrets.KEY_FFAIL_DATA }}
-      run: Rscript scripts/get_hourly_data_ffail.R
+      - uses: r-lib/actions/setup-r@v2
+        if: steps.gate.outputs.should_run == 'true'
+
+      - uses: r-lib/actions/setup-pandoc@v2
+        if: steps.gate.outputs.should_run == 'true'
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        if: steps.gate.outputs.should_run == 'true'
+        with:
+          packages: |
+            any::data.table
+            any::lubridate
+            any::rjson
+            any::flextable
+            any::forecast
+            any::ggplot2
+            any::webshot
+            any::rmarkdown
+            any::patchwork
+            any::jsonlite
+
+  # Run R script
+      - name: Get hourly data ffail
+        if: steps.gate.outputs.should_run == 'true'
+        env:
+          KEY_FFAIL_DATA: ${{ secrets.KEY_FFAIL_DATA }}
+        run: Rscript scripts/get_hourly_data_ffail.R
 
 #    # Run R script
 #    - name: Get hourly data nordpool
+#      if: steps.gate.outputs.should_run == 'true'
 #      run: Rscript scripts/get_hourly_data_nordpool.R
 
-    # Run R script
-    - name: Filter prices with sept_2023 system
-      run: Rscript scripts/filter.R
+      # Run R script
+      - name: Filter prices with sept_2023 system
+        if: steps.gate.outputs.should_run == 'true'
+        run: Rscript scripts/filter.R
 
 #    # Run R script
 #    - name: Estimate compensation
+#      if: steps.gate.outputs.should_run == 'true'
 #      run: Rscript scripts/forecast.R
 
 #    # Run R script
 #    - name: Compensation table
+#      if: steps.gate.outputs.should_run == 'true'
 #      run: Rscript scripts/viz_compensation.R
 
 #    # Run R script
 #    - name: Plot compensation and mean price
+#      if: steps.gate.outputs.should_run == 'true'
 #      run: Rscript scripts/viz_compensation_month.R
 
 #    # Run R script
 #    - name: Render README
+#      if: steps.gate.outputs.should_run == 'true'
 #      run: Rscript -e 'rmarkdown::render("README.Rmd",output_format="all")'
 
+      # Add new files in data folder, commit along with other modified files, push
+      - name: Commit files
+        if: steps.gate.outputs.should_run == 'true'
+        run: |
+          git config --local user.name "actions-user"
+          git config --local user.email "actions@github.com"
 
-    # Add new files in data folder, commit along with other modified files, push
-    - name: Commit files
-      run: |
-        git config --local user.name actions-user
-        git config --local user.email "actions@github.com"
+          # Check if there are any changes
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "GHA update data, forecasts, plots and render doc $(date)"
+            git push
+          else
+            echo "No changes to commit"
+          fi
 
-        # Check if there are any changes
-        if [ -n "$(git status --porcelain)" ]; then
-          git add *
-          git commit -am "GHA update data, forecasts, plots and render doc $(date)"
-          git push
-        else
-          echo "No changes to commit"
-        fi
+    # Optional: avoid overlaps if a run is slow and the next trigger fires
+    concurrency:
+      group: oslotimes
+      cancel-in-progress: false
